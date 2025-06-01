@@ -1,0 +1,53 @@
+body {
+  background-color: #f8f9fa;
+}
+
+.card {
+  border-radius: 10px;
+  transition: transform 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+.btn-success {
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+  border-color: #218838;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+  border-color: #c82333;
+}
+
+.card-img-top {
+  height: 100px;
+  object-fit: contain;
+  padding: 10px;
+}
+
+.error {
+  color: #dc3545;
+  font-size: 0.9rem;
+}
