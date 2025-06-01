@@ -3,53 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - MEGACCS</title>
-  <!-- Bootstrap 5 CSS -->
+  <title>Login - MEGACARDS</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Font Awesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
+  <style>
+    .form-container { max-width: 400px; margin: auto; }
+    .spinner-container { display: none; text-align: center; }
+  </style>
 </head>
 <body class="bg-light">
   <div class="container d-flex justify-content-center align-items-center min-vh-100">
-    <div class="card shadow p-4" style="max-width: 400px; width: 100%;">
+    <div class="card shadow p-4 form-container">
       <ul class="nav nav-tabs mb-4" id="authTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab">Login</button>
+        <li class="nav-item">
+          <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button">Login</button>
         </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button" role="tab">Register</button>
+        <li class="nav-item">
+          <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button">Register</button>
         </li>
       </ul>
       <div class="tab-content">
         <!-- Login Form -->
-        <div class="tab-pane fade show active" id="login" role="tabpanel">
+        <div class="tab-pane fade show active" id="login">
           <h2 class="text-center mb-4">Login</h2>
           <form id="loginForm">
             <div class="mb-3">
               <label for="loginUsername" class="form-label"><i class="fas fa-user me-2"></i>User</label>
-              <input type="text" class="form-control" id="loginUsername" name="username" required>
+              <input type="text" class="form-control" id="loginUsername" name="username" required minlength="3">
             </div>
             <div class="mb-3">
               <label for="loginPassword" class="form-label"><i class="fas fa-lock me-2"></i>Password</label>
-              <input type="password" class="form-control" id="loginPassword" name="password" required>
+              <input type="password" class="form-control" id="loginPassword" name="password" required minlength="6">
             </div>
-            <button type="submit" class="btn btn-primary w-100">Login</button>
+            <button type="submit" class="btn btn-primary w-100" id="loginButton">
+              <span class="spinner-border spinner-border-sm d-none" id="loginSpinner"></span> Login
+            </button>
           </form>
           <p id="loginErrorMessage" class="text-danger mt-3 text-center"></p>
         </div>
         <!-- Register Form -->
-        <div class="tab-pane fade" id="register" role="tabpanel">
+        <div class="tab-pane fade" id="register">
           <h2 class="text-center mb-4">Register</h2>
           <form id="registerForm">
             <div class="mb-3">
               <label for="registerUsername" class="form-label"><i class="fas fa-user me-2"></i>User</label>
-              <input type="text" class="form-control" id="registerUsername" name="username" required>
+              <input type="text" class="form-control" id="registerUsername" name="username" required minlength="3">
             </div>
             <div class="mb-3">
               <label for="registerPassword" class="form-label"><i class="fas fa-lock me-2"></i>Password</label>
-              <input type="password" class="form-control" id="registerPassword" name="password" required>
+              <input type="password" class="form-control" id="registerPassword" name="password" required minlength="6">
             </div>
-            <button type="submit" class="btn btn-success w-100">Register</button>
+            <button type="submit" class="btn btn-success w-100" id="registerButton">
+              <span class="spinner-border spinner-border-sm d-none" id="registerSpinner"></span> Register
+            </button>
           </form>
           <p id="registerMessage" class="text-success mt-3 text-center"></p>
           <p id="registerErrorMessage" class="text-danger mt-3 text-center"></p>
@@ -57,7 +63,6 @@
       </div>
     </div>
   </div>
-  <!-- Bootstrap 5 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="script.js"></script>
 </body>
