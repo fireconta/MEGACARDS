@@ -2,16 +2,16 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbx2DetpI-FBjWOO8vXvQfHX
 
 document.addEventListener('DOMContentLoaded', () => {
   const loginForm = document.getElementById('loginForm');
+  const registerForm = document.getElementById('registerForm');
+
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
+      const username = document.getElementById('loginUsername').value;
+      const password = document.getElementById('loginPassword').value;
       try {
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'login', username, password })
+        const response = await fetch(`${API_URL}?action=login&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`, {
+          method: 'GET'
         });
         const data = await response.json();
         if (data.success) {
@@ -20,10 +20,37 @@ document.addEventListener('DOMContentLoaded', () => {
           localStorage.setItem('balance', data.balance);
           window.location.href = 'dashboard.html';
         } else {
-          document.getElementById('errorMessage').textContent = data.message || 'Erro ao fazer login';
+          document.getElementById('loginErrorMessage').textContent = data.message || 'Error logging in';
         }
       } catch (error) {
-        document.getElementById('errorMessage').textContent = 'Erro de conexão';
+        console.error('Login error:', error);
+        document.getElementById('loginErrorMessage').textContent = 'Connection error. Check network or server.';
+      }
+    });
+  }
+
+  if (registerForm) {
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('registerUsername').value;
+      const password = document.getElementById('registerPassword').value;
+      try {
+        const response = await fetch(`${API_URL}?action=register&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`, {
+          method: 'GET'
+        });
+        const data = await response.json();
+        if (data.success) {
+          document.getElementById('registerMessage').textContent = data.message || 'User registered successfully';
+          document.getElementById('registerErrorMessage').textContent = '';
+          registerForm.reset();
+        } else {
+          document.getElementById('registerErrorMessage').textContent = data.message || 'Error registering user';
+          document.getElementById('registerMessage').textContent = '';
+        }
+      } catch (error) {
+        console.error('Register error:', error);
+        document.getElementById('registerErrorMessage').textContent = 'Connection error. Check network or server.';
+        document.getElementById('registerMessage').textContent = '';
       }
     });
   }
@@ -67,16 +94,16 @@ async function loadCards() {
           <img src="https://via.placeholder.com/150?text=Card" class="card-img-top" alt="Card">
           <div class="card-body">
             <h5 class="card-title">${card.brand}</h5>
-            <p class="card-text">Número: ${card.cardNumber}</p>
-            <p class="card-text">Valor: R$${card.value.toFixed(2)}</p>
-            <button class="btn btn-primary" onclick="purchaseCard('${card.cardNumber}', ${card.value})"><i class="fas fa-shopping-cart me-2"></i>Comprar</button>
+            <p class="card-text">Number: ${card.cardNumber}</p>
+            <p class="card-text">Value: R$${card.value.toFixed(2)}</p>
+            <button class="btn btn-primary" onclick="purchaseCard('${card.cardNumber}', ${card.value})"><i class="fas fa-shopping-cart me-2"></i>Buy</button>
           </div>
         </div>
       `;
       cardsList.appendChild(cardDiv);
     });
   } catch (error) {
-    console.error('Erro ao carregar cartões:', error);
+    console.error('Error loading cards:', error);
   }
 }
 
@@ -94,12 +121,12 @@ async function purchaseCard(cardNumber, cardValue) {
       localStorage.setItem('balance', data.newBalance);
       document.getElementById('userBalance').textContent = data.newBalance;
       loadCards();
-      alert('Cartão comprado com sucesso!');
+      alert('Card purchased successfully!');
     } else {
-      alert(data.message || 'Erro ao comprar cartão');
+      alert(data.message || 'Error purchasing card');
     }
   } catch (error) {
-    alert('Erro de conexão');
+    alert('Connection error');
   }
 }
 
@@ -121,16 +148,16 @@ async function loadPurchasedCards(username) {
           <img src="https://via.placeholder.com/150?text=Card" class="card-img-top" alt="Card">
           <div class="card-body">
             <h5 class="card-title">${card.brand}</h5>
-            <p class="card-text">Número: ${card.cardNumber}</p>
+            <p class="card-text">Number: ${card.cardNumber}</p>
             <p class="card-text">CVV: ${card.cvv}</p>
-            <p class="card-text">Validade: ${card.expiry}</p>
+            <p class="card-text">Expiry: ${card.expiry}</p>
           </div>
         </div>
       `;
       purchasedCards.appendChild(cardDiv);
     });
   } catch (error) {
-    console.error('Erro ao carregar cartões comprados:', error);
+    console.error('Error loading purchased cards:', error);
   }
 }
 
@@ -152,11 +179,11 @@ async function loadAllCards() {
           <img src="https://via.placeholder.com/150?text=Card" class="card-img-top" alt="Card">
           <div class="card-body">
             <h5 class="card-title">${card.brand}</h5>
-            <p class="card-text">Número: ${card.cardNumber}</p>
-            <p class="card-text">Valor: R$${card.value.toFixed(2)}</p>
+            <p class="card-text">Number: ${card.cardNumber}</p>
+            <p class="card-text">Value: R$${card.value.toFixed(2)}</p>
             <div class="d-flex gap-2">
-              <button class="btn btn-warning" onclick="editCard('${card.cardNumber}')"><i class="fas fa-edit me-2"></i>Editar</button>
-              <button class="btn btn-danger" onclick="deleteCard('${card.cardNumber}')"><i class="fas fa-trash me-2"></i>Excluir</button>
+              <button class="btn btn-warning" onclick="editCard('${card.cardNumber}')"><i class="fas fa-edit me-2"></i>Edit</button>
+              <button class="btn btn-danger" onclick="deleteCard('${card.cardNumber}')"><i class="fas fa-trash me-2"></i>Delete</button>
             </div>
           </div>
         </div>
@@ -164,7 +191,7 @@ async function loadAllCards() {
       allCards.appendChild(cardDiv);
     });
   } catch (error) {
-    console.error('Erro ao carregar todos os cartões:', error);
+    console.error('Error loading all cards:', error);
   }
 }
 
@@ -194,18 +221,18 @@ function setupAddCardForm() {
       if (data.success) {
         loadAllCards();
         addCardForm.reset();
-        alert('Cartão adicionado com sucesso!');
+        alert('Card added successfully!');
       } else {
-        alert(data.message || 'Erro ao adicionar cartão');
+        alert(data.message || 'Error adding card');
       }
     } catch (error) {
-      alert('Erro de conexão');
+      alert('Connection error');
     }
   });
 }
 
 async function editCard(cardNumber) {
-  const newValue = prompt('Novo valor do cartão:');
+  const newValue = prompt('New card value:');
   if (newValue) {
     try {
       const response = await fetch(API_URL, {
@@ -216,18 +243,18 @@ async function editCard(cardNumber) {
       const data = await response.json();
       if (data.success) {
         loadAllCards();
-        alert('Cartão editado com sucesso!');
+        alert('Card edited successfully!');
       } else {
-        alert(data.message || 'Erro ao editar cartão');
+        alert(data.message || 'Error editing card');
       }
     } catch (error) {
-      alert('Erro de conexão');
+      alert('Connection error');
     }
   }
 }
 
 async function deleteCard(cardNumber) {
-  if (confirm('Tem certeza que deseja excluir este cartão?')) {
+  if (confirm('Are you sure you want to delete this card?')) {
     try {
       const response = await fetch(API_URL, {
         method: 'POST',
@@ -237,12 +264,12 @@ async function deleteCard(cardNumber) {
       const data = await response.json();
       if (data.success) {
         loadAllCards();
-        alert('Cartão excluído com sucesso!');
+        alert('Card deleted successfully!');
       } else {
-        alert(data.message || 'Erro ao excluir cartão');
+        alert(data.message || 'Error deleting card');
       }
     } catch (error) {
-      alert('Erro de conexão');
+      alert('Connection error');
     }
   }
 }
