@@ -1,4 +1,4 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbx2DetpI-FBjWOO8vXvQfHXR4dnJCX3wmiklocFR-ppuxIBg1yKmGIUJ8lp3JN9D41jdA/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbx2DetpI-FBjWOO8vX9fHXR4dnJCJS3wmiklocFR-ppuxIBg1yKmGIUJ8lp3JN9D41jdA/exec';
 
 /**
  * Realiza requisição à API com tratamento de erros.
@@ -6,12 +6,9 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbx2DetpI-FBjWOO8vXvQfHX
 async function apiRequest(method, action, data = {}) {
   try {
     const url = method === 'GET' 
-      ? `${API_URL}?action=${action}&${new URLSearchParams(
-          Object.keys(data).reduce((acc, key) => ({
-            ...acc,
-            [key]: encodeURIComponent(data[key])
-          }), {})
-        ).toString()}`
+      ? `${API_URL}?action=${action}&${Object.keys(data)
+          .map(key => `${key}=${encodeURIComponent(data[key])}`)
+          .join('&')}`
       : API_URL;
     const options = {
       method,
@@ -22,24 +19,24 @@ async function apiRequest(method, action, data = {}) {
     }
     const response = await fetch(url, options);
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      throw new Error(`Erro HTTP ${response.status}: ${response.statusText}`);
     }
     return await response.json();
   } catch (error) {
-    console.error(`${action} error:`, error);
-    throw new Error('Failed to connect to server. Please check your network or try again later.');
+    console.error(`Erro na ação ${action}:`, error);
+    throw new Error('Não foi possível conectar ao servidor. Verifique sua conexão ou tente novamente.');
   }
 }
 
 /**
- * Mostra/esconde spinner e desabilita/habilita botão.
+ * Mostra ou esconde spinner e habilita/desabilita botão.
  */
-function toggleButtonState(buttonId, spinnerId, disable) {
+function toggleButtonState(buttonId, spinnerId, state) {
   const button = document.getElementById(buttonId);
   const spinner = document.getElementById(spinnerId);
   if (button && spinner) {
-    button.disabled = disable;
-    spinner.classList.toggle('d-none', !disable);
+    button.disabled = state;
+    spinner.classList.toggle('d-none', !state);
   }
 }
 
@@ -69,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
           localStorage.setItem('balance', data.balance);
           window.location.href = 'dashboard.html';
         } else {
-          errorMessage.textContent = data.message || 'Failed to login';
+          errorMessage.textContent = data.message || 'Falha ao fazer login';
         }
       } catch (error) {
         errorMessage.textContent = error.message;
@@ -92,11 +89,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = document.getElementById('registerPassword').value;
         const data = await apiRequest('POST', 'register', { username, password });
         if (data.success) {
-          successMessage.textContent = data.message || 'Registration successful!';
+          successMessage.textContent = data.message || 'Usuário registrado com sucesso!';
           registerForm.reset();
-          alert('Registration successful! Please log in.');
+          alert('Registro concluído com sucesso! Faça login para continuar.');
         } else {
-          errorMessage.textContent = data.message || 'Failed to register user';
+          errorMessage.textContent = data.message || 'Erro ao registrar usuário';
         }
       } catch (error) {
         errorMessage.textContent = error.message;
@@ -145,12 +142,12 @@ async function loadCards() {
       cardDiv.className = 'col';
       cardDiv.innerHTML = `
         <div class="card h-100">
-          <img src="https://via.placeholder.com/150?text=Card" class="card-img-top" alt="Card">
+          <img src="https://via.placeholder.com/150?text=Card" class="card-img-top" alt="Cartão">
           <div class="card-body">
             <h5 class="card-title">${card.brand || ''}</h5>
-            <p class="card-text">Number: ${card.cardNumber || ''}</p>
-            <p class="card-text">Value: R$${card.value?.toFixed(2) || '0.00'}</p>
-            <button class="btn btn-primary" onclick="purchaseCard('${card.cardNumber || ''}', ${card.value || 0})"><i class="fas fa-shopping-cart me-2"></i>Buy</button>
+            <p class="card-text">Número: ${card.cardNumber || ''}</p>
+            <p class="card-text">Valor: R$${card.value?.toFixed(2) || '0.00'}</p>
+            <button class="btn btn-primary" onclick="purchaseCard('${card.cardNumber || ''}', ${card.value || 0})"><i class="fas fa-shopping-cart me-1"></i> Comprar</button>
           </div>
         </div>
       `;
@@ -175,9 +172,9 @@ async function purchaseCard(cardNumber, cardValue) {
       localStorage.setItem('balance', data.newBalance);
       document.getElementById('userBalance').textContent = data.newBalance.toFixed(2);
       loadCards();
-      alert('Card purchased successfully!');
+      alert('Cartão comprado com sucesso!');
     } else {
-      alert('Error purchasing card: ' + (data.message || 'Unknown error'));
+      alert('Erro ao comprar cartão: ' + (data.message || 'Erro desconhecido'));
     }
   } catch (error) {
     alert(error.message);
@@ -203,12 +200,12 @@ async function loadPurchasedCards(username) {
       cardDiv.className = 'col';
       cardDiv.innerHTML = `
         <div class="card h-100">
-          <img src="https://via.placeholder.com/150?text=Card" class="card-img-top" alt="Card">
+          <img src="https://via.placeholder.com/150?text=Card" class="card-img-top" alt="Cartão">
           <div class="card-body">
             <h5 class="card-title">${card.brand || ''}</h5>
-            <p class="card-text">Number: ${card.cardNumber || ''}</p>
+            <p class="card-text">Número: ${card.cardNumber || ''}</p>
             <p class="card-text">CVV: ${card.cvv || ''}</p>
-            <p class="card-text">Expiry: ${card.expiry || ''}</p>
+            <p class="card-text">Validade: ${card.expiry || ''}</p>
           </div>
         </div>
       `;
@@ -240,14 +237,14 @@ async function loadAllCards() {
       cardDiv.className = 'col';
       cardDiv.innerHTML = `
         <div class="card h-100">
-          <img src="https://via.placeholder.com/150?text=Card" class="card-img-top" alt="Card">
+          <img src="https://via.placeholder.com/150?text=Card" class="card-img-top" alt="Cartão">
           <div class="card-body">
             <h5 class="card-title">${card.brand || ''}</h5>
-            <p class="card-text">Number: ${card.cardNumber || ''}</p>
-            <p class="card-text">Value: R$${card.value?.toFixed(2) || '0.00'}</p>
-            <div class="d-flex gap-2">
-              <button class="btn btn-warning" onclick="editCard('${card.cardNumber || ''}')"><i class="fas fa-edit me-2"></i>Edit</button>
-              <button class="btn btn-danger" onclick="deleteCard('${card.cardNumber || ''}')"><i class="fas fa-trash me-2"></i>Delete</button>
+            <p class="card-text">Número: ${card.cardNumber || ''}</p>
+            <p class="card-text">Valor: R$${card.value?.toFixed(2) || '0.00'}</p>
+            <div class="d-flex gap-1">
+              <button class="btn btn-primary" onclick="editCard('${card.cardNumber || ''}')"><i class="fas fa-edit me-1"></i> Editar</button>
+              <button class="btn btn-danger" onclick="deleteCard('${card.cardNumber || ''}')"><i class="fas fa-trash me-1"></i> Excluir</button>
             </div>
           </div>
         </div>
@@ -286,9 +283,9 @@ function setupAddCardForm() {
         if (data.success) {
           loadAllCards();
           addCardForm.reset();
-          alert('Card added successfully!');
+          alert('Cartão adicionado com sucesso!');
         } else {
-          alert('Error adding card: ' + (data.message || 'Unknown error'));
+          alert('Erro ao adicionar cartão: ' + (data.message || 'Erro desconhecido'));
         }
       } catch (error) {
         alert(error.message);
@@ -301,15 +298,15 @@ function setupAddCardForm() {
  * Edita um cartão.
  */
 async function editCard(cardNumber) {
-  const newValue = prompt('Enter new card value:');
-  if (newValue && !isNaN(parseFloat(newValue))) {
+  const newValue = prompt('Digite o novo valor do cartão:');
+  if (newValue && !isNaN(newValue)) {
     try {
       const data = await apiRequest('POST', 'editCard', { card: { cardNumber, value: parseFloat(newValue) } });
       if (data.success) {
         loadAllCards();
-        alert('Card edited successfully!');
+        alert('Cartão editado com sucesso!');
       } else {
-        alert('Error editing card: ' + (data.message || 'Unknown error'));
+        alert('Erro ao editar cartão: ' + (data.message || 'Erro desconhecido'));
       }
     } catch (error) {
       alert(error.message);
@@ -321,14 +318,14 @@ async function editCard(cardNumber) {
  * Deleta um cartão.
  */
 async function deleteCard(cardNumber) {
-  if (confirm('Are you sure you want to delete this card?')) {
+  if (confirm('Tem certeza que deseja excluir este cartão?')) {
     try {
       const data = await apiRequest('POST', 'deleteCard', { cardNumber });
       if (data.success) {
         loadAllCards();
-        alert('Card deleted successfully!');
+        alert('Cartão excluído com sucesso!');
       } else {
-        alert('Error deleting card: ' + (data.message || 'Unknown error'));
+        alert('Erro ao excluir cartão: ' + (data.message || 'Erro desconhecido'));
       }
     } catch (error) {
       alert(error.message);
