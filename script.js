@@ -63,7 +63,7 @@ async function loadCards() {
       const cardDiv = document.createElement('div');
       cardDiv.className = 'col';
       cardDiv.innerHTML = `
-        <div class="card h-100 shadow">
+        <div class="card h-100">
           <img src="https://via.placeholder.com/150?text=Card" class="card-img-top" alt="Card">
           <div class="card-body">
             <h5 class="card-title">${card.brand}</h5>
@@ -117,7 +117,7 @@ async function loadPurchasedCards(username) {
       const cardDiv = document.createElement('div');
       cardDiv.className = 'col';
       cardDiv.innerHTML = `
-        <div class="card h-100 shadow">
+        <div class="card h-100">
           <img src="https://via.placeholder.com/150?text=Card" class="card-img-top" alt="Card">
           <div class="card-body">
             <h5 class="card-title">${card.brand}</h5>
@@ -148,7 +148,7 @@ async function loadAllCards() {
       const cardDiv = document.createElement('div');
       cardDiv.className = 'col';
       cardDiv.innerHTML = `
-        <div class="card h-100 shadow">
+        <div class="card h-100">
           <img src="https://via.placeholder.com/150?text=Card" class="card-img-top" alt="Card">
           <div class="card-body">
             <h5 class="card-title">${card.brand}</h5>
