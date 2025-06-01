@@ -29,7 +29,7 @@
           <form id="loginForm">
             <div class="mb-3">
               <label for="loginUsername" class="form-label"><i class="fas fa-user me-2"></i>User</label>
-              <input type="text" class="form-control" id="loginUsername" name="username" required minlength="3">
+              <input type="text" class="form-control" id="loginUsername" name="username" required minlength="3" pattern="[a-zA-Z0-9]+">
             </div>
             <div class="mb-3">
               <label for="loginPassword" class="form-label"><i class="fas fa-lock me-2"></i>Password</label>
@@ -47,7 +47,7 @@
           <form id="registerForm">
             <div class="mb-3">
               <label for="registerUsername" class="form-label"><i class="fas fa-user me-2"></i>User</label>
-              <input type="text" class="form-control" id="registerUsername" name="username" required minlength="3">
+              <input type="text" class="form-control" id="registerUsername" name="username" required minlength="3" pattern="[a-zA-Z0-9]+">
             </div>
             <div class="mb-3">
               <label for="registerPassword" class="form-label"><i class="fas fa-lock me-2"></i>Password</label>
