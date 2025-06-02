@@ -1,66 +1,86 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Administrador</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .dark { background-color: #1a202c; color: #e2e8f0; }
-        .light { background-color: #f7fafc; color: #1a202c; }
-    </style>
+    <script src="script.js" defer></script>
 </head>
-<body class="dark">
-    <div class="container mx-auto p-4">
-        <div id="navbar" class="flex justify-between mb-4">
-            <div>
-                <button onclick="window.location.href='shop.html'" class="bg-blue-600 p-2 rounded hover:bg-blue-500">Voltar à Loja</button>
-                <button id="themeToggle" onclick="ui.toggleTheme()" class="bg-gray-600 p-2 rounded hover:bg-gray-500 ml-2">Modo Claro</button>
-                <button onclick="auth.logout()" class="bg-red-600 p-2 rounded hover:bg-red-500 ml-2">Sair</button>
+<body class="bg-gray-900 text-white min-h-screen">
+    <nav id="navbar" class="bg-blue-600 p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-white">Painel Administrador</h1>
+            <div class="flex space-x-4">
+                <button id="themeToggle" onclick="ui.toggleTheme()" class="text-white hover:text-gray-200 transition">Modo Claro</button>
+                <button onclick="window.location.href='shop.html'" class="bg-blue-600 p-2 rounded-lg hover:bg-blue-500 transition">Voltar à Loja</button>
             </div>
         </div>
+    </nav>
+    <main class="container mx-auto p-6">
         <div id="notifications" class="fixed top-4 right-4"></div>
-
-        <h2 class="text-2xl font-bold mb-4">Usuários</h2>
-        <button onclick="document.getElementById('addUserModal').classList.remove('hidden')" class="mb-4 bg-green-600 p-2 rounded hover:bg-green-500">Adicionar Usuário</button>
-        <div id="userList" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8"></div>
-
-        <h2 class="text-2xl font-bold mb-4">Cartões</h2>
-        <button onclick="document.getElementById('cardModal').classList.remove('hidden')" class="mb-4 bg-green-600 p-2 rounded hover:bg-green-500">Adicionar Cartão</button>
-        <div id="adminCardList" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-
+        <section class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Gerenciar Usuários</h2>
+            <div class="mb-4">
+                <input type="text" id="userSearch" placeholder="Pesquisar usuário" class="p-2 rounded-lg bg-gray-700 text-white w-full focus:ring-2 focus:ring-blue-500" oninput="ui.displayUsers(this.value)">
+            </div>
+            <button onclick="document.getElementById('addUserModal').classList.remove('hidden')" class="mb-4 bg-green-600 p-2 rounded-lg hover:bg-green-500 transition">Adicionar Usuário</button>
+            <div id="userList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </section>
+        <section>
+            <h2 class="text-2xl font-bold mb-4">Gerenciar Cartões</h2>
+            <div class="mb-4">
+                <input type="text" id="cardSearch" placeholder="Pesquisar cartão" class="p-2 rounded-lg bg-gray-700 text-white w-full focus:ring-2 focus:ring-blue-500" oninput="ui.displayAdminCards(this.value)">
+            </div>
+            <button onclick="document.getElementById('cardModal').classList.remove('hidden')" class="mb-4 bg-green-600 p-2 rounded-lg hover:bg-green-500 transition">Adicionar Cartão</button>
+            <div id="adminCardList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </section>
         <div id="addUserModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
-            <div class="bg-gray-800 p-4 rounded max-w-md w-full">
+            <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full shadow-2xl">
                 <h2 class="text-xl font-bold mb-4">Adicionar Usuário</h2>
-                <input id="newUsername" type="text" placeholder="Usuário" class="w-full p-2 rounded bg-gray-700 text-white mb-2">
-                <input id="newPassword" type="password" placeholder="Senha" class="w-full p-2 rounded bg-gray-700 text-white mb-2">
-                <input id="newBalance" type="number" placeholder="Saldo (R$)" class="w-full p-2 rounded bg-gray-700 text-white mb-2">
-                <select id="isAdmin" class="w-full p-2 rounded bg-gray-700 text-white mb-2">
+                <input id="newUsername" type="text" placeholder="Usuário" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
+                <input id="newPassword" type="password" placeholder="Senha" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
+                <input id="newBalance" type="number" placeholder="Saldo (R$)" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
+                <select id="isAdmin" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
                     <option value="false">Não</option>
                     <option value="true">Sim</option>
                 </select>
-                <button onclick="ui.addUser()" class="w-full bg-green-600 p-2 rounded hover:bg-green-500">Adicionar</button>
-                <button onclick="ui.closeModal()" class="w-full mt-2 bg-gray-600 p-2 rounded hover:bg-gray-500">Fechar</button>
+                <button onclick="ui.addUser()" class="w-full bg-green-600 p-2 rounded-lg hover:bg-green-500 transition">Adicionar</button>
+                <button onclick="ui.closeModal()" class="w-full mt-2 bg-gray-600 p-2 rounded-lg hover:bg-gray-500 transition">Fechar</button>
             </div>
         </div>
-
         <div id="cardModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
-            <div class="bg-gray-800 p-4 rounded max-w-md w-full">
+            <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full shadow-2xl">
                 <h2 class="text-xl font-bold mb-4">Adicionar Cartão</h2>
-                <input id="cardNumber" type="text" placeholder="Número do Cartão" oninput="formatCardNumber(this)" class="w-full p-2 rounded bg-gray-700 text-white mb-2">
-                <input id="cardCvv" type="text" placeholder="CVV" oninput="restrictCvv(this)" class="w-full p-2 rounded bg-gray-700 text-white mb-2">
-                <input id="cardExpiry" type="text" placeholder="Validade (MM/AA)" oninput="formatExpiry(this)" class="w-full p-2 rounded bg-gray-700 text-white mb-2">
-                <input id="cardName" type="text" placeholder="Nome" class="w-full p-2 rounded bg-gray-700 text-white mb-2">
-                <input id="cardCpf" type="text" placeholder="CPF" oninput="formatCpf(this)" class="w-full p-2 rounded bg-gray-700 text-white mb-2">
-                <input id="cardBrand" type="text" placeholder="Bandeira" class="w-full p-2 rounded bg-gray-700 text-white mb-2">
-                <input id="cardBank" type="text" placeholder="Banco" class="w-full p-2 rounded bg-gray-700 text-white mb-2">
-                <input id="cardCountry" type="text" placeholder="País" class="w-full p-2 rounded bg-gray-700 text-white mb-2">
-                <input id="cardLevel" type="text" placeholder="Nível" class="w-full p-2 rounded bg-gray-700 text-white mb-2">
-                <button onclick="ui.saveCard()" class="w-full bg-green-600 p-2 rounded hover:bg-green-500">Adicionar</button>
-                <button onclick="ui.closeModal()" class="w-full mt-2 bg-gray-600 p-2 rounded hover:bg-gray-500">Fechar</button>
+                <input id="cardNumber" type="text" placeholder="Número do Cartão" oninput="formatCardNumber(this)" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
+                <input id="cardCvv" type="text" placeholder="CVV" oninput="restrictCvv(this)" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
+                <input id="cardExpiry" type="text" placeholder="Validade (MM/AA)" oninput="formatExpiry(this)" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
+                <input id="cardName" type="text" placeholder="Nome" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
+                <input id="cardCpf" type="text" placeholder="CPF" oninput="formatCpf(this)" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
+                <input id="cardBrand" type="text" placeholder="Bandeira" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
+                <input id="cardBank" type="text" placeholder="Banco" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
+                <input id="cardCountry" type="text" placeholder="País" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
+                <input id="cardLevel" type="text" placeholder="Nível" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
+                <button onclick="ui.saveCard()" class="w-full bg-green-600 p-2 rounded-lg hover:bg-green-500 transition">Adicionar</button>
+                <button onclick="ui.closeModal()" class="w-full mt-2 bg-gray-600 p-2 rounded-lg hover:bg-gray-500 transition">Fechar</button>
             </div>
         </div>
-    </div>
-    <script src="script.js"></script>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (!user) {
+                window.location.href = 'index.html';
+            } else if (!user.is_admin) {
+                window.location.href = 'shop.html';
+            } else {
+                document.documentElement.className = 'dark';
+                document.getElementById('themeToggle').textContent = 'Modo Claro';
+                admin.loadUsers();
+                admin.loadAdminCards();
+            }
+            console.log('Página dashboard.html carregada em ' + new Date().toLocaleString());
+        });
+    </script>
 </body>
 </html>
