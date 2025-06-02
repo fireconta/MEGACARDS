@@ -8,7 +8,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
   <style>
     .form-container { max-width: 400px; margin: auto; }
-    .spinner-container { display: none; text-align: center; }
+    .alert { display: none; }
   </style>
 </head>
 <body class="bg-light">
@@ -19,46 +19,46 @@
           <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button">Login</button>
         </li>
         <li class="nav-item">
-          <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button">Register</button>
+          <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button">Registrar</button>
         </li>
       </ul>
       <div class="tab-content">
         <!-- Login Form -->
         <div class="tab-pane fade show active" id="login">
-          <h2 class="text-center mb-4">Login</h2>
+          <h2 class="text-center mb-4">Entrar</h2>
+          <div id="loginErrorMessage" class="alert alert-danger" role="alert"></div>
           <form id="loginForm">
             <div class="mb-3">
-              <label for="loginUsername" class="form-label"><i class="fas fa-user me-2"></i>User</label>
-              <input type="text" class="form-control" id="loginUsername" name="username" required minlength="3" pattern="[a-zA-Z0-9]+">
+              <label for="loginUsername" class="form-label"><i class="fas fa-user me-2"></i>Usuário</label>
+              <input type="text" class="form-control" id="loginUsername" name="username" required minlength="3" pattern="[a-zA-Z0-9]+" placeholder="Digite seu usuário">
             </div>
             <div class="mb-3">
-              <label for="loginPassword" class="form-label"><i class="fas fa-lock me-2"></i>Password</label>
-              <input type="password" class="form-control" id="loginPassword" name="password" required minlength="6">
+              <label for="loginPassword" class="form-label"><i class="fas fa-lock me-2"></i>Senha</label>
+              <input type="password" class="form-control" id="loginPassword" name="password" required minlength="6" placeholder="Digite sua senha">
             </div>
             <button type="submit" class="btn btn-primary w-100" id="loginButton">
-              <span class="spinner-border spinner-border-sm d-none" id="loginSpinner"></span> Login
+              <span class="spinner-border spinner-border-sm d-none" id="loginSpinner"></span> Entrar
             </button>
           </form>
-          <p id="loginErrorMessage" class="text-danger mt-3 text-center"></p>
         </div>
         <!-- Register Form -->
         <div class="tab-pane fade" id="register">
-          <h2 class="text-center mb-4">Register</h2>
+          <h2 class="text-center mb-4">Registrar</h2>
+          <div id="registerMessage" class="alert alert-success" role="alert"></div>
+          <div id="registerErrorMessage" class="alert alert-danger" role="alert"></div>
           <form id="registerForm">
             <div class="mb-3">
-              <label for="registerUsername" class="form-label"><i class="fas fa-user me-2"></i>User</label>
-              <input type="text" class="form-control" id="registerUsername" name="username" required minlength="3" pattern="[a-zA-Z0-9]+">
+              <label for="registerUsername" class="form-label"><i class="fas fa-user me-2"></i>Usuário</label>
+              <input type="text" class="form-control" id="registerUsername" name="username" required minlength="3" pattern="[a-zA-Z0-9]+" placeholder="Escolha um usuário">
             </div>
             <div class="mb-3">
-              <label for="registerPassword" class="form-label"><i class="fas fa-lock me-2"></i>Password</label>
-              <input type="password" class="form-control" id="registerPassword" name="password" required minlength="6">
+              <label for="registerPassword" class="form-label"><i class="fas fa-lock me-2"></i>Senha</label>
+              <input type="password" class="form-control" id="registerPassword" name="password" required minlength="6" placeholder="Escolha uma senha">
             </div>
             <button type="submit" class="btn btn-success w-100" id="registerButton">
-              <span class="spinner-border spinner-border-sm d-none" id="registerSpinner"></span> Register
+              <span class="spinner-border spinner-border-sm d-none" id="registerSpinner"></span> Registrar
             </button>
           </form>
-          <p id="registerMessage" class="text-success mt-3 text-center"></p>
-          <p id="registerErrorMessage" class="text-danger mt-3 text-center"></p>
         </div>
       </div>
     </div>
