@@ -73,7 +73,7 @@ function checkAuth() {
 function showNotification(message, type = 'error') {
     const notify = document.getElementById('notifications');
     if (notify) {
-        notify.innerHTML = `<div class="p-2 rounded ${type === 'error' ? 'bg-red-600' : 'bg-green-600'}">${message}</div>`;
+        notify.innerHTML = `<div class="p-2 rounded ${type === 'error' ? 'bg-red-600' : 'bg-cyan-600'}">${message}</div>`;
         setTimeout(() => notify.innerHTML = '', CONFIG.NOTIFICATION_TIMEOUT);
     }
 }
@@ -290,13 +290,19 @@ const shop = {
                 } else {
                     state.cards.forEach(card => {
                         const cardElement = document.createElement('div');
-                        cardElement.className = 'bg-gray-800 p-4 rounded-lg shadow-xl cursor-pointer hover:bg-gray-700 transition-all duration-300';
+                        cardElement.className = 'card-item p-4 text-left';
                         cardElement.innerHTML = `
-                            <p class="font-semibold mb-2"><strong>Número:</strong> ${card.numero}</p>
-                            <p class="mb-1"><strong>Bandeira:</strong> ${card.bandeira}</p>
-                            <p class="mb-1"><strong>Banco:</strong> ${card.banco}</p>
-                            <p class="mb-1"><strong>Nível:</strong> ${card.nivel}</p>
-                            <button onclick="shop.showCardDetails('${card.numero}')" class="mt-2 w-full bg-blue-600 p-2 rounded hover:bg-blue-500 transition">Ver Detalhes</button>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-gray-300">${card.banco}</span>
+                                <span class="text-white font-bold">${card.bandeira}</span>
+(head).html
+                            </div>
+                            <div class="text-2xl font-semibold mb-2">${card.numero}</div>
+                            <div class="text-gray-400 mb-2">${card.nome}</div>
+                            <div class="text-white font-medium mb-4">R$ ${card.balance || '0.00'}</div>
+                            <div class="flex space-x-2">
+                                <button onclick="shop.showCardDetails('${card.numero}')" class="card-button">Ver Detalhes</button>
+                            </div>
                         `;
                         cardList.appendChild(cardElement);
                     });
@@ -307,7 +313,7 @@ const shop = {
                 if (navbar) {
                     const adminButton = document.createElement('button');
                     adminButton.textContent = 'Painel Administrador';
-                    adminButton.className = 'bg-blue-600 p-2 rounded-lg hover:bg-blue-500 transition ml-2';
+                    adminButton.className = 'bg-cyan-500 p-2 rounded-lg hover:bg-cyan-600 transition ml-2';
                     adminButton.onclick = () => window.location.href = 'dashboard.html';
                     navbar.querySelector('div').appendChild(adminButton);
                 }
@@ -332,7 +338,7 @@ const shop = {
                 <p class="mb-1"><strong>País:</strong> ${card.pais}</p>
                 <p class="mb-1"><strong>BIN:</strong> ${card.bin}</p>
                 <p class="mb-1"><strong>Nível:</strong> ${card.nivel}</p>
-                <button onclick="shop.showConfirmPurchase('${card.numero}', 10.00)" class="mt-4 w-full bg-green-600 p-2 rounded hover:bg-green-500 transition">Comprar (R$ 10.00)</button>
+                <button onclick="shop.showConfirmPurchase('${card.numero}', 10.00)" class="mt-4 w-full bg-cyan-500 p-2 rounded-lg hover:bg-cyan-600 transition">Comprar (R$ 10.00)</button>
             `;
             document.getElementById('cardDetailsModal').classList.remove('hidden');
         }
@@ -478,6 +484,55 @@ const admin = {
         }
     },
 
+    async editUserBalance() {
+        if (!state.isAdmin) {
+            showNotification('Acesso negado. Apenas administradores podem editar saldos.');
+            return;
+        }
+        const modal = document.getElementById('editBalanceModal');
+        const username = modal.getAttribute('data-username');
+        const newBalance = parseFloat(document.getElementById('editBalanceAmount').value.trim());
+
+        if (isNaN(newBalance) || newBalance < 0) {
+            showNotification('Digite um valor válido para o saldo.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${CONFIG.JSONBIN_URL}/latest`, {
+                headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
+            });
+            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+            const { record } = await response.json();
+            const users = record.users || [];
+            const userIndex = users.findIndex(u => u.username === username);
+            if (userIndex === -1) throw new Error('Usuário não encontrado.');
+
+            users[userIndex].balance = newBalance;
+            if (state.currentUser.username === username) {
+                state.currentUser.balance = newBalance;
+                localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
+            }
+
+            const updateResponse = await fetch(CONFIG.JSONBIN_URL, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': CONFIG.JSONBIN_KEY
+                },
+                body: JSON.stringify({ users })
+            });
+            if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
+
+            showNotification('Saldo atualizado com sucesso!', 'success');
+            ui.closeModal();
+            admin.loadUsers();
+        } catch (error) {
+            console.error('Erro ao editar saldo:', error);
+            showNotification(error.message || 'Erro ao conectar ao servidor.');
+        }
+    },
+
     async deleteUser(username) {
         if (!state.isAdmin) {
             showNotification('Acesso negado. Apenas administradores podem excluir usuários.');
@@ -569,16 +624,28 @@ const ui = {
             );
             filteredUsers.forEach(user => {
                 const userElement = document.createElement('div');
-                userElement.className = 'bg-gray-800 p-4 rounded shadow hover:bg-gray-700 transition';
+                userElement.className = 'card-item p-4 text-left';
                 userElement.innerHTML = `
-                    <p><strong>Usuário:</strong> ${user.username}</p>
-                    <p><strong>Saldo:</strong> R$ ${user.balance.toFixed(2)}</p>
-                    <p><strong>Admin:</strong> ${user.is_admin ? 'Sim' : 'Não'}</p>
-                    <button onclick="admin.deleteUser('${user.username}')" class="mt-2 bg-red-600 p-2 rounded hover:bg-red-500 w-full">Excluir</button>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-gray-300">Usuário</span>
+                        <span class="text-white font-bold">${user.username}</span>
+                    </div>
+                    <div class="text-white font-medium mb-2">Saldo: R$ ${user.balance.toFixed(2)}</div>
+                    <div class="text-gray-400 mb-4">Admin: ${user.is_admin ? 'Sim' : 'Não'}</div>
+                    <div class="flex space-x-2">
+                        <button onclick="ui.showEditBalanceModal('${user.username}')" class="action-button">Editar Saldo</button>
+                        <button onclick="admin.deleteUser('${user.username}')" class="delete-button">Excluir</button>
+                    </div>
                 `;
                 userList.appendChild(userElement);
             });
         }
+    },
+
+    showEditBalanceModal(username) {
+        const modal = document.getElementById('editBalanceModal');
+        modal.setAttribute('data-username', username);
+        modal.classList.remove('hidden');
     },
 
     displayAdminCards(searchTerm = '') {
@@ -590,13 +657,18 @@ const ui = {
             );
             filteredCards.forEach(card => {
                 const cardElement = document.createElement('div');
-                cardElement.className = 'bg-gray-800 p-4 rounded shadow hover:bg-gray-700 transition';
+                cardElement.className = 'card-item p-4 text-left';
                 cardElement.innerHTML = `
-                    <p><strong>Número:</strong> ${card.numero}</p>
-                    <p><strong>CVV:</strong> ${card.cvv}</p>
-                    <p><strong>Validade:</strong> ${card.validade}</p>
-                    <p><strong>Nome:</strong> ${card.nome}</p>
-                    <button onclick="admin.deleteCard('${card.numero}')" class="mt-2 bg-red-600 p-2 rounded hover:bg-red-500 w-full">Excluir</button>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-gray-300">${card.banco}</span>
+                        <span class="text-white font-bold">${card.bandeira}</span>
+                    </div>
+                    <div class="text-2xl font-semibold mb-2">${card.numero}</div>
+                    <div class="text-gray-400 mb-2">${card.nome}</div>
+                    <div class="text-white font-medium mb-4">R$ ${card.balance || '0.00'}</div>
+                    <div class="flex space-x-2">
+                        <button onclick="admin.deleteCard('${card.numero}')" class="delete-button">Excluir</button>
+                    </div>
                 `;
                 cardList.appendChild(cardElement);
             });
@@ -709,13 +781,18 @@ const ui = {
                        (levelFilter === 'all' || card.nivel.toLowerCase() === levelFilter);
             }).forEach(card => {
                 const cardElement = document.createElement('div');
-                cardElement.className = 'bg-gray-800 p-4 rounded-lg shadow-xl cursor-pointer hover:bg-gray-700 transition-all duration-300';
+                cardElement.className = 'card-item p-4 text-left';
                 cardElement.innerHTML = `
-                    <p class="font-semibold mb-2"><strong>Número:</strong> ${card.numero}</p>
-                    <p class="mb-1"><strong>Bandeira:</strong> ${card.bandeira}</p>
-                    <p class="mb-1"><strong>Banco:</strong> ${card.banco}</p>
-                    <p class="mb-1"><strong>Nível:</strong> ${card.nivel}</p>
-                    <button onclick="shop.showCardDetails('${card.numero}')" class="mt-2 w-full bg-blue-600 p-2 rounded hover:bg-blue-500 transition">Ver Detalhes</button>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-gray-300">${card.banco}</span>
+                        <span class="text-white font-bold">${card.bandeira}</span>
+                    </div>
+                    <div class="text-2xl font-semibold mb-2">${card.numero}</div>
+                    <div class="text-gray-400 mb-2">${card.nome}</div>
+                    <div class="text-white font-medium mb-4">R$ ${card.balance || '0.00'}</div>
+                    <div class="flex space-x-2">
+                        <button onclick="shop.showCardDetails('${card.numero}')" class="card-button">Ver Detalhes</button>
+                    </div>
                 `;
                 cardList.appendChild(cardElement);
             });
@@ -735,11 +812,13 @@ const ui = {
         if (accountInfo) {
             accountInfo.classList.remove('hidden');
             accountInfo.innerHTML = `
-                <h2 class="text-2xl font-bold mb-4">Minha Conta</h2>
-                <p><strong>Usuário:</strong> <span id="userName">${state.currentUser.username}</span></p>
-                <p><strong>Saldo:</strong> <span id="userBalanceAccount">R$ ${state.currentUser.balance.toFixed(2)}</span></p>
-                <div id="userCards" class="mt-4"></div>
-                <button onclick="ui.showAddBalanceForm()" class="mt-4 bg-green-600 p-2 rounded hover:bg-green-500 transition" aria-label="Adicionar saldo">Adicionar Saldo</button>
+                <h2 class="text-2xl font-bold mb-4 text-cyan-500">Minha Conta</h2>
+                <div class="bg-gray-800 p-6 rounded-lg shadow-2xl">
+                    <p class="mb-2"><strong>Usuário:</strong> <span id="userName">${state.currentUser.username}</span></p>
+                    <p class="mb-4"><strong>Saldo:</strong> <span id="userBalanceAccount">R$ ${state.currentUser.balance.toFixed(2)}</span></p>
+                    <div id="userCards" class="mt-4"></div>
+                </div>
+                <button onclick="ui.showAddBalanceForm()" class="mt-4 bg-cyan-500 p-2 rounded-lg hover:bg-cyan-600 transition w-full">Adicionar Saldo</button>
             `;
             ui.loadUserCards();
         }
@@ -760,11 +839,14 @@ const ui = {
             const userCardsDiv = document.getElementById('userCards');
             if (userCardsDiv) {
                 userCardsDiv.innerHTML = state.userCards.map(card => `
-                    <div class="bg-gray-700 p-2 rounded mb-2">
-                        <p><strong>Número:</strong> ${card.numero}</p>
-                        <p><strong>CVV:</strong> ${card.cvv}</p>
-                        <p><strong>Validade:</strong> ${card.validade}</p>
-                        <p><strong>Nome:</strong> ${card.nome}</p>
+                    <div class="card-item p-4 text-left mb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-300">${card.banco || 'N/A'}</span>
+                            <span class="text-white font-bold">${card.bandeira || 'N/A'}</span>
+                        </div>
+                        <div class="text-2xl font-semibold mb-2">${card.numero}</div>
+                        <div class="text-gray-400 mb-2">${card.nome}</div>
+                        <div class="text-white font-medium mb-4">R$ 0.00</div>
                     </div>
                 `).join('');
             }
