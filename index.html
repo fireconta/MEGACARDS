@@ -3,75 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loja de Cartões - Login</title>
+    <meta name="theme-color" content="#1A2A44">
+    <title>Login - LOGAN CC's</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="script.js" defer></script>
     <style>
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #1A1A1A;
+            background: linear-gradient(135deg, #1A2A44 0%, #2D4066 100%);
+            margin: 0;
+            padding: 0;
+            color: #E0E7FF;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
         }
-        .login-button {
-            background-color: #00C4B4;
+        .header {
+            background: linear-gradient(90deg, #1A2A44, #2D4066);
+            padding: 15px 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        .header .logo img {
+            height: 40px;
+        }
+        main {
+            flex-grow: 1;
+            padding: 20px 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        h2 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: #00C4B4;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .form-container {
+            background: rgba(45, 64, 102, 0.9);
+            border-radius: 12px;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+        .form-container input {
+            background: #3A4D70;
+            color: #E0E7FF;
+            border: 1px solid #4A5D82;
+            border-radius: 8px;
+            padding: 12px;
+            width: 100%;
+            margin-bottom: 15px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .form-container input:focus {
+            border-color: #00C4B4;
+            box-shadow: 0 0 8px rgba(0, 196, 180, 0.5);
+            outline: none;
+        }
+        .form-container button {
+            background: linear-gradient(90deg, #00C4B4, #009688);
             color: #FFFFFF;
-            border-radius: 20px;
-            padding: 10px 20px;
-            transition: background-color 0.3s ease;
+            border-radius: 8px;
+            padding: 10px;
+            width: 100%;
+            transition: background 0.3s ease, transform 0.2s ease;
+            font-weight: 600;
         }
-        .login-button:hover {
-            background-color: #00A89C;
+        .form-container button:hover {
+            background: linear-gradient(90deg, #009688, #00796B);
+            transform: scale(1.02);
         }
-        .register-button {
-            background-color: #4B5563;
-            color: #FFFFFF;
-            border-radius: 20px;
-            padding: 10px 20px;
-            transition: background-color 0.3s ease;
+        .error-text {
+            color: #EF4444;
+            font-size: 0.875rem;
+            margin-top: -10px;
+            margin-bottom: 10px;
         }
-        .register-button:hover {
-            background-color: #6B7280;
+        .toggle-link {
+            color: #00C4B4;
+            cursor: pointer;
+            text-align: center;
+            display: block;
+            margin-top: 15px;
+            transition: color 0.3s ease;
+        }
+        .toggle-link:hover {
+            color: #009688;
+        }
+        @media (max-width: 640px) {
+            .form-container {
+                padding: 20px;
+            }
         }
     </style>
 </head>
-<body class="text-white min-h-screen flex items-center justify-center">
-    <div id="loginForm" class="bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md">
-        <h2 class="text-2xl font-bold mb-6 text-cyan-500">Entrar</h2>
-        <div class="mb-4">
-            <label for="username" class="block text-sm font-medium mb-2">Usuário</label>
-            <input id="username" type="text" placeholder="Usuário" class="w-full p-2 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-cyan-500">
-            <p id="usernameError" class="text-red-500 text-sm mt-1"></p>
+<body>
+    <header class="header">
+        <a href="logo.png" class="logo"><img src="logo.png" alt="LOGAN CC's Logo"></a>
+    </header>
+    <main>
+        <div id="loginForm" class="form-container">
+            <h2>Login - LOGAN CC's</h2>
+            <input id="username" type="text" placeholder="Usuário">
+            <p id="usernameError" class="error-text"></p>
+            <input id="password" type="password" placeholder="Senha">
+            <p id="passwordError" class="error-text"></p>
+            <button id="loginButton" onclick="auth.login()">Entrar</button>
+            <span class="toggle-link" onclick="ui.showRegisterForm()">Não tem conta? Registre-se</span>
         </div>
-        <div class="mb-6">
-            <label for="password" class="block text-sm font-medium mb-2">Senha</label>
-            <input id="password" type="password" placeholder="Senha" class="w-full p-2 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-cyan-500">
-            <p id="passwordError" class="text-red-500 text-sm mt-1"></p>
+        <div id="registerForm" class="form-container hidden">
+            <h2>Registro - LOGAN CC's</h2>
+            <input id="newUsername" type="text" placeholder="Novo Usuário">
+            <p id="newUsernameError" class="error-text"></p>
+            <input id="newPassword" type="password" placeholder="Nova Senha">
+            <p id="newPasswordError" class="error-text"></p>
+            <button id="registerButton" onclick="auth.register()">Registrar</button>
+            <span class="toggle-link" onclick="ui.showLoginForm()">Já tem conta? Faça login</span>
         </div>
-        <button id="loginButton" class="w-full login-button">Entrar</button>
-        <p class="mt-4 text-center text-sm">Não tem uma conta? <a href="#" onclick="ui.showRegisterForm()" class="text-cyan-500 hover:underline">Registre-se</a></p>
-    </div>
-    <div id="registerForm" class="bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md hidden">
-        <h2 class="text-2xl font-bold mb-6 text-cyan-500">Registrar</h2>
-        <div class="mb-4">
-            <label for="newUsername" class="block text-sm font-medium mb-2">Usuário</label>
-            <input id="newUsername" type="text" placeholder="Usuário" class="w-full p-2 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-cyan-500">
-            <p id="newUsernameError" class="text-red-500 text-sm mt-1"></p>
-        </div>
-        <div class="mb-6">
-            <label for="newPassword" class="block text-sm font-medium mb-2">Senha</label>
-            <input id="newPassword" type="password" placeholder="Senha" class="w-full p-2 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-cyan-500">
-            <p id="newPasswordError" class="text-red-500 text-sm mt-1"></p>
-        </div>
-        <button id="registerButton" class="w-full login-button">Registrar</button>
-        <p class="mt-4 text-center text-sm">Já tem uma conta? <a href="#" onclick="ui.showLoginForm()" class="text-cyan-500 hover:underline">Entre</a></p>
-    </div>
-    <div id="notifications" class="fixed top-4 right-4"></div>
+    </main>
+    <div id="notifications" class="fixed top-4 right-4 z-30"></div>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            if (state.currentUser) {
+            if (checkAuth()) {
                 window.location.href = 'shop.html';
             }
-            console.log('Página index.html carregada em ' + new Date().toLocaleString());
+            document.documentElement.className = 'dark';
         });
     </script>
 </body>
