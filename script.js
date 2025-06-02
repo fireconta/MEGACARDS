@@ -73,7 +73,7 @@ function checkAuth() {
 function showNotification(message, type = 'error') {
     const notify = document.getElementById('notifications');
     if (notify) {
-        notify.innerHTML = `<div class="p-2 rounded ${type === 'error' ? 'bg-red-600' : 'bg-cyan-600'}">${message}</div>`;
+        notify.innerHTML = `<div class="notification ${type}">${message}</div>`;
         setTimeout(() => notify.innerHTML = '', CONFIG.NOTIFICATION_TIMEOUT);
     }
 }
@@ -90,7 +90,6 @@ function toggleLoadingButton(button, isLoading, originalText) {
 
 const auth = {
     async login() {
-        console.log('Função de login chamada em ' + new Date().toLocaleString());
         const loginButton = document.getElementById('loginButton');
         const usernameInput = document.getElementById('username');
         const passwordInput = document.getElementById('password');
@@ -98,7 +97,6 @@ const auth = {
         const passwordError = document.getElementById('passwordError');
 
         if (!usernameInput || !passwordInput || !loginButton) {
-            console.error('Elementos de entrada não encontrados em ' + new Date().toLocaleString());
             showNotification('Erro: Elementos de entrada não encontrados.');
             return;
         }
@@ -160,10 +158,8 @@ const auth = {
             localStorage.setItem('sessionStart', Date.now().toString());
             state.loginAttempts = 0;
             showNotification('Login bem-sucedido!', 'success');
-            console.log('Login bem-sucedido, redirecionando para shop.html em ' + new Date().toLocaleString());
             setTimeout(() => window.location.href = 'shop.html', 1000);
         } catch (error) {
-            console.error('Erro ao fazer login:', error.message, 'em ' + new Date().toLocaleString());
             if (passwordError) passwordError.textContent = error.message || 'Usuário ou senha inválidos.';
             showNotification(error.message || 'Erro ao conectar ao servidor.');
             state.loginAttempts++;
@@ -177,7 +173,6 @@ const auth = {
     },
 
     async register() {
-        console.log('Função de registro chamada em ' + new Date().toLocaleString());
         const registerButton = document.getElementById('registerButton');
         const usernameInput = document.getElementById('newUsername');
         const passwordInput = document.getElementById('newPassword');
@@ -185,7 +180,6 @@ const auth = {
         const passwordError = document.getElementById('newPasswordError');
 
         if (!usernameInput || !passwordInput || !registerButton) {
-            console.error('Elementos de entrada de registro não encontrados.');
             showNotification('Erro: Elementos de entrada não encontrados.');
             return;
         }
@@ -238,9 +232,7 @@ const auth = {
             showNotification('Registro bem-sucedido! Faça login para continuar.', 'success');
             setTimeout(() => ui.showLoginForm(), 1000);
         } catch (error) {
-            console.error('Erro ao registrar:', error.message);
             if (usernameError) usernameError.textContent = error.message || 'Erro ao registrar.';
-            if (passwordError) passwordError.textContent = error.message || 'Erro ao registrar.';
             showNotification(error.message || 'Erro ao registrar.');
         } finally {
             toggleLoadingButton(registerButton, false, 'Registrar');
@@ -276,39 +268,20 @@ const shop = {
                 throw new Error(`Erro HTTP: ${response.status} - ${errorText}`);
             }
             const { record } = await response.json();
-            console.log('Resposta da bin de cartões:', record);
             if (!record || !Array.isArray(record.cards)) {
                 throw new Error('Os cartões não estão em um formato válido. Verifique a estrutura da bin.');
             }
             state.cards = record.cards;
-            console.log('Cartões carregados:', state.cards);
             const cardList = document.getElementById('cardList');
             if (cardList) {
                 cardList.innerHTML = '';
                 if (state.cards.length === 0) {
                     cardList.innerHTML = '<p class="text-gray-400 text-center">Nenhum cartão disponível no momento.</p>';
                 } else {
-                    state.cards.forEach(card => {
-                        const cardElement = document.createElement('div');
-                        cardElement.className = 'card-item p-4 text-left';
-                        cardElement.innerHTML = `
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-gray-300">${card.banco}</span>
-                                <span class="text-white font-bold">${card.bandeira}</span>
-                            </div>
-                            <div class="text-2xl font-semibold mb-2">${card.numero}</div>
-                            <div class="text-gray-400 mb-2">${card.nome}</div>
-                            <div class="text-white font-medium mb-4">R$ ${card.balance || '0.00'}</div>
-                            <div class="flex space-x-2">
-                                <button onclick="shop.showCardDetails('${card.numero}')" class="card-button">Ver Detalhes</button>
-                            </div>
-                        `;
-                        cardList.appendChild(cardElement);
-                    });
+                    ui.filterCards();
                 }
             }
         } catch (error) {
-            console.error('Erro ao carregar cartões:', error);
             showNotification(error.message || 'Erro ao carregar cartões.');
         }
     },
@@ -317,19 +290,15 @@ const shop = {
         const card = state.cards.find(c => c.numero === cardNumber);
         if (card) {
             document.getElementById('cardDetailsContent').innerHTML = `
-                <p class="mb-1"><strong>Número:</strong> ${card.numero}</p>
-                <p class="mb-1"><strong>CVV:</strong> ${card.cvv}</p>
-                <p class="mb-1"><strong>Validade:</strong> ${card.validade}</p>
-                <p class="mb-1"><strong>Nome:</strong> ${card.nome}</p>
-                <p class="mb-1"><strong>CPF:</strong> ${card.cpf}</p>
-                <p class="mb-1"><strong>Bandeira:</strong> ${card.bandeira}</p>
-                <p class="mb-1"><strong>Banco:</strong> ${card.banco}</p>
-                <p class="mb-1"><strong>País:</strong> ${card.pais}</p>
-                <p class="mb-1"><strong>BIN:</strong> ${card.bin}</p>
-                <p class="mb-1"><strong>Nível:</strong> ${card.nivel}</p>
-                <button onclick="shop.showConfirmPurchase('${card.numero}', 10.00)" class="mt-4 w-full bg-cyan-500 p-2 rounded-lg hover:bg-cyan-600 transition">Comprar (R$ 10.00)</button>
+                <p class="mb-1 flex items-center gap-2"><i class="fas fa-credit-card"></i><strong>Número:</strong> ${card.numero}</p>
+                <p class="mb-1 flex items-center gap-2"><i class="fas fa-flag"></i><strong>Bandeira:</strong> ${card.bandeira}</p>
+                <p class="mb-1 flex items-center gap-2"><i class="fas fa-university"></i><strong>Banco:</strong> ${card.banco}</p>
+                <p class="mb-1 flex items-center gap-2"><i class="fas fa-star"></i><strong>Nível:</strong> ${card.nivel}</p>
+                <p class="mb-1 flex items-center gap-2"><i class="fas fa-globe"></i><strong>País:</strong> ${card.pais}</p>
+                <button onclick="shop.showConfirmPurchase('${card.numero}', 10.00)" class="mt-4 w-full p-2 rounded-lg">Comprar (R$ 10.00)</button>
             `;
             document.getElementById('cardDetailsModal').classList.remove('hidden');
+            document.getElementById('cardDetailsModal').classList.add('show');
         }
     },
 
@@ -337,15 +306,16 @@ const shop = {
         const card = state.cards.find(c => c.numero === cardNumber);
         if (card) {
             document.getElementById('confirmCardDetails').innerHTML = `
-                <p class="mb-1"><strong>Número:</strong> ${card.numero}</p>
-                <p class="mb-1"><strong>Bandeira:</strong> ${card.bandeira}</p>
-                <p class="mb-1"><strong>Banco:</strong> ${card.banco}</p>
-                <p class="mb-1"><strong>Nível:</strong> ${card.nivel}</p>
+                <p class="mb-1 flex items-center gap-2"><i class="fas fa-credit-card"></i><strong>Número:</strong> ${card.numero}</p>
+                <p class="mb-1 flex items-center gap-2"><i class="fas fa-flag"></i><strong>Bandeira:</strong> ${card.bandeira}</p>
+                <p class="mb-1 flex items-center gap-2"><i class="fas fa-university"></i><strong>Banco:</strong> ${card.banco}</p>
+                <p class="mb-1 flex items-center gap-2"><i class="fas fa-star"></i><strong>Nível:</strong> ${card.nivel}</p>
             `;
             document.getElementById('confirmTotalAmount').textContent = price.toFixed(2);
             document.getElementById('confirmUserBalance').textContent = state.currentUser.balance.toFixed(2);
             document.getElementById('confirmPurchaseModal').setAttribute('data-card-number', cardNumber);
             document.getElementById('confirmPurchaseModal').classList.remove('hidden');
+            document.getElementById('confirmPurchaseModal').classList.add('show');
         }
     },
 
@@ -363,11 +333,11 @@ const shop = {
             if (!CONFIG.CARD_JSONBIN_URL || !CONFIG.CARD_JSONBIN_KEY) {
                 throw new Error('URL ou chave da bin de cartões não configurada.');
             }
-            const response = await fetch(`${CONFIG.JSONBIN_URL}/latest`, {
+            const userResponse = await fetch(`${CONFIG.JSONBIN_URL}/latest`, {
                 headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
             });
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record: userRecord } = await response.json();
+            if (!userResponse.ok) throw new Error(`Erro HTTP: ${userResponse.status}`);
+            const { record: userRecord } = await userResponse.json();
             const userIndex = userRecord.users.findIndex(u => u.username === state.currentUser.username);
             if (userIndex === -1) throw new Error('Usuário não encontrado.');
 
@@ -392,7 +362,13 @@ const shop = {
                 numero: card.numero,
                 cvv: card.cvv,
                 validade: card.validade,
-                nome: card.nome
+                nome: card.nome,
+                cpf: card.cpf,
+                bandeira: card.bandeira,
+                banco: card.banco,
+                pais: card.pais,
+                nivel: card.nivel,
+                bin: card.bin
             });
 
             const updateUserResponse = await fetch(CONFIG.JSONBIN_URL, {
@@ -417,14 +393,14 @@ const shop = {
 
             state.cards = cards;
             state.userCards = userCards;
-            document.getElementById('userBalanceFooter').textContent = `R$ ${state.currentUser.balance.toFixed(2)}`;
+            document.getElementById('userBalanceHeader').textContent = state.currentUser.balance.toFixed(2);
             document.getElementById('userBalanceAccount').textContent = `R$ ${state.currentUser.balance.toFixed(2)}`;
-            ui.loadUserCardsFooter();
-            shop.loadCards();
+            ui.loadUserCards();
+            ui.loadUserCardsWallet();
+            ui.filterCards();
             showNotification('Compra realizada com sucesso!', 'success');
             document.getElementById('confirmPurchaseModal').classList.add('hidden');
         } catch (error) {
-            console.error('Erro ao comprar cartão:', error);
             showNotification(error.message || 'Erro ao conectar ao servidor.');
         }
     }
@@ -446,7 +422,6 @@ const admin = {
             state.users = record.users || [];
             ui.displayUsers();
         } catch (error) {
-            console.error('Erro ao carregar usuários:', error);
             showNotification('Erro ao carregar usuários.');
         }
     },
@@ -469,7 +444,6 @@ const admin = {
             state.cards = record.cards || [];
             ui.displayAdminCards();
         } catch (error) {
-            console.error('Erro ao carregar cartões:', error);
             showNotification(error.message || 'Erro ao carregar cartões.');
         }
     },
@@ -517,12 +491,13 @@ const admin = {
             showNotification('Saldo atualizado com sucesso!', 'success');
             ui.closeModal();
             admin.loadUsers();
-            document.getElementById('userBalanceFooter').textContent = `R$ ${newBalance.toFixed(2)}`;
+            if (document.getElementById('userBalanceHeader')) {
+                document.getElementById('userBalanceHeader').textContent = newBalance.toFixed(2);
+            }
             if (document.getElementById('userBalanceAccount')) {
                 document.getElementById('userBalanceAccount').textContent = `R$ ${newBalance.toFixed(2)}`;
             }
         } catch (error) {
-            console.error('Erro ao editar saldo:', error);
             showNotification(error.message || 'Erro ao conectar ao servidor.');
         }
     },
@@ -532,31 +507,32 @@ const admin = {
             showNotification('Acesso negado. Apenas administradores podem excluir usuários.');
             return;
         }
-        if (confirm(`Tem certeza que deseja excluir o usuário ${username}?`)) {
-            try {
-                const response = await fetch(`${CONFIG.JSONBIN_URL}/latest`, {
-                    headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
-                });
-                if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-                const { record } = await response.json();
-                const users = record.users || [];
-                const updatedUsers = users.filter(u => u.username !== username);
+        if (username === state.currentUser.username) {
+            showNotification('Você não pode excluir sua própria conta.');
+            return;
+        }
+        try {
+            const response = await fetch(`${CONFIG.JSONBIN_URL}/latest`, {
+                headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
+            });
+            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+            const { record } = await response.json();
+            const users = record.users || [];
+            const updatedUsers = users.filter(u => u.username !== username);
 
-                const updateResponse = await fetch(CONFIG.JSONBIN_URL, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': CONFIG.JSONBIN_KEY
-                    },
-                    body: JSON.stringify({ users: updatedUsers })
-                });
-                if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
-                showNotification('Usuário excluído com sucesso!', 'success');
-                admin.loadUsers();
-            } catch (error) {
-                console.error('Erro ao excluir usuário:', error);
-                showNotification(error.message || 'Erro ao conectar ao servidor.');
-            }
+            const updateResponse = await fetch(CONFIG.JSONBIN_URL, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': CONFIG.JSONBIN_KEY
+                },
+                body: JSON.stringify({ users: updatedUsers })
+            });
+            if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
+            showNotification('Usuário excluído com sucesso!', 'success');
+            admin.loadUsers();
+        } catch (error) {
+            showNotification(error.message || 'Erro ao conectar ao servidor.');
         }
     },
 
@@ -565,35 +541,32 @@ const admin = {
             showNotification('Acesso negado. Apenas administradores podem excluir cartões.');
             return;
         }
-        if (confirm(`Tem certeza que deseja excluir o cartão ${cardNumber}?`)) {
-            try {
-                if (!CONFIG.CARD_JSONBIN_URL || !CONFIG.CARD_JSONBIN_KEY) {
-                    throw new Error('URL ou chave da bin de cartões não configurada.');
-                }
-                const response = await fetch(`${CONFIG.CARD_JSONBIN_URL}/latest`, {
-                    headers: { 'X-Master-Key': CONFIG.CARD_JSONBIN_KEY }
-                });
-                if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-                const { record } = await response.json();
-                const cards = record.cards || [];
-                const userCards = record.userCards || [];
-                const updatedCards = cards.filter(c => c.numero !== cardNumber);
-
-                const updateResponse = await fetch(CONFIG.CARD_JSONBIN_URL, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': CONFIG.CARD_JSONBIN_KEY
-                    },
-                    body: JSON.stringify({ cards: updatedCards, userCards })
-                });
-                if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
-                showNotification('Cartão excluído com sucesso!', 'success');
-                admin.loadAdminCards();
-            } catch (error) {
-                console.error('Erro ao excluir cartão:', error);
-                showNotification(error.message || 'Erro ao conectar ao servidor.');
+        try {
+            if (!CONFIG.CARD_JSONBIN_URL || !CONFIG.CARD_JSONBIN_KEY) {
+                throw new Error('URL ou chave da bin de cartões não configurada.');
             }
+            const response = await fetch(`${CONFIG.CARD_JSONBIN_URL}/latest`, {
+                headers: { 'X-Master-Key': CONFIG.CARD_JSONBIN_KEY }
+            });
+            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+            const { record } = await response.json();
+            const cards = record.cards || [];
+            const userCards = record.userCards || [];
+            const updatedCards = cards.filter(c => c.numero !== cardNumber);
+
+            const updateResponse = await fetch(CONFIG.CARD_JSONBIN_URL, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': CONFIG.CARD_JSONBIN_KEY
+                },
+                body: JSON.stringify({ cards: updatedCards, userCards })
+            });
+            if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
+            showNotification('Cartão excluído com sucesso!', 'success');
+            admin.loadAdminCards();
+        } catch (error) {
+            showNotification(error.message || 'Erro ao conectar ao servidor.');
         }
     }
 };
@@ -609,26 +582,22 @@ const ui = {
         document.getElementById('registerForm').classList.remove('hidden');
     },
 
-    displayUsers(searchTerm = '') {
+    displayUsers() {
         const userList = document.getElementById('userList');
         if (userList) {
             userList.innerHTML = '';
-            const filteredUsers = state.users.filter(user =>
-                user.username.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            filteredUsers.forEach(user => {
+            state.users.forEach(user => {
                 const userElement = document.createElement('div');
-                userElement.className = 'card-item p-4 text-left';
+                userElement.className = 'card-item';
                 userElement.innerHTML = `
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-gray-300">Usuário</span>
-                        <span class="text-white font-bold">${user.username}</span>
+                    <div>
+                        <p class="flex items-center gap-2"><i class="fas fa-user"></i><strong>Usuário:</strong> ${user.username}</p>
+                        <p class="flex items-center gap-2"><i class="fas fa-coins"></i><strong>Saldo:</strong> R$ ${user.balance.toFixed(2)}</p>
+                        <p class="flex items-center gap-2"><i class="fas fa-crown"></i><strong>Admin:</strong> ${user.is_admin ? 'Sim' : 'Não'}</p>
                     </div>
-                    <div class="text-white font-medium mb-2">Saldo: R$ ${user.balance.toFixed(2)}</div>
-                    <div class="text-gray-400 mb-4">Admin: ${user.is_admin ? 'Sim' : 'Não'}</div>
-                    <div class="flex space-x-2">
-                        <button onclick="ui.showEditBalanceModal('${user.username}')" class="action-button">Editar Saldo</button>
-                        <button onclick="admin.deleteUser('${user.username}')" class="delete-button">Excluir</button>
+                    <div class="flex gap-2">
+                        <button class="action-button" onclick="ui.showEditBalanceModal('${user.username}')">Editar Saldo</button>
+                        <button class="delete-button" onclick="admin.deleteUser('${user.username}')">Excluir</button>
                     </div>
                 `;
                 userList.appendChild(userElement);
@@ -640,28 +609,25 @@ const ui = {
         const modal = document.getElementById('editBalanceModal');
         modal.setAttribute('data-username', username);
         modal.classList.remove('hidden');
+        modal.classList.add('show');
     },
 
-    displayAdminCards(searchTerm = '') {
+    displayAdminCards() {
         const cardList = document.getElementById('adminCardList');
         if (cardList) {
             cardList.innerHTML = '';
-            const filteredCards = state.cards.filter(card =>
-                card.numero.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            filteredCards.forEach(card => {
+            state.cards.forEach(card => {
                 const cardElement = document.createElement('div');
-                cardElement.className = 'card-item p-4 text-left';
+                cardElement.className = 'card-item';
                 cardElement.innerHTML = `
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-gray-300">${card.banco}</span>
-                        <span class="text-white font-bold">${card.bandeira}</span>
+                    <div>
+                        <p class="flex items-center gap-2"><i class="fas fa-credit-card"></i><strong>Número:</strong> ${card.numero}</p>
+                        <p class="flex items-center gap-2"><i class="fas fa-flag"></i><strong>Bandeira:</strong> ${card.bandeira}</p>
+                        <p class="flex items-center gap-2"><i class="fas fa-university"></i><strong>Banco:</strong> ${card.banco}</p>
+                        <p class="flex items-center gap-2"><i class="fas fa-star"></i><strong>Nível:</strong> ${card.nivel}</p>
                     </div>
-                    <div class="text-2xl font-semibold mb-2">${card.numero}</div>
-                    <div class="text-gray-400 mb-2">${card.nome}</div>
-                    <div class="text-white font-medium mb-4">R$ ${card.balance || '0.00'}</div>
-                    <div class="flex space-x-2">
-                        <button onclick="admin.deleteCard('${card.numero}')" class="delete-button">Excluir</button>
+                    <div>
+                        <button class="delete-button" onclick="admin.deleteCard('${card.numero}')">Excluir</button>
                     </div>
                 `;
                 cardList.appendChild(cardElement);
@@ -672,11 +638,11 @@ const ui = {
     async addUser() {
         const username = document.getElementById('newUsername').value.trim();
         const password = document.getElementById('newPassword').value.trim();
-        const balance = document.getElementById('newBalance').value.trim();
+        const balance = parseFloat(document.getElementById('newBalance').value.trim()) || 0;
         const isAdmin = document.getElementById('isAdmin').value === 'true';
 
-        if (!username || !password || !balance) {
-            showNotification('Preencha todos os campos.');
+        if (!username || !password) {
+            showNotification('Usuário e senha são obrigatórios.');
             return;
         }
 
@@ -688,9 +654,10 @@ const ui = {
             const { record } = await response.json();
             const users = record.users || [];
             if (users.find(u => u.username === username)) {
-                throw new Error('Usuário já existe');
+                showNotification('Usuário já existe.');
+                return;
             }
-            const newUser = { username, password, balance: parseFloat(balance), is_admin: isAdmin };
+            const newUser = { username, password, balance, is_admin: isAdmin };
             users.push(newUser);
             const updateResponse = await fetch(CONFIG.JSONBIN_URL, {
                 method: 'PUT',
@@ -702,10 +669,9 @@ const ui = {
             });
             if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
             showNotification('Usuário adicionado com sucesso!', 'success');
-            document.getElementById('addUserModal').classList.add('hidden');
+            ui.closeModal();
             admin.loadUsers();
         } catch (error) {
-            console.error('Erro ao adicionar usuário:', error);
             showNotification(error.message || 'Erro ao conectar ao servidor.');
         }
     },
@@ -724,15 +690,12 @@ const ui = {
             bin: document.getElementById('cardNumber').value.trim().replace(/\s/g, '').substring(0, 6)
         };
 
-        if (!cardData.numero || !cardData.cvv || !cardData.validade || !cardData.nome || !cardData.cpf || !cardData.bandeira || !cardData.banco || !cardData.pais || !cardData.nivel) {
-            showNotification('Preencha todos os campos.');
+        if (!cardData.numero || !cardData.bandeira || !cardData.banco) {
+            showNotification('Número, bandeira e banco são obrigatórios.');
             return;
         }
 
         try {
-            if (!CONFIG.CARD_JSONBIN_URL || !CONFIG.CARD_JSONBIN_KEY) {
-                throw new Error('URL ou chave da bin de cartões não configurada.');
-            }
             const response = await fetch(`${CONFIG.CARD_JSONBIN_URL}/latest`, {
                 headers: { 'X-Master-Key': CONFIG.CARD_JSONBIN_KEY }
             });
@@ -741,286 +704,9 @@ const ui = {
             const cards = record.cards || [];
             const userCards = record.userCards || [];
             cards.push(cardData);
-
             const updateResponse = await fetch(CONFIG.CARD_JSONBIN_URL, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Master-Key': CONFIG.CARD_JSONBIN_KEY
                 },
-                body: JSON.stringify({ cards, userCards })
-            });
-            if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
-            showNotification('Cartão adicionado com sucesso!', 'success');
-            document.getElementById('cardModal').classList.add('hidden');
-            admin.loadAdminCards();
-        } catch (error) {
-            console.error('Erro ao salvar cartão:', error);
-            showNotification(error.message || 'Erro ao conectar ao servidor.');
-        }
-    },
-
-    filterCards() {
-        const binFilter = document.getElementById('binFilter').value.toLowerCase();
-        const brandFilter = document.getElementById('brandFilter').value.toLowerCase();
-        const bankFilter = document.getElementById('bankFilter').value.toLowerCase();
-        const levelFilter = document.getElementById('levelFilter').value.toLowerCase();
-        const cardList = document.getElementById('cardList');
-        if (cardList) {
-            cardList.innerHTML = '';
-            state.cards.filter(card => {
-                return (binFilter === '' || card.bin.toLowerCase().includes(binFilter)) &&
-                       (brandFilter === 'all' || card.bandeira.toLowerCase() === brandFilter) &&
-                       (bankFilter === 'all' || card.banco.toLowerCase() === bankFilter) &&
-                       (levelFilter === 'all' || card.nivel.toLowerCase() === levelFilter);
-            }).forEach(card => {
-                const cardElement = document.createElement('div');
-                cardElement.className = 'card-item p-4 text-left';
-                cardElement.innerHTML = `
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-gray-300">${card.banco}</span>
-                        <span class="text-white font-bold">${card.bandeira}</span>
-                    </div>
-                    <div class="text-2xl font-semibold mb-2">${card.numero}</div>
-                    <div class="text-gray-400 mb-2">${card.nome}</div>
-                    <div class="text-white font-medium mb-4">R$ ${card.balance || '0.00'}</div>
-                    <div class="flex space-x-2">
-                        <button onclick="shop.showCardDetails('${card.numero}')" class="card-button">Ver Detalhes</button>
-                    </div>
-                `;
-                cardList.appendChild(cardElement);
-            });
-        }
-    },
-
-    clearFilters() {
-        document.getElementById('binFilter').value = '';
-        document.getElementById('brandFilter').value = 'all';
-        document.getElementById('bankFilter').value = 'all';
-        document.getElementById('levelFilter').value = 'all';
-        ui.filterCards();
-    },
-
-    showAccountInfo() {
-        const accountInfo = document.getElementById('accountInfo');
-        if (accountInfo) {
-            accountInfo.classList.remove('hidden');
-            accountInfo.innerHTML = `
-                <h2 class="text-2xl font-bold mb-4 text-cyan-500">Minha Conta</h2>
-                <div class="bg-gray-800 p-6 rounded-lg shadow-2xl">
-                    <p class="mb-2"><strong>Usuário:</strong> <span id="userName">${state.currentUser.username}</span></p>
-                    <p class="mb-4"><strong>Saldo:</strong> <span id="userBalanceAccount">R$ ${state.currentUser.balance.toFixed(2)}</span></p>
-                    <div id="userCards" class="mt-4"></div>
-                </div>
-                <button onclick="ui.showAddBalanceForm()" class="mt-4 bg-cyan-500 p-2 rounded-lg hover:bg-cyan-600 transition w-full">Adicionar Saldo</button>
-            `;
-            ui.loadUserCards();
-        }
-    },
-
-    async loadUserCards() {
-        if (!state.currentUser) return;
-        try {
-            if (!CONFIG.CARD_JSONBIN_URL || !CONFIG.CARD_JSONBIN_KEY) {
-                throw new Error('URL ou chave da bin de cartões não configurada.');
-            }
-            const response = await fetch(`${CONFIG.CARD_JSONBIN_URL}/latest`, {
-                headers: { 'X-Master-Key': CONFIG.CARD_JSONBIN_KEY }
-            });
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record } = await response.json();
-            state.userCards = (record.userCards || []).filter(uc => uc.user === state.currentUser.username);
-            const userCardsDiv = document.getElementById('userCards');
-            if (userCardsDiv) {
-                userCardsDiv.innerHTML = state.userCards.map(card => `
-                    <div class="card-item p-4 text-left mb-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-gray-300">${card.banco || 'N/A'}</span>
-                            <span class="text-white font-bold">${card.bandeira || 'N/A'}</span>
-                        </div>
-                        <div class="text-2xl font-semibold mb-2">${card.numero}</div>
-                        <div class="text-gray-400 mb-2">${card.nome}</div>
-                        <div class="text-white font-medium mb-4">R$ 0.00</div>
-                    </div>
-                `).join('');
-            }
-        } catch (error) {
-            console.error('Erro ao carregar cartões do usuário:', error);
-            showNotification(error.message || 'Erro ao carregar cartões do usuário.');
-        }
-    },
-
-    async loadUserCardsFooter() {
-        if (!state.currentUser) return;
-        try {
-            if (!CONFIG.CARD_JSONBIN_URL || !CONFIG.CARD_JSONBIN_KEY) {
-                throw new Error('URL ou chave da bin de cartões não configurada.');
-            }
-            const response = await fetch(`${CONFIG.CARD_JSONBIN_URL}/latest`, {
-                headers: { 'X-Master-Key': CONFIG.CARD_JSONBIN_KEY }
-            });
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record } = await response.json();
-            state.userCards = (record.userCards || []).filter(uc => uc.user === state.currentUser.username);
-            const userCardsList = document.getElementById('userCardsList');
-            if (userCardsList) {
-                userCardsList.innerHTML = state.userCards.map(card => `
-                    <div class="text-sm text-gray-300">${card.numero}</div>
-                `).join('');
-                const userCardsFooter = document.getElementById('userCardsFooter');
-                if (state.userCards.length > 0) {
-                    userCardsFooter.classList.remove('hidden');
-                } else {
-                    userCardsFooter.classList.add('hidden');
-                }
-            }
-        } catch (error) {
-            console.error('Erro ao carregar cartões do usuário:', error);
-            showNotification(error.message || 'Erro ao carregar cartões do usuário.');
-        }
-    },
-
-    showAddBalanceForm() {
-        document.getElementById('rechargeModal').classList.remove('hidden');
-    },
-
-    closeModal() {
-        document.querySelectorAll('.fixed').forEach(modal => modal.classList.add('hidden'));
-    },
-
-    async addBalance() {
-        const amount = document.getElementById('rechargeAmount').value.trim();
-        if (!amount || parseFloat(amount) <= 0) {
-            showNotification('Digite um valor válido para recarga.');
-            return;
-        }
-        try {
-            const response = await fetch(`${CONFIG.JSONBIN_URL}/latest`, {
-                headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
-            });
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record } = await response.json();
-            const users = record.users || [];
-            const userIndex = users.findIndex(u => u.username === state.currentUser.username);
-            if (userIndex === -1) throw new Error('Usuário não encontrado.');
-
-            users[userIndex].balance = parseFloat(users[userIndex].balance) + parseFloat(amount);
-            state.currentUser.balance = users[userIndex].balance;
-            localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
-
-            const updateResponse = await fetch(CONFIG.JSONBIN_URL, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': CONFIG.JSONBIN_KEY
-                },
-                body: JSON.stringify({ users })
-            });
-            if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
-
-            showNotification('Saldo adicionado com sucesso!', 'success');
-            document.getElementById('userBalanceFooter').textContent = `R$ ${state.currentUser.balance.toFixed(2)}`;
-            document.getElementById('userBalanceAccount').textContent = `R$ ${state.currentUser.balance.toFixed(2)}`;
-            ui.closeModal();
-            ui.loadUserCardsFooter();
-        } catch (error) {
-            console.error('Erro ao adicionar saldo:', error);
-            showNotification(error.message || 'Erro ao conectar ao servidor.');
-        }
-    },
-
-    toggleTheme() {
-        state.theme = state.theme === 'dark' ? 'light' : 'dark';
-        document.documentElement.className = state.theme;
-        localStorage.setItem('theme', state.theme);
-        const themeToggle = document.getElementById('themeToggle');
-        if (themeToggle) themeToggle.textContent = state.theme === 'dark' ? '🌙' : '☀️';
-    }
-};
-
-function closeCardDetailsModal() {
-    document.getElementById('cardDetailsModal').classList.add('hidden');
-}
-
-function closeConfirmPurchaseModal() {
-    document.getElementById('confirmPurchaseModal').classList.add('hidden');
-}
-
-function confirmPurchase() {
-    const modal = document.getElementById('confirmPurchaseModal');
-    const cardNumber = modal.getAttribute('data-card-number');
-    shop.purchaseCard(cardNumber, 10.00);
-    closeConfirmPurchaseModal();
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    checkAuth();
-    console.log('Script.js carregado em ' + new Date().toLocaleString());
-
-    const loginButton = document.getElementById('loginButton');
-    if (loginButton) {
-        loginButton.addEventListener('click', () => {
-            console.log('Botão de login clicado em ' + new Date().toLocaleString());
-            auth.login();
-        });
-        console.log('Evento de clique adicionado ao botão de login em ' + new Date().toLocaleString());
-    } else {
-        console.error('Botão de login não encontrado. Verifique se o ID "loginButton" está presente no HTML.');
-    }
-
-    const registerButton = document.getElementById('registerButton');
-    if (registerButton) {
-        registerButton.addEventListener('click', () => {
-            console.log('Botão de registro clicado em ' + new Date().toLocaleString());
-            auth.register();
-        });
-        console.log('Evento de clique adicionado ao botão de registro em ' + new Date().toLocaleString());
-    } else {
-        console.error('Botão de registro não encontrado. Verifique se o ID "registerButton" está presente no HTML.');
-    }
-
-    const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password');
-    if (usernameInput && passwordInput) {
-        usernameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                console.log('Enter pressionado no campo de usuário em ' + new Date().toLocaleString());
-                auth.login();
-            }
-        });
-        passwordInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                console.log('Enter pressionado no campo de senha em ' + new Date().toLocaleString());
-                auth.login();
-            }
-        });
-    }
-
-    const newUsernameInput = document.getElementById('newUsername');
-    const newPasswordInput = document.getElementById('newPassword');
-    if (newUsernameInput && newPasswordInput) {
-        newUsernameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                console.log('Enter pressionado no campo de novo usuário em ' + new Date().toLocaleString());
-                auth.register();
-            }
-        });
-        newPasswordInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                console.log('Enter pressionado no campo de nova senha em ' + new Date().toLocaleString());
-                auth.register();
-            }
-        });
-    }
-
-    const page = window.location.pathname.split('/').pop();
-    if (page === 'shop.html' && state.currentUser) shop.loadCards();
-    if (page === 'dashboard.html' && state.currentUser) {
-        if (state.isAdmin) {
-            admin.loadUsers();
-            admin.loadAdminCards();
-        } else {
-            window.location.href = 'shop.html';
-        }
-    }
-});
