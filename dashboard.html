@@ -5,70 +5,114 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Administrador</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <script src="script.js" defer></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #1A1A1A;
+        }
+        .card-item {
+            background: linear-gradient(135deg, #2A2A2A, #3A3A3A);
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+        .card-item:hover {
+            transform: translateY(-5px);
+        }
+        .action-button {
+            background-color: #00C4B4;
+            color: #FFFFFF;
+            border-radius: 20px;
+            padding: 6px 12px;
+            transition: background-color 0.3s ease;
+        }
+        .action-button:hover {
+            background-color: #00A89C;
+        }
+        .delete-button {
+            background-color: #EF4444;
+            color: #FFFFFF;
+            border-radius: 20px;
+            padding: 6px 12px;
+            transition: background-color 0.3s ease;
+        }
+        .delete-button:hover {
+            background-color: #DC2626;
+        }
+    </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
-    <nav id="navbar" class="bg-blue-600 p-4">
+<body class="text-white min-h-screen">
+    <nav id="navbar" class="bg-gray-900 p-4 fixed w-full z-10 shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-white">Painel Administrador</h1>
-            <div class="flex space-x-4">
-                <button id="themeToggle" onclick="ui.toggleTheme()" class="text-white hover:text-gray-200 transition">Modo Claro</button>
-                <button onclick="window.location.href='shop.html'" class="bg-blue-600 p-2 rounded-lg hover:bg-blue-500 transition">Voltar à Loja</button>
+            <h1 class="text-2xl font-semibold text-white">Painel Administrador</h1>
+            <div class="flex items-center space-x-4">
+                <button id="themeToggle" onclick="ui.toggleTheme()" class="text-white hover:text-gray-300 transition">Modo Claro</button>
+                <button onclick="window.location.href='shop.html'" class="bg-cyan-500 p-2 rounded-lg hover:bg-cyan-600 transition">Voltar à Loja</button>
             </div>
         </div>
     </nav>
-    <main class="container mx-auto p-6">
+    <main class="container mx-auto pt-20 pb-6 px-4">
         <div id="notifications" class="fixed top-4 right-4"></div>
         <section class="mb-8">
-            <h2 class="text-2xl font-bold mb-4">Gerenciar Usuários</h2>
+            <h2 class="text-2xl font-bold mb-4 text-cyan-500">Gerenciar Usuários</h2>
             <div class="mb-4">
-                <input type="text" id="userSearch" placeholder="Pesquisar usuário" class="p-2 rounded-lg bg-gray-700 text-white w-full focus:ring-2 focus:ring-blue-500" oninput="ui.displayUsers(this.value)">
+                <input type="text" id="userSearch" placeholder="Pesquisar usuário" class="w-full p-2 rounded-lg bg-gray-800 text-white focus:ring-2 focus:ring-cyan-500" oninput="ui.displayUsers(this.value)">
             </div>
-            <button onclick="document.getElementById('addUserModal').classList.remove('hidden')" class="mb-4 bg-green-600 p-2 rounded-lg hover:bg-green-500 transition">Adicionar Usuário</button>
-            <div id="userList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <button onclick="document.getElementById('addUserModal').classList.remove('hidden')" class="mb-4 bg-cyan-500 p-2 rounded-lg hover:bg-cyan-600 transition">Adicionar Usuário</button>
+            <div id="userList" class="grid grid-cols-1 gap-4"></div>
         </section>
         <section>
-            <h2 class="text-2xl font-bold mb-4">Gerenciar Cartões</h2>
+            <h2 class="text-2xl font-bold mb-4 text-cyan-500">Gerenciar Cartões</h2>
             <div class="mb-4">
-                <input type="text" id="cardSearch" placeholder="Pesquisar cartão" class="p-2 rounded-lg bg-gray-700 text-white w-full focus:ring-2 focus:ring-blue-500" oninput="ui.displayAdminCards(this.value)">
+                <input type="text" id="cardSearch" placeholder="Pesquisar cartão" class="w-full p-2 rounded-lg bg-gray-800 text-white focus:ring-2 focus:ring-cyan-500" oninput="ui.displayAdminCards(this.value)">
             </div>
-            <button onclick="document.getElementById('cardModal').classList.remove('hidden')" class="mb-4 bg-green-600 p-2 rounded-lg hover:bg-green-500 transition">Adicionar Cartão</button>
-            <div id="adminCardList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <button onclick="document.getElementById('cardModal').classList.remove('hidden')" class="mb-4 bg-cyan-500 p-2 rounded-lg hover:bg-cyan-600 transition">Adicionar Cartão</button>
+            <div id="adminCardList" class="grid grid-cols-1 gap-4"></div>
         </section>
         <div id="addUserModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
             <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full shadow-2xl">
-                <h2 class="text-xl font-bold mb-4">Adicionar Usuário</h2>
-                <input id="newUsername" type="text" placeholder="Usuário" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
-                <input id="newPassword" type="password" placeholder="Senha" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
-                <input id="newBalance" type="number" placeholder="Saldo (R$)" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
-                <select id="isAdmin" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
+                <h2 class="text-xl font-bold mb-4 text-cyan-500">Adicionar Usuário</h2>
+                <input id="newUsername" type="text" placeholder="Usuário" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-cyan-500">
+                <input id="newPassword" type="password" placeholder="Senha" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-cyan-500">
+                <input id="newBalance" type="number" placeholder="Saldo (R$)" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-cyan-500">
+                <select id="isAdmin" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-cyan-500">
                     <option value="false">Não</option>
                     <option value="true">Sim</option>
                 </select>
-                <button onclick="ui.addUser()" class="w-full bg-green-600 p-2 rounded-lg hover:bg-green-500 transition">Adicionar</button>
+                <button onclick="ui.addUser()" class="w-full bg-cyan-500 p-2 rounded-lg hover:bg-cyan-600 transition">Adicionar</button>
+                <button onclick="ui.closeModal()" class="w-full mt-2 bg-gray-600 p-2 rounded-lg hover:bg-gray-500 transition">Fechar</button>
+            </div>
+        </div>
+        <div id="editBalanceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden" data-username="">
+            <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full shadow-2xl">
+                <h2 class="text-xl font-bold mb-4 text-cyan-500">Editar Saldo</h2>
+                <input id="editBalanceAmount" type="number" placeholder="Novo saldo (R$)" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-4 focus:ring-2 focus:ring-cyan-500">
+                <button onclick="admin.editUserBalance()" class="w-full bg-cyan-500 p-2 rounded-lg hover:bg-cyan-600 transition">Salvar</button>
                 <button onclick="ui.closeModal()" class="w-full mt-2 bg-gray-600 p-2 rounded-lg hover:bg-gray-500 transition">Fechar</button>
             </div>
         </div>
         <div id="cardModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
             <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full shadow-2xl">
-                <h2 class="text-xl font-bold mb-4">Adicionar Cartão</h2>
-                <input id="cardNumber" type="text" placeholder="Número do Cartão" oninput="formatCardNumber(this)" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
-                <input id="cardCvv" type="text" placeholder="CVV" oninput="restrictCvv(this)" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
-                <input id="cardExpiry" type="text" placeholder="Validade (MM/AA)" oninput="formatExpiry(this)" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
-                <input id="cardName" type="text" placeholder="Nome" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
-                <input id="cardCpf" type="text" placeholder="CPF" oninput="formatCpf(this)" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
-                <input id="cardBrand" type="text" placeholder="Bandeira" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
-                <input id="cardBank" type="text" placeholder="Banco" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
-                <input id="cardCountry" type="text" placeholder="País" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
-                <input id="cardLevel" type="text" placeholder="Nível" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-green-500">
-                <button onclick="ui.saveCard()" class="w-full bg-green-600 p-2 rounded-lg hover:bg-green-500 transition">Adicionar</button>
+                <h2 class="text-xl font-bold mb-4 text-cyan-500">Adicionar Cartão</h2>
+                <input id="cardNumber" type="text" placeholder="Número do Cartão" oninput="formatCardNumber(this)" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-cyan-500">
+                <input id="cardCvv" type="text" placeholder="CVV" oninput="restrictCvv(this)" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-cyan-500">
+                <input id="cardExpiry" type="text" placeholder="Validade (MM/AA)" oninput="formatExpiry(this)" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-cyan-500">
+                <input id="cardName" type="text" placeholder="Nome" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-cyan-500">
+                <input id="cardCpf" type="text" placeholder="CPF" oninput="formatCpf(this)" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-cyan-500">
+                <input id="cardBrand" type="text" placeholder="Bandeira" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-cyan-500">
+                <input id="cardBank" type="text" placeholder="Banco" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-cyan-500">
+                <input id="cardCountry" type="text" placeholder="País" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-cyan-500">
+                <input id="cardLevel" type="text" placeholder="Nível" class="w-full p-2 rounded-lg bg-gray-700 text-white mb-2 focus:ring-2 focus:ring-cyan-500">
+                <button onclick="ui.saveCard()" class="w-full bg-cyan-500 p-2 rounded-lg hover:bg-cyan-600 transition">Adicionar</button>
                 <button onclick="ui.closeModal()" class="w-full mt-2 bg-gray-600 p-2 rounded-lg hover:bg-gray-500 transition">Fechar</button>
             </div>
         </div>
     </main>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            checkAuth(); // Garante que o estado do usuário seja verificado
+            checkAuth();
             const user = state.currentUser;
             if (!user) {
                 window.location.href = 'index.html';
