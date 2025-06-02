@@ -5,9 +5,10 @@ const CONFIG = {
     LOGIN_BLOCK_TIME: 60000,
     NOTIFICATION_TIMEOUT: 5000,
     LOG_RETENTION_DAYS: 30,
-    API_URL: 'https://script.google.com/macros/s/AKfycbx1quy5cfw9XVFkQtJ9XU_LsEyLmBhO2mDmFU5_3__DTWaO25rCIA84SbesR8oGl8M/exec',
     JSONBIN_URL: 'https://api.jsonbin.io/v3/b/683db3318a456b7966a88cdd',
-    JSONBIN_KEY: '$2a$10$/Oqg4nCgjzZhdIp./fBtxuIISi6286hxDKDKuMUUN4gfGy8CGZIMK'
+    JSONBIN_KEY: '$2a$10$/Oqg4nCgjzZhdIp./fBtxuIISi6286hxDKDKuMUUN4gfGy8CGZIMK',
+    CARD_JSONBIN_URL: 'https://api.jsonbin.io/v3/b/683dd1e78561e97a501ec0e4',
+    CARD_JSONBIN_KEY: '$2a$10$/Oqg4nCgjzZhdIp./fBtxuIISi6286hxDKDKuMUUN4gfGy8CGZIMK'
 };
 
 const state = {
@@ -137,9 +138,9 @@ const auth = {
                 headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
             });
             if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record: users } = await response.json();
-            console.log('Usuários recebidos:', users);
-            const user = users.find(u => u.username === username && u.password === password);
+            const { record } = await response.json();
+            state.users = record.users || [];
+            const user = state.users.find(u => u.username === username && u.password === password);
             if (!user) {
                 throw new Error('Usuário ou senha inválidos');
             }
@@ -212,7 +213,8 @@ const auth = {
                 headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
             });
             if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record: users } = await response.json();
+            const { record } = await response.json();
+            const users = record.users || [];
             if (users.find(u => u.username === username)) {
                 throw new Error('Usuário já existe');
             }
@@ -224,7 +226,7 @@ const auth = {
                     'Content-Type': 'application/json',
                     'X-Master-Key': CONFIG.JSONBIN_KEY
                 },
-                body: JSON.stringify(users)
+                body: JSON.stringify({ users })
             });
             if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
             showNotification('Registro bem-sucedido! Faça login para continuar.', 'success');
@@ -257,16 +259,15 @@ const shop = {
             return;
         }
         try {
-            const response = await fetch(`${CONFIG.API_URL}?action=getCards`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            if (!CONFIG.CARD_JSONBIN_URL || !CONFIG.CARD_JSONBIN_KEY) {
+                throw new Error('URL ou chave da bin de cartões não configurada.');
+            }
+            const response = await fetch(`${CONFIG.CARD_JSONBIN_URL}/latest`, {
+                headers: { 'X-Master-Key': CONFIG.CARD_JSONBIN_KEY }
             });
             if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const data = await response.json();
-            if (data.success === false) {
-                throw new Error(data.message || 'Erro ao carregar cartões.');
-            }
-            state.cards = data;
+            const { record } = await response.json();
+            state.cards = record.cards || [];
             console.log('Cartões carregados:', state.cards);
             const cardList = document.getElementById('cardList');
             if (cardList) {
@@ -351,51 +352,68 @@ const shop = {
             return;
         }
         try {
+            if (!CONFIG.CARD_JSONBIN_URL || !CONFIG.CARD_JSONBIN_KEY) {
+                throw new Error('URL ou chave da bin de cartões não configurada.');
+            }
             const response = await fetch(`${CONFIG.JSONBIN_URL}/latest`, {
                 headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
             });
             if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record: users } = await response.json();
-            const userIndex = users.findIndex(u => u.username === state.currentUser.username);
+            const { record: userRecord } = await response.json();
+            const userIndex = userRecord.users.findIndex(u => u.username === state.currentUser.username);
             if (userIndex === -1) throw new Error('Usuário não encontrado.');
 
-            users[userIndex].balance -= price;
-            state.currentUser.balance = users[userIndex].balance;
+            const cardResponse = await fetch(`${CONFIG.CARD_JSONBIN_URL}/latest`, {
+                headers: { 'X-Master-Key': CONFIG.CARD_JSONBIN_KEY }
+            });
+            if (!cardResponse.ok) throw new Error(`Erro HTTP: ${cardResponse.status}`);
+            const { record: cardRecord } = await cardResponse.json();
+            const cards = cardRecord.cards || [];
+            const userCards = cardRecord.userCards || [];
+
+            userRecord.users[userIndex].balance -= price;
+            state.currentUser.balance = userRecord.users[userIndex].balance;
             localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
 
-            const updateResponse = await fetch(CONFIG.JSONBIN_URL, {
+            const card = cards.find(c => c.numero === cardNumber);
+            if (!card) throw new Error('Cartão não encontrado.');
+
+            cards.splice(cards.findIndex(c => c.numero === cardNumber), 1);
+            userCards.push({
+                user: state.currentUser.username,
+                numero: card.numero,
+                cvv: card.cvv,
+                validade: card.validade,
+                nome: card.nome
+            });
+
+            const updateUserResponse = await fetch(CONFIG.JSONBIN_URL, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Master-Key': CONFIG.JSONBIN_KEY
                 },
-                body: JSON.stringify(users)
+                body: JSON.stringify(userRecord)
             });
-            if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
+            if (!updateUserResponse.ok) throw new Error(`Erro HTTP: ${updateUserResponse.status}`);
 
-            const purchaseData = new URLSearchParams({
-                action: 'purchaseCard',
-                user: state.currentUser.username,
-                cardNumber: cardNumber,
-                price: price.toString()
+            const updateCardResponse = await fetch(CONFIG.CARD_JSONBIN_URL, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': CONFIG.CARD_JSONBIN_KEY
+                },
+                body: JSON.stringify({ cards, userCards })
             });
-            const cardResponse = await fetch(CONFIG.API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: purchaseData
-            });
-            if (!cardResponse.ok) throw new Error('Erro ao comprar cartão.');
-            const result = await cardResponse.json();
-            if (result.success) {
-                document.getElementById('userBalance').textContent = `R$ ${state.currentUser.balance.toFixed(2)}`;
-                document.getElementById('userBalanceAccount').textContent = `R$ ${state.currentUser.balance.toFixed(2)}`;
-                state.cards = state.cards.filter(c => c.numero !== cardNumber);
-                shop.loadCards();
-                showNotification('Compra realizada com sucesso!', 'success');
-                document.getElementById('confirmPurchaseModal').classList.add('hidden');
-            } else {
-                throw new Error(result.message || 'Erro ao comprar o cartão.');
-            }
+            if (!updateCardResponse.ok) throw new Error(`Erro HTTP: ${updateCardResponse.status}`);
+
+            state.cards = cards;
+            state.userCards = userCards;
+            document.getElementById('userBalance').textContent = `R$ ${state.currentUser.balance.toFixed(2)}`;
+            document.getElementById('userBalanceAccount').textContent = `R$ ${state.currentUser.balance.toFixed(2)}`;
+            shop.loadCards();
+            showNotification('Compra realizada com sucesso!', 'success');
+            document.getElementById('confirmPurchaseModal').classList.add('hidden');
         } catch (error) {
             console.error('Erro ao comprar cartão:', error);
             showNotification(error.message || 'Erro ao conectar ao servidor.');
@@ -415,8 +433,8 @@ const admin = {
                 headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
             });
             if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record: users } = await response.json();
-            state.users = users;
+            const { record } = await response.json();
+            state.users = record.users || [];
             ui.displayUsers();
         } catch (error) {
             console.error('Erro ao carregar usuários:', error);
@@ -431,16 +449,19 @@ const admin = {
             return;
         }
         try {
-            const response = await fetch(`${CONFIG.API_URL}?action=getCards`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            if (!CONFIG.CARD_JSONBIN_URL || !CONFIG.CARD_JSONBIN_KEY) {
+                throw new Error('URL ou chave da bin de cartões não configurada.');
+            }
+            const response = await fetch(`${CONFIG.CARD_JSONBIN_URL}/latest`, {
+                headers: { 'X-Master-Key': CONFIG.CARD_JSONBIN_KEY }
             });
-            if (!response.ok) throw new Error('Erro ao carregar cartões.');
-            state.cards = await response.json();
+            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+            const { record } = await response.json();
+            state.cards = record.cards || [];
             ui.displayAdminCards();
         } catch (error) {
             console.error('Erro ao carregar cartões:', error);
-            showNotification('Erro ao carregar cartões.');
+            showNotification(error.message || 'Erro ao carregar cartões.');
         }
     },
 
@@ -455,15 +476,17 @@ const admin = {
                     headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
                 });
                 if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-                const { record: users } = await response.json();
+                const { record } = await response.json();
+                const users = record.users || [];
                 const updatedUsers = users.filter(u => u.username !== username);
+
                 const updateResponse = await fetch(CONFIG.JSONBIN_URL, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-Master-Key': CONFIG.JSONBIN_KEY
                     },
-                    body: JSON.stringify(updatedUsers)
+                    body: JSON.stringify({ users: updatedUsers })
                 });
                 if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
                 showNotification('Usuário excluído com sucesso!', 'success');
@@ -482,23 +505,32 @@ const admin = {
         }
         if (confirm(`Tem certeza que deseja excluir o cartão ${cardNumber}?`)) {
             try {
-                const deleteData = new URLSearchParams({ action: 'deleteCard', cardNumber: cardNumber });
-                const response = await fetch(CONFIG.API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: deleteData
-                });
-                if (!response.ok) throw new Error('Erro ao excluir cartão.');
-                const result = await response.json();
-                if (result.success) {
-                    showNotification('Cartão excluído com sucesso!', 'success');
-                    admin.loadAdminCards();
-                } else {
-                    showNotification(result.message || 'Erro ao excluir cartão.');
+                if (!CONFIG.CARD_JSONBIN_URL || !CONFIG.CARD_JSONBIN_KEY) {
+                    throw new Error('URL ou chave da bin de cartões não configurada.');
                 }
+                const response = await fetch(`${CONFIG.CARD_JSONBIN_URL}/latest`, {
+                    headers: { 'X-Master-Key': CONFIG.CARD_JSONBIN_KEY }
+                });
+                if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+                const { record } = await response.json();
+                const cards = record.cards || [];
+                const userCards = record.userCards || [];
+                const updatedCards = cards.filter(c => c.numero !== cardNumber);
+
+                const updateResponse = await fetch(CONFIG.CARD_JSONBIN_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': CONFIG.CARD_JSONBIN_KEY
+                    },
+                    body: JSON.stringify({ cards: updatedCards, userCards })
+                });
+                if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
+                showNotification('Cartão excluído com sucesso!', 'success');
+                admin.loadAdminCards();
             } catch (error) {
                 console.error('Erro ao excluir cartão:', error);
-                showNotification('Erro ao conectar ao servidor.');
+                showNotification(error.message || 'Erro ao conectar ao servidor.');
             }
         }
     }
@@ -574,7 +606,8 @@ const ui = {
                 headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
             });
             if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record: users } = await response.json();
+            const { record } = await response.json();
+            const users = record.users || [];
             if (users.find(u => u.username === username)) {
                 throw new Error('Usuário já existe');
             }
@@ -586,7 +619,7 @@ const ui = {
                     'Content-Type': 'application/json',
                     'X-Master-Key': CONFIG.JSONBIN_KEY
                 },
-                body: JSON.stringify(users)
+                body: JSON.stringify({ users })
             });
             if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
             showNotification('Usuário adicionado com sucesso!', 'success');
@@ -608,7 +641,8 @@ const ui = {
             bandeira: document.getElementById('cardBrand').value.trim(),
             banco: document.getElementById('cardBank').value.trim(),
             pais: document.getElementById('cardCountry').value.trim(),
-            nivel: document.getElementById('cardLevel').value.trim()
+            nivel: document.getElementById('cardLevel').value.trim(),
+            bin: document.getElementById('cardNumber').value.trim().replace(/\s/g, '').substring(0, 6)
         };
 
         if (!cardData.numero || !cardData.cvv || !cardData.validade || !cardData.nome || !cardData.cpf || !cardData.bandeira || !cardData.banco || !cardData.pais || !cardData.nivel) {
@@ -617,23 +651,33 @@ const ui = {
         }
 
         try {
-            const response = await fetch(CONFIG.API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ action: 'addCard', ...cardData })
-            });
-            if (!response.ok) throw new Error('Erro ao adicionar cartão.');
-            const result = await response.json();
-            if (result.success) {
-                showNotification('Cartão adicionado com sucesso!', 'success');
-                document.getElementById('cardModal').classList.add('hidden');
-                admin.loadAdminCards();
-            } else {
-                showNotification(result.message || 'Erro ao adicionar cartão.');
+            if (!CONFIG.CARD_JSONBIN_URL || !CONFIG.CARD_JSONBIN_KEY) {
+                throw new Error('URL ou chave da bin de cartões não configurada.');
             }
+            const response = await fetch(`${CONFIG.CARD_JSONBIN_URL}/latest`, {
+                headers: { 'X-Master-Key': CONFIG.CARD_JSONBIN_KEY }
+            });
+            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+            const { record } = await response.json();
+            const cards = record.cards || [];
+            const userCards = record.userCards || [];
+            cards.push(cardData);
+
+            const updateResponse = await fetch(CONFIG.CARD_JSONBIN_URL, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': CONFIG.CARD_JSONBIN_KEY
+                },
+                body: JSON.stringify({ cards, userCards })
+            });
+            if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
+            showNotification('Cartão adicionado com sucesso!', 'success');
+            document.getElementById('cardModal').classList.add('hidden');
+            admin.loadAdminCards();
         } catch (error) {
             console.error('Erro ao salvar cartão:', error);
-            showNotification('Erro ao conectar ao servidor.');
+            showNotification(error.message || 'Erro ao conectar ao servidor.');
         }
     },
 
@@ -691,17 +735,15 @@ const ui = {
     async loadUserCards() {
         if (!state.currentUser) return;
         try {
-            const userCardsData = new URLSearchParams({
-                action: 'getUserCards',
-                user: state.currentUser.username
+            if (!CONFIG.CARD_JSONBIN_URL || !CONFIG.CARD_JSONBIN_KEY) {
+                throw new Error('URL ou chave da bin de cartões não configurada.');
+            }
+            const response = await fetch(`${CONFIG.CARD_JSONBIN_URL}/latest`, {
+                headers: { 'X-Master-Key': CONFIG.CARD_JSONBIN_KEY }
             });
-            const response = await fetch(CONFIG.API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: userCardsData
-            });
-            if (!response.ok) throw new Error('Erro ao carregar cartões do usuário.');
-            state.userCards = await response.json();
+            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+            const { record } = await response.json();
+            state.userCards = (record.userCards || []).filter(uc => uc.user === state.currentUser.username);
             const userCardsDiv = document.getElementById('userCards');
             if (userCardsDiv) {
                 userCardsDiv.innerHTML = state.userCards.map(card => `
@@ -715,7 +757,7 @@ const ui = {
             }
         } catch (error) {
             console.error('Erro ao carregar cartões do usuário:', error);
-            showNotification('Erro ao carregar cartões do usuário.');
+            showNotification(error.message || 'Erro ao carregar cartões do usuário.');
         }
     },
 
@@ -738,7 +780,8 @@ const ui = {
                 headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
             });
             if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record: users } = await response.json();
+            const { record } = await response.json();
+            const users = record.users || [];
             const userIndex = users.findIndex(u => u.username === state.currentUser.username);
             if (userIndex === -1) throw new Error('Usuário não encontrado.');
 
@@ -752,7 +795,7 @@ const ui = {
                     'Content-Type': 'application/json',
                     'X-Master-Key': CONFIG.JSONBIN_KEY
                 },
-                body: JSON.stringify(users)
+                body: JSON.stringify({ users })
             });
             if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
 
@@ -792,7 +835,7 @@ function confirmPurchase() {
 
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
-    console.log('Script.js carregado em ' + new Date().toLocaleString() + '. URL da API:', CONFIG.API_URL);
+    console.log('Script.js carregado em ' + new Date().toLocaleString());
 
     const loginButton = document.getElementById('loginButton');
     if (loginButton) {
