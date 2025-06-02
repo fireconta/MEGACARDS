@@ -5,107 +5,155 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#1A2A44">
     <title>Login - LOGAN CC's</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Montserrat:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="script.js" defer></script>
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #1A2A44 0%, #2D4066 100%);
+        * {
             margin: 0;
             padding: 0;
-            color: #E0E7FF;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(145deg, #0F172A 0%, #1E293B 100%);
+            color: #E2E8F0;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
         }
         .header {
-            background: linear-gradient(90deg, #1A2A44, #2D4066);
-            padding: 15px 25px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
             display: flex;
             justify-content: center;
             align-items: center;
             position: sticky;
             top: 0;
-            z-index: 20;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         }
         .header .logo img {
-            height: 40px;
+            height: 50px;
+            transition: transform 0.3s ease;
+        }
+        .header .logo img:hover {
+            transform: scale(1.1);
         }
         main {
             flex-grow: 1;
-            padding: 20px 15px;
             display: flex;
             justify-content: center;
             align-items: center;
+            padding: 2rem 1rem;
+            background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.1), transparent 50%);
+        }
+        .auth-container {
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            animation: fadeIn 0.5s ease-out;
+            text-align: center;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         h2 {
-            font-size: 2.25rem;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2.5rem;
             font-weight: 700;
-            color: #00C4B4;
-            text-align: center;
+            color: #38BDF8;
             margin-bottom: 1.5rem;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            text-shadow: 0 2px 6px rgba(56, 189, 248, 0.3);
         }
-        .form-container {
-            background: rgba(45, 64, 102, 0.9);
-            border-radius: 12px;
-            padding: 30px;
+        .form-group input {
+            background: #2D3748;
+            color: #E2E8F0;
+            border: 1px solid #4B5563;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
             width: 100%;
-            max-width: 400px;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+            margin-bottom: 0.75rem;
+            transition: all 0.3s ease;
+            font-size: 1rem;
         }
-        .form-container input {
-            background: #3A4D70;
-            color: #E0E7FF;
-            border: 1px solid #4A5D82;
-            border-radius: 8px;
-            padding: 12px;
-            width: 100%;
-            margin-bottom: 15px;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-        .form-container input:focus {
-            border-color: #00C4B4;
-            box-shadow: 0 0 8px rgba(0, 196, 180, 0.5);
+        .form-group input:focus {
+            border-color: #38BDF8;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
             outline: none;
+            background: #334155;
         }
-        .form-container button {
-            background: linear-gradient(90deg, #00C4B4, #009688);
+        .form-group button {
+            background: linear-gradient(90deg, #38BDF8, #2563EB);
             color: #FFFFFF;
-            border-radius: 8px;
-            padding: 10px;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
             width: 100%;
-            transition: background 0.3s ease, transform 0.2s ease;
             font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
         }
-        .form-container button:hover {
-            background: linear-gradient(90deg, #009688, #00796B);
-            transform: scale(1.02);
+        .form-group button:hover {
+            background: linear-gradient(90deg, #2563EB, #1D4ED8);
+            transform: scale(1.03);
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
         }
         .error-text {
-            color: #EF4444;
+            color: #F87171;
             font-size: 0.875rem;
-            margin-top: -10px;
-            margin-bottom: 10px;
+            margin-bottom: 0.75rem;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
         }
         .toggle-link {
-            color: #00C4B4;
+            color: #38BDF8;
             cursor: pointer;
-            text-align: center;
-            display: block;
-            margin-top: 15px;
+            margin-top: 1rem;
+            font-size: 0.9rem;
             transition: color 0.3s ease;
+            text-decoration: none;
         }
         .toggle-link:hover {
-            color: #009688;
+            color: #2563EB;
+        }
+        .notification {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1000;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            color: #FFFFFF;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease;
+        }
+        .notification.error {
+            background: #F87171;
+        }
+        .notification.success {
+            background: #34D399;
         }
         @media (max-width: 640px) {
-            .form-container {
-                padding: 20px;
+            .auth-container {
+                padding: 1.5rem;
+                max-width: 90%;
+            }
+            h2 {
+                font-size: 2rem;
             }
         }
     </style>
@@ -115,23 +163,24 @@
         <a href="logo.png" class="logo"><img src="logo.png" alt="LOGAN CC's Logo"></a>
     </header>
     <main>
-        <div id="loginForm" class="form-container">
+        <div id="authContainer" class="auth-container">
             <h2>Login - LOGAN CC's</h2>
-            <input id="username" type="text" placeholder="Usuário">
-            <p id="usernameError" class="error-text"></p>
-            <input id="password" type="password" placeholder="Senha">
-            <p id="passwordError" class="error-text"></p>
-            <button id="loginButton" onclick="auth.login()">Entrar</button>
-            <span class="toggle-link" onclick="ui.showRegisterForm()">Não tem conta? Registre-se</span>
-        </div>
-        <div id="registerForm" class="form-container hidden">
-            <h2>Registro - LOGAN CC's</h2>
-            <input id="newUsername" type="text" placeholder="Novo Usuário">
-            <p id="newUsernameError" class="error-text"></p>
-            <input id="newPassword" type="password" placeholder="Nova Senha">
-            <p id="newPasswordError" class="error-text"></p>
-            <button id="registerButton" onclick="auth.register()">Registrar</button>
-            <span class="toggle-link" onclick="ui.showLoginForm()">Já tem conta? Faça login</span>
+            <div id="loginForm" class="form-group">
+                <input id="username" type="text" placeholder="Usuário">
+                <p id="usernameError" class="error-text"></p>
+                <input id="password" type="password" placeholder="Senha">
+                <p id="passwordError" class="error-text"></p>
+                <button id="loginButton" onclick="auth.login()">Entrar</button>
+                <a class="toggle-link" onclick="ui.showRegisterForm()">Não tem conta? Registre-se</a>
+            </div>
+            <div id="registerForm" class="form-group hidden">
+                <input id="newUsername" type="text" placeholder="Novo Usuário">
+                <p id="newUsernameError" class="error-text"></p>
+                <input id="newPassword" type="password" placeholder="Nova Senha">
+                <p id="newPasswordError" class="error-text"></p>
+                <button id="registerButton" onclick="auth.register()">Registrar</button>
+                <a class="toggle-link" onclick="ui.showLoginForm()">Já tem conta? Faça login</a>
+            </div>
         </div>
     </main>
     <div id="notifications" class="fixed top-4 right-4 z-30"></div>
@@ -141,6 +190,7 @@
                 window.location.href = 'shop.html';
             }
             document.documentElement.className = 'dark';
+            ui.showLoginForm();
         });
     </script>
 </body>
