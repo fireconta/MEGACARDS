@@ -86,7 +86,8 @@
     <div id="notifications" class="fixed top-4 right-4"></div>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const user = JSON.parse(localStorage.getItem('currentUser'));
+            checkAuth(); // Garante que o estado do usuário seja verificado
+            const user = state.currentUser;
             if (!user) {
                 window.location.href = 'index.html';
             } else {
