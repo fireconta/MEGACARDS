@@ -295,7 +295,6 @@ const shop = {
                             <div class="flex justify-between items-center mb-2">
                                 <span class="text-gray-300">${card.banco}</span>
                                 <span class="text-white font-bold">${card.bandeira}</span>
-(head).html
                             </div>
                             <div class="text-2xl font-semibold mb-2">${card.numero}</div>
                             <div class="text-gray-400 mb-2">${card.nome}</div>
@@ -306,16 +305,6 @@ const shop = {
                         `;
                         cardList.appendChild(cardElement);
                     });
-                }
-            }
-            if (state.isAdmin) {
-                const navbar = document.getElementById('navbar');
-                if (navbar) {
-                    const adminButton = document.createElement('button');
-                    adminButton.textContent = 'Painel Administrador';
-                    adminButton.className = 'bg-cyan-500 p-2 rounded-lg hover:bg-cyan-600 transition ml-2';
-                    adminButton.onclick = () => window.location.href = 'dashboard.html';
-                    navbar.querySelector('div').appendChild(adminButton);
                 }
             }
         } catch (error) {
@@ -428,8 +417,9 @@ const shop = {
 
             state.cards = cards;
             state.userCards = userCards;
-            document.getElementById('userBalance').textContent = `R$ ${state.currentUser.balance.toFixed(2)}`;
+            document.getElementById('userBalanceFooter').textContent = `R$ ${state.currentUser.balance.toFixed(2)}`;
             document.getElementById('userBalanceAccount').textContent = `R$ ${state.currentUser.balance.toFixed(2)}`;
+            ui.loadUserCardsFooter();
             shop.loadCards();
             showNotification('Compra realizada com sucesso!', 'success');
             document.getElementById('confirmPurchaseModal').classList.add('hidden');
@@ -527,6 +517,10 @@ const admin = {
             showNotification('Saldo atualizado com sucesso!', 'success');
             ui.closeModal();
             admin.loadUsers();
+            document.getElementById('userBalanceFooter').textContent = `R$ ${newBalance.toFixed(2)}`;
+            if (document.getElementById('userBalanceAccount')) {
+                document.getElementById('userBalanceAccount').textContent = `R$ ${newBalance.toFixed(2)}`;
+            }
         } catch (error) {
             console.error('Erro ao editar saldo:', error);
             showNotification(error.message || 'Erro ao conectar ao servidor.');
@@ -856,6 +850,36 @@ const ui = {
         }
     },
 
+    async loadUserCardsFooter() {
+        if (!state.currentUser) return;
+        try {
+            if (!CONFIG.CARD_JSONBIN_URL || !CONFIG.CARD_JSONBIN_KEY) {
+                throw new Error('URL ou chave da bin de cartões não configurada.');
+            }
+            const response = await fetch(`${CONFIG.CARD_JSONBIN_URL}/latest`, {
+                headers: { 'X-Master-Key': CONFIG.CARD_JSONBIN_KEY }
+            });
+            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+            const { record } = await response.json();
+            state.userCards = (record.userCards || []).filter(uc => uc.user === state.currentUser.username);
+            const userCardsList = document.getElementById('userCardsList');
+            if (userCardsList) {
+                userCardsList.innerHTML = state.userCards.map(card => `
+                    <div class="text-sm text-gray-300">${card.numero}</div>
+                `).join('');
+                const userCardsFooter = document.getElementById('userCardsFooter');
+                if (state.userCards.length > 0) {
+                    userCardsFooter.classList.remove('hidden');
+                } else {
+                    userCardsFooter.classList.add('hidden');
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao carregar cartões do usuário:', error);
+            showNotification(error.message || 'Erro ao carregar cartões do usuário.');
+        }
+    },
+
     showAddBalanceForm() {
         document.getElementById('rechargeModal').classList.remove('hidden');
     },
@@ -895,9 +919,10 @@ const ui = {
             if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
 
             showNotification('Saldo adicionado com sucesso!', 'success');
-            document.getElementById('userBalance').textContent = `R$ ${state.currentUser.balance.toFixed(2)}`;
+            document.getElementById('userBalanceFooter').textContent = `R$ ${state.currentUser.balance.toFixed(2)}`;
             document.getElementById('userBalanceAccount').textContent = `R$ ${state.currentUser.balance.toFixed(2)}`;
             ui.closeModal();
+            ui.loadUserCardsFooter();
         } catch (error) {
             console.error('Erro ao adicionar saldo:', error);
             showNotification(error.message || 'Erro ao conectar ao servidor.');
@@ -909,7 +934,7 @@ const ui = {
         document.documentElement.className = state.theme;
         localStorage.setItem('theme', state.theme);
         const themeToggle = document.getElementById('themeToggle');
-        if (themeToggle) themeToggle.textContent = state.theme === 'dark' ? 'Modo Claro' : 'Modo Escuro';
+        if (themeToggle) themeToggle.textContent = state.theme === 'dark' ? '🌙' : '☀️';
     }
 };
 
