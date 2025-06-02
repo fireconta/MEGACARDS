@@ -31,8 +31,9 @@ async function loadDashboard() {
       const response = await fetch(`${JSONBIN_URL}/latest`, {
         headers: { 'X-Master-Key': JSONBIN_KEY }
       });
-      if (!response.ok) throw new Error('Falha ao carregar dados');
+      if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
       const { record: users } = await response.json();
+      console.log('Usuários carregados:', users); // Depuração
       const user = users.find(u => u.username === username);
       if (!user) throw new Error('Usuário não encontrado');
       document.getElementById('usernameDisplay').textContent = user.username;
@@ -73,11 +74,13 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const username = document.getElementById('loginUsername').value.trim();
         const password = document.getElementById('loginPassword').value;
+        console.log('Tentando login:', { username, password }); // Depuração
         const response = await fetch(`${JSONBIN_URL}/latest`, {
           headers: { 'X-Master-Key': JSONBIN_KEY }
         });
-        if (!response.ok) throw new Error('Falha ao conectar ao servidor');
+        if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
         const { record: users } = await response.json();
+        console.log('Usuários recebidos:', users); // Depuração
         const user = users.find(u => u.username === username && u.password === password);
         if (!user) throw new Error('Usuário ou senha inválidos');
         localStorage.setItem('username', user.username);
@@ -85,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('balance', user.balance);
         window.location.href = 'dashboard.html';
       } catch (error) {
+        console.error('Erro no login:', error); // Depuração
         errorMessage.textContent = error.message || 'Falha ao fazer login';
         errorMessage.style.display = 'block';
       } finally {
@@ -106,16 +110,15 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const username = document.getElementById('registerUsername').value.trim();
         const password = document.getElementById('registerPassword').value;
-        // Carregar usuários existentes
+        console.log('Tentando registro:', { username, password }); // Depuração
         const response = await fetch(`${JSONBIN_URL}/latest`, {
           headers: { 'X-Master-Key': JSONBIN_KEY }
         });
-        if (!response.ok) throw new Error('Falha ao conectar ao servidor');
+        if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
         const { record: users } = await response.json();
         if (users.find(u => u.username === username)) {
           throw new Error('Usuário já existe');
         }
-        // Adicionar novo usuário
         const newUser = { username, password, balance: 0, is_admin: false };
         users.push(newUser);
         const updateResponse = await fetch(JSONBIN_URL, {
@@ -126,12 +129,13 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           body: JSON.stringify(users)
         });
-        if (!updateResponse.ok) throw new Error('Falha ao registrar usuário');
+        if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
         successMessage.textContent = 'Usuário registrado com sucesso!';
         successMessage.style.display = 'block';
         registerForm.reset();
         alert('Registro concluído com sucesso! Faça login para continuar.');
       } catch (error) {
+        console.error('Erro no registro:', error); // Depuração
         errorMessage.textContent = error.message || 'Erro ao registrar usuário';
         errorMessage.style.display = 'block';
       } finally {
