@@ -261,24 +261,32 @@ const shop = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
             });
-            if (!response.ok) throw new Error('Erro ao carregar cartões.');
-            state.cards = await response.json();
+            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+            const data = await response.json();
+            if (data.success === false) {
+                throw new Error(data.message || 'Erro ao carregar cartões.');
+            }
+            state.cards = data;
             console.log('Cartões carregados:', state.cards);
             const cardList = document.getElementById('cardList');
             if (cardList) {
                 cardList.innerHTML = '';
-                state.cards.forEach(card => {
-                    const cardElement = document.createElement('div');
-                    cardElement.className = 'bg-gray-800 p-4 rounded shadow cursor-pointer hover:bg-gray-700 transition';
-                    cardElement.innerHTML = `
-                        <p><strong>Número:</strong> ${card.numero}</p>
-                        <p><strong>Bandeira:</strong> ${card.bandeira}</p>
-                        <p><strong>Banco:</strong> ${card.banco}</p>
-                        <p><strong>Nível:</strong> ${card.nivel}</p>
-                        <button onclick="shop.showCardDetails('${card.numero}')" class="mt-2 bg-blue-600 p-2 rounded hover:bg-blue-500 w-full">Ver Detalhes</button>
-                    `;
-                    cardList.appendChild(cardElement);
-                });
+                if (state.cards.length === 0) {
+                    cardList.innerHTML = '<p class="text-gray-400">Nenhum cartão disponível no momento.</p>';
+                } else {
+                    state.cards.forEach(card => {
+                        const cardElement = document.createElement('div');
+                        cardElement.className = 'bg-gray-800 p-4 rounded shadow cursor-pointer hover:bg-gray-700 transition';
+                        cardElement.innerHTML = `
+                            <p><strong>Número:</strong> ${card.numero}</p>
+                            <p><strong>Bandeira:</strong> ${card.bandeira}</p>
+                            <p><strong>Banco:</strong> ${card.banco}</p>
+                            <p><strong>Nível:</strong> ${card.nivel}</p>
+                            <button onclick="shop.showCardDetails('${card.numero}')" class="mt-2 bg-blue-600 p-2 rounded hover:bg-blue-500 w-full">Ver Detalhes</button>
+                        `;
+                        cardList.appendChild(cardElement);
+                    });
+                }
             }
             if (state.isAdmin) {
                 const navbar = document.getElementById('navbar');
@@ -292,7 +300,7 @@ const shop = {
             }
         } catch (error) {
             console.error('Erro ao carregar cartões:', error);
-            showNotification('Erro ao carregar cartões.');
+            showNotification(error.message || 'Erro ao carregar cartões.');
         }
     },
 
@@ -302,7 +310,7 @@ const shop = {
             document.getElementById('cardDetailsContent').innerHTML = `
                 <p><strong>Número:</strong> ${card.numero}</p>
                 <p><strong>CVV:</strong> ${card.cvv}</p>
-                <p><strong>Validade:</strong> ${card.valida}</p>
+                <p><strong>Validade:</strong> ${card.validade}</p>
                 <p><strong>Nome:</strong> ${card.nome}</p>
                 <p><strong>CPF:</strong> ${card.cpf}</p>
                 <p><strong>Bandeira:</strong> ${card.bandeira}</p>
@@ -310,7 +318,7 @@ const shop = {
                 <p><strong>País:</strong> ${card.pais}</p>
                 <p><strong>BIN:</strong> ${card.bin}</p>
                 <p><strong>Nível:</strong> ${card.nivel}</p>
-                <button onclick="shop.showConfirmPurchase('${cardNumber}', 10.00)" class="mt-4 bg-green-600 p-2 rounded hover:bg-green-500 w-full">Comprar (R$ 10.00)</button>
+                <button onclick="shop.showConfirmPurchase('${card.numero}', 10.00)" class="mt-4 bg-green-600 p-2 rounded hover:bg-green-500 w-full">Comprar (R$ 10.00)</button>
             `;
             document.getElementById('cardDetailsModal').classList.remove('hidden');
         }
@@ -541,7 +549,7 @@ const ui = {
                 cardElement.innerHTML = `
                     <p><strong>Número:</strong> ${card.numero}</p>
                     <p><strong>CVV:</strong> ${card.cvv}</p>
-                    <p><strong>Validade:</strong> ${card.valida}</p>
+                    <p><strong>Validade:</strong> ${card.validade}</p>
                     <p><strong>Nome:</strong> ${card.nome}</p>
                     <button onclick="admin.deleteCard('${card.numero}')" class="mt-2 bg-red-600 p-2 rounded hover:bg-red-500 w-full">Excluir</button>
                 `;
@@ -594,7 +602,7 @@ const ui = {
         const cardData = {
             numero: document.getElementById('cardNumber').value.trim(),
             cvv: document.getElementById('cardCvv').value.trim(),
-            valida: document.getElementById('cardExpiry').value.trim(),
+            validade: document.getElementById('cardExpiry').value.trim(),
             nome: document.getElementById('cardName').value.trim(),
             cpf: document.getElementById('cardCpf').value.trim(),
             bandeira: document.getElementById('cardBrand').value.trim(),
@@ -603,7 +611,7 @@ const ui = {
             nivel: document.getElementById('cardLevel').value.trim()
         };
 
-        if (!cardData.numero || !cardData.cvv || !cardData.valida || !cardData.nome || !cardData.cpf || !cardData.bandeira || !cardData.banco || !cardData.pais || !cardData.nivel) {
+        if (!cardData.numero || !cardData.cvv || !cardData.validade || !cardData.nome || !cardData.cpf || !cardData.bandeira || !cardData.banco || !cardData.pais || !cardData.nivel) {
             showNotification('Preencha todos os campos.');
             return;
         }
@@ -700,7 +708,7 @@ const ui = {
                     <div class="bg-gray-700 p-2 rounded mb-2">
                         <p><strong>Número:</strong> ${card.numero}</p>
                         <p><strong>CVV:</strong> ${card.cvv}</p>
-                        <p><strong>Validade:</strong> ${card.valida}</p>
+                        <p><strong>Validade:</strong> ${card.validade}</p>
                         <p><strong>Nome:</strong> ${card.nome}</p>
                     </div>
                 `).join('');
