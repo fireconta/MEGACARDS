@@ -137,17 +137,23 @@ const auth = {
             const response = await fetch(`${CONFIG.JSONBIN_URL}/latest`, {
                 headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
             });
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Erro HTTP: ${response.status} - ${errorText}`);
+            }
             const { record } = await response.json();
-            state.users = record.users || [];
+            if (!record || !Array.isArray(record.users)) {
+                throw new Error('Estrutura da bin de usuários inválida.');
+            }
+            state.users = record.users;
             const user = state.users.find(u => u.username === username && u.password === password);
             if (!user) {
-                throw new Error('Usuário ou senha inválidos');
+                throw new Error('Usuário ou senha inválidos.');
             }
             state.currentUser = {
                 username: user.username,
-                balance: user.balance,
-                is_admin: user.is_admin
+                balance: user.balance || 0,
+                is_admin: user.is_admin || false
             };
             state.isAdmin = user.is_admin;
             localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
@@ -601,7 +607,7 @@ const ui = {
         const username = document.getElementById('newUsername').value.trim();
         const password = document.getElementById('newPassword').value.trim();
         const balance = document.getElementById('newBalance').value.trim();
-        const isAdmin = document.getElementById('isAdmin').value === 'TRUE';
+        const isAdmin = document.getElementById('isAdmin').value === 'true';
 
         if (!username || !password || !balance) {
             showNotification('Preencha todos os campos.');
