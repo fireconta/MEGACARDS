@@ -265,25 +265,32 @@ const shop = {
             const response = await fetch(`${CONFIG.CARD_JSONBIN_URL}/latest`, {
                 headers: { 'X-Master-Key': CONFIG.CARD_JSONBIN_KEY }
             });
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Erro HTTP: ${response.status} - ${errorText}`);
+            }
             const { record } = await response.json();
-            state.cards = record.cards || [];
+            console.log('Resposta da bin de cartões:', record);
+            if (!record || !Array.isArray(record.cards)) {
+                throw new Error('Os cartões não estão em um formato válido. Verifique a estrutura da bin.');
+            }
+            state.cards = record.cards;
             console.log('Cartões carregados:', state.cards);
             const cardList = document.getElementById('cardList');
             if (cardList) {
                 cardList.innerHTML = '';
                 if (state.cards.length === 0) {
-                    cardList.innerHTML = '<p class="text-gray-400">Nenhum cartão disponível no momento.</p>';
+                    cardList.innerHTML = '<p class="text-gray-400 text-center">Nenhum cartão disponível no momento.</p>';
                 } else {
                     state.cards.forEach(card => {
                         const cardElement = document.createElement('div');
-                        cardElement.className = 'bg-gray-800 p-4 rounded shadow cursor-pointer hover:bg-gray-700 transition';
+                        cardElement.className = 'bg-gray-800 p-4 rounded-lg shadow-xl cursor-pointer hover:bg-gray-700 transition-all duration-300';
                         cardElement.innerHTML = `
-                            <p><strong>Número:</strong> ${card.numero}</p>
-                            <p><strong>Bandeira:</strong> ${card.bandeira}</p>
-                            <p><strong>Banco:</strong> ${card.banco}</p>
-                            <p><strong>Nível:</strong> ${card.nivel}</p>
-                            <button onclick="shop.showCardDetails('${card.numero}')" class="mt-2 bg-blue-600 p-2 rounded hover:bg-blue-500 w-full">Ver Detalhes</button>
+                            <p class="font-semibold mb-2"><strong>Número:</strong> ${card.numero}</p>
+                            <p class="mb-1"><strong>Bandeira:</strong> ${card.bandeira}</p>
+                            <p class="mb-1"><strong>Banco:</strong> ${card.banco}</p>
+                            <p class="mb-1"><strong>Nível:</strong> ${card.nivel}</p>
+                            <button onclick="shop.showCardDetails('${card.numero}')" class="mt-2 w-full bg-blue-600 p-2 rounded hover:bg-blue-500 transition">Ver Detalhes</button>
                         `;
                         cardList.appendChild(cardElement);
                     });
@@ -294,7 +301,7 @@ const shop = {
                 if (navbar) {
                     const adminButton = document.createElement('button');
                     adminButton.textContent = 'Painel Administrador';
-                    adminButton.className = 'bg-blue-600 p-2 rounded hover:bg-blue-500 ml-2';
+                    adminButton.className = 'bg-blue-600 p-2 rounded-lg hover:bg-blue-500 transition ml-2';
                     adminButton.onclick = () => window.location.href = 'dashboard.html';
                     navbar.querySelector('div').appendChild(adminButton);
                 }
@@ -309,17 +316,17 @@ const shop = {
         const card = state.cards.find(c => c.numero === cardNumber);
         if (card) {
             document.getElementById('cardDetailsContent').innerHTML = `
-                <p><strong>Número:</strong> ${card.numero}</p>
-                <p><strong>CVV:</strong> ${card.cvv}</p>
-                <p><strong>Validade:</strong> ${card.validade}</p>
-                <p><strong>Nome:</strong> ${card.nome}</p>
-                <p><strong>CPF:</strong> ${card.cpf}</p>
-                <p><strong>Bandeira:</strong> ${card.bandeira}</p>
-                <p><strong>Banco:</strong> ${card.banco}</p>
-                <p><strong>País:</strong> ${card.pais}</p>
-                <p><strong>BIN:</strong> ${card.bin}</p>
-                <p><strong>Nível:</strong> ${card.nivel}</p>
-                <button onclick="shop.showConfirmPurchase('${card.numero}', 10.00)" class="mt-4 bg-green-600 p-2 rounded hover:bg-green-500 w-full">Comprar (R$ 10.00)</button>
+                <p class="mb-1"><strong>Número:</strong> ${card.numero}</p>
+                <p class="mb-1"><strong>CVV:</strong> ${card.cvv}</p>
+                <p class="mb-1"><strong>Validade:</strong> ${card.validade}</p>
+                <p class="mb-1"><strong>Nome:</strong> ${card.nome}</p>
+                <p class="mb-1"><strong>CPF:</strong> ${card.cpf}</p>
+                <p class="mb-1"><strong>Bandeira:</strong> ${card.bandeira}</p>
+                <p class="mb-1"><strong>Banco:</strong> ${card.banco}</p>
+                <p class="mb-1"><strong>País:</strong> ${card.pais}</p>
+                <p class="mb-1"><strong>BIN:</strong> ${card.bin}</p>
+                <p class="mb-1"><strong>Nível:</strong> ${card.nivel}</p>
+                <button onclick="shop.showConfirmPurchase('${card.numero}', 10.00)" class="mt-4 w-full bg-green-600 p-2 rounded hover:bg-green-500 transition">Comprar (R$ 10.00)</button>
             `;
             document.getElementById('cardDetailsModal').classList.remove('hidden');
         }
@@ -329,10 +336,10 @@ const shop = {
         const card = state.cards.find(c => c.numero === cardNumber);
         if (card) {
             document.getElementById('confirmCardDetails').innerHTML = `
-                <p><strong>Número:</strong> ${card.numero}</p>
-                <p><strong>Bandeira:</strong> ${card.bandeira}</p>
-                <p><strong>Banco:</strong> ${card.banco}</p>
-                <p><strong>Nível:</strong> ${card.nivel}</p>
+                <p class="mb-1"><strong>Número:</strong> ${card.numero}</p>
+                <p class="mb-1"><strong>Bandeira:</strong> ${card.bandeira}</p>
+                <p class="mb-1"><strong>Banco:</strong> ${card.banco}</p>
+                <p class="mb-1"><strong>Nível:</strong> ${card.nivel}</p>
             `;
             document.getElementById('confirmTotalAmount').textContent = price.toFixed(2);
             document.getElementById('confirmUserBalance').textContent = state.currentUser.balance.toFixed(2);
@@ -696,13 +703,13 @@ const ui = {
                        (levelFilter === 'all' || card.nivel.toLowerCase() === levelFilter);
             }).forEach(card => {
                 const cardElement = document.createElement('div');
-                cardElement.className = 'bg-gray-800 p-4 rounded shadow cursor-pointer hover:bg-gray-700 transition';
+                cardElement.className = 'bg-gray-800 p-4 rounded-lg shadow-xl cursor-pointer hover:bg-gray-700 transition-all duration-300';
                 cardElement.innerHTML = `
-                    <p><strong>Número:</strong> ${card.numero}</p>
-                    <p><strong>Bandeira:</strong> ${card.bandeira}</p>
-                    <p><strong>Banco:</strong> ${card.banco}</p>
-                    <p><strong>Nível:</strong> ${card.nivel}</p>
-                    <button onclick="shop.showCardDetails('${card.numero}')" class="mt-2 bg-blue-600 p-2 rounded hover:bg-blue-500 w-full">Ver Detalhes</button>
+                    <p class="font-semibold mb-2"><strong>Número:</strong> ${card.numero}</p>
+                    <p class="mb-1"><strong>Bandeira:</strong> ${card.bandeira}</p>
+                    <p class="mb-1"><strong>Banco:</strong> ${card.banco}</p>
+                    <p class="mb-1"><strong>Nível:</strong> ${card.nivel}</p>
+                    <button onclick="shop.showCardDetails('${card.numero}')" class="mt-2 w-full bg-blue-600 p-2 rounded hover:bg-blue-500 transition">Ver Detalhes</button>
                 `;
                 cardList.appendChild(cardElement);
             });
@@ -726,7 +733,7 @@ const ui = {
                 <p><strong>Usuário:</strong> <span id="userName">${state.currentUser.username}</span></p>
                 <p><strong>Saldo:</strong> <span id="userBalanceAccount">R$ ${state.currentUser.balance.toFixed(2)}</span></p>
                 <div id="userCards" class="mt-4"></div>
-                <button onclick="ui.showAddBalanceForm()" class="mt-4 bg-green-600 p-2 rounded hover:bg-green-500" aria-label="Adicionar saldo">Adicionar Saldo</button>
+                <button onclick="ui.showAddBalanceForm()" class="mt-4 bg-green-600 p-2 rounded hover:bg-green-500 transition" aria-label="Adicionar saldo">Adicionar Saldo</button>
             `;
             ui.loadUserCards();
         }
