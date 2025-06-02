@@ -3,44 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Loja de Cartões</title>
+    <title>Loja de Cartões - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <script src="script.js" defer></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #1A1A1A;
+        }
+        .login-button {
+            background-color: #00C4B4;
+            color: #FFFFFF;
+            border-radius: 20px;
+            padding: 10px 20px;
+            transition: background-color 0.3s ease;
+        }
+        .login-button:hover {
+            background-color: #00A89C;
+        }
+        .register-button {
+            background-color: #4B5563;
+            color: #FFFFFF;
+            border-radius: 20px;
+            padding: 10px 20px;
+            transition: background-color 0.3s ease;
+        }
+        .register-button:hover {
+            background-color: #6B7280;
+        }
+    </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center">
-    <div class="container mx-auto p-4 max-w-md">
-        <div id="notifications" class="fixed top-4 right-4"></div>
-        <div id="loginForm" class="bg-gray-800 p-6 rounded-lg shadow-2xl">
-            <h2 class="text-2xl font-bold mb-4 text-center">Login</h2>
-            <div class="mb-4">
-                <label for="username" class="block mb-1">Usuário</label>
-                <input type="text" id="username" class="w-full p-2 bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500" required autocomplete="username" maxlength="50">
-                <p id="usernameError" class="text-red-500 text-sm mt-1"></p>
-            </div>
-            <div class="mb-4">
-                <label for="password" class="block mb-1">Senha</label>
-                <input type="password" id="password" class="w-full p-2 bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500" required autocomplete="current-password" minlength="6" maxlength="50">
-                <p id="passwordError" class="text-red-500 text-sm mt-1"></p>
-            </div>
-            <button id="loginButton" onclick="auth.login()" class="w-full bg-blue-600 p-2 rounded-lg hover:bg-blue-500 transition">Entrar</button>
-            <button onclick="ui.showRegisterForm()" class="mt-4 w-full bg-gray-600 p-2 rounded-lg hover:bg-gray-500 transition">Criar Conta</button>
+<body class="text-white min-h-screen flex items-center justify-center">
+    <div id="loginForm" class="bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md">
+        <h2 class="text-2xl font-bold mb-6 text-cyan-500">Entrar</h2>
+        <div class="mb-4">
+            <label for="username" class="block text-sm font-medium mb-2">Usuário</label>
+            <input id="username" type="text" placeholder="Usuário" class="w-full p-2 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-cyan-500">
+            <p id="usernameError" class="text-red-500 text-sm mt-1"></p>
         </div>
-
-        <div id="registerForm" class="bg-gray-800 p-6 rounded-lg shadow-2xl hidden">
-            <h2 class="text-2xl font-bold mb-4 text-center">Registrar</h2>
-            <div class="mb-4">
-                <label for="newUsername" class="block mb-1">Usuário</label>
-                <input type="text" id="newUsername" class="w-full p-2 bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500" required autocomplete="username" maxlength="50">
-                <p id="newUsernameError" class="text-red-500 text-sm mt-1"></p>
-            </div>
-            <div class="mb-4">
-                <label for="newPassword" class="block mb-1">Senha</label>
-                <input type="password" id="newPassword" class="w-full p-2 bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500" required autocomplete="new-password" minlength="6" maxlength="50">
-                <p id="newPasswordError" class="text-red-500 text-sm mt-1"></p>
-            </div>
-            <button id="registerButton" onclick="auth.register()" class="w-full bg-green-600 p-2 rounded-lg hover:bg-green-500 transition">Registrar</button>
-            <button onclick="ui.showLoginForm()" class="mt-4 w-full bg-gray-600 p-2 rounded-lg hover:bg-gray-500 transition">Voltar ao Login</button>
+        <div class="mb-6">
+            <label for="password" class="block text-sm font-medium mb-2">Senha</label>
+            <input id="password" type="password" placeholder="Senha" class="w-full p-2 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-cyan-500">
+            <p id="passwordError" class="text-red-500 text-sm mt-1"></p>
         </div>
+        <button id="loginButton" class="w-full login-button">Entrar</button>
+        <p class="mt-4 text-center text-sm">Não tem uma conta? <a href="#" onclick="ui.showRegisterForm()" class="text-cyan-500 hover:underline">Registre-se</a></p>
     </div>
+    <div id="registerForm" class="bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md hidden">
+        <h2 class="text-2xl font-bold mb-6 text-cyan-500">Registrar</h2>
+        <div class="mb-4">
+            <label for="newUsername" class="block text-sm font-medium mb-2">Usuário</label>
+            <input id="newUsername" type="text" placeholder="Usuário" class="w-full p-2 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-cyan-500">
+            <p id="newUsernameError" class="text-red-500 text-sm mt-1"></p>
+        </div>
+        <div class="mb-6">
+            <label for="newPassword" class="block text-sm font-medium mb-2">Senha</label>
+            <input id="newPassword" type="password" placeholder="Senha" class="w-full p-2 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-cyan-500">
+            <p id="newPasswordError" class="text-red-500 text-sm mt-1"></p>
+        </div>
+        <button id="registerButton" class="w-full login-button">Registrar</button>
+        <p class="mt-4 text-center text-sm">Já tem uma conta? <a href="#" onclick="ui.showLoginForm()" class="text-cyan-500 hover:underline">Entre</a></p>
+    </div>
+    <div id="notifications" class="fixed top-4 right-4"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (state.currentUser) {
+                window.location.href = 'shop.html';
+            }
+            console.log('Página index.html carregada em ' + new Date().toLocaleString());
+        });
+    </script>
 </body>
 </html>
