@@ -143,12 +143,13 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            color: #38BDF8;
+            color: #A0BFE0;
             font-size: 1.25rem;
             transition: all 0.3s ease;
             text-decoration: none;
             font-weight: 500;
             padding: 0.5rem;
+            cursor: pointer;
         }
         .wallet-button i {
             margin-bottom: 0.3rem;
@@ -157,9 +158,12 @@
             font-size: 0.7rem;
             color: #A0BFE0;
         }
-        .wallet-button:hover, .wallet-button.active {
-            color: #2563EB;
+        .wallet-button.active {
+            color: #38BDF8;
             transform: scale(1.1);
+        }
+        .wallet-button:hover {
+            color: #2563EB;
         }
         .modal {
             background: rgba(0, 0, 0, 0.8);
@@ -231,7 +235,7 @@
             padding: 1.5rem;
             background: rgba(30, 41, 59, 0.9);
             border-radius: 1rem;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 8px 25px rgba(0, 0,0.5);
             border: 1px solid rgba(56, 189, 248, 0.2);
             display: grid;
             gap: 1rem;
@@ -306,6 +310,9 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        .hidden {
+            display: none !important;
+        }
         @media (min-width: 640px) {
             .filter-section {
                 grid-template-columns: repeat(2, 1fr);
@@ -363,24 +370,22 @@
             <button onclick="ui.clearFilters()" class="clear">Limpar Filtros</button>
         </div>
         <div id="cardList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" role="region" aria-live="polite"></div>
-        <div id="loadingSpinner" class="loading-spinner" aria-label="Carregando cartões"></div>
-    </main>
-    <footer class="wallet" role="navigation">
-        <a href="shop.html" class="wallet-button active" aria-current="page"><i class="fas fa-store" aria-hidden="true"></i><span>Loja</span></a>
-        <a href="#" onclick="ui.showAccountInfo(); return false;" class="wallet-button"><i class="fas fa-user" aria-hidden="true"></i><span>Conta</span></a>
-        <a href="#" onclick="ui.showWallet(); return false;" class="wallet-button"><i class="fas fa-wallet" aria-hidden="true"></i><span>Carteira</span></a>
-        <a href="#" onclick="auth.logout(); return false;" class="wallet-button"><i class="fas fa-sign-out-alt" aria-hidden="true"></i><span>Sair</span></a>
-        <a id="adminButton" href="dashboard.html" class="wallet-button hidden"><i class="fas fa-crown" aria-hidden="true"></i><span>Admin</span></a>
-    </footer>
-    <div id="accountInfo" class="container mx-auto p-6 hidden" role="dialog">
-        <h2>Minha Conta</h2>
-        <div class="card-details">
+        <div id="accountInfo" class="card-details hidden" role="region" aria-live="polite">
+            <h2>Minha Conta</h2>
             <p class="mb-2"><strong>Usuário:</strong> <span id="userName"></span></p>
             <p class="mb-4"><strong>Saldo:</strong> R$ <span id="userBalanceAccount">0.00</span></p>
             <div id="userCards" class="mt-4"></div>
+            <button onclick="ui.showAddBalanceForm()" class="card-button w-full">Adicionar Saldo</button>
         </div>
-        <button onclick="ui.showAddBalanceForm()" class="card-button w-full">Adicionar Saldo</button>
-    </div>
+        <div id="loadingSpinner" class="loading-spinner" aria-label="Carregando cartões"></div>
+    </main>
+    <footer class="wallet" role="navigation">
+        <button id="shopButton" class="wallet-button active" onclick="showShopSection()"><i class="fas fa-store" aria-hidden="true"></i><span>Loja</span></button>
+        <button id="accountButton" class="wallet-button" onclick="showAccountSection()"><i class="fas fa-user" aria-hidden="true"></i><span>Conta</span></button>
+        <button id="walletButton" class="wallet-button" onclick="ui.showWallet()"><i class="fas fa-wallet" aria-hidden="true"></i><span>Carteira</span></button>
+        <button id="logoutButton" class="wallet-button" onclick="auth.logout()"><i class="fas fa-sign-out-alt" aria-hidden="true"></i><span>Sair</span></button>
+        <a id="adminButton" href="dashboard.html" class="wallet-button hidden"><i class="fas fa-crown" aria-hidden="true"></i><span>Admin</span></a>
+    </footer>
     <div id="walletModal" class="modal hidden" role="dialog">
         <div class="modal-content">
             <h2>Minha Carteira</h2>
@@ -415,17 +420,35 @@
     </div>
     <div id="notifications" class="fixed top-4 right-4 z-30" role="alert"></div>
     <script>
-        // Função de debounce para otimizar a filtragem
         let debounceTimer;
         function debounceFilterCards() {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => ui.filterCards(), 300);
         }
 
-        // Inicialização
+        function showShopSection() {
+            document.getElementById('accountInfo').classList.add('hidden');
+            document.getElementById('cardList').classList.remove('hidden');
+            setActiveButton('shopButton');
+        }
+
+        function showAccountSection() {
+            document.getElementById('cardList').classList.add('hidden');
+            document.getElementById('accountInfo').classList.remove('hidden');
+            ui.showAccountInfo();
+            setActiveButton('accountButton');
+        }
+
+        function setActiveButton(buttonId) {
+            const buttons = document.querySelectorAll('.wallet-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            document.getElementById(buttonId).classList.add('active');
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const loadingSpinner = document.getElementById('loadingSpinner');
             if (loadingSpinner) loadingSpinner.classList.add('active');
+            showShopSection();
         });
     </script>
 </body>
