@@ -66,8 +66,9 @@
         h2 {
             font-family: 'Montserrat', sans-serif;
             font-size: 2rem;
+            font-weight: 700;
             color: #38BDF8;
-            text-align: left;
+            text-align: center;
             margin-bottom: 1.5rem;
             text-shadow: 0 2px 6px rgba(56, 189, 248, 0.3);
         }
@@ -112,32 +113,31 @@
         .error-text.show {
             opacity: 1;
         }
-        button.action-button {
+        .action-button {
             background: linear-gradient(90deg, #38BDF8, #2563EB);
             color: #FFFFFF;
-            border: none;
             border-radius: 0.5rem;
             padding: 0.75rem;
-            width: 100% -2px;
+            width: 100%;
             font-weight: 600;
-            font-size: 0.95rem;
+            border: none;
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
         }
-        button.action-button:hover:not(:disabled) {
+        .action-button:hover:not(:disabled) {
             background: linear-gradient(90deg, #2563EB, #1D4ED8);
             transform: scale(1.03);
             box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
         }
-        button.action-button:disabled {
+        .action-button:disabled {
             background: #4B5563;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
-        button.action-button::after {
+        .action-button::after {
             content: '';
             position: absolute;
             top: 0;
@@ -147,18 +147,17 @@
             background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
             transition: left 0.5s ease;
         }
-        button.action-button:hover::after {
+        .action-button:hover::after {
             left: 100%;
         }
         .secondary-button {
             background: #4B5563;
-            color: #E2E2F0;
-            border: none;
+            color: #E2E8F0;
             border-radius: 0.5rem;
             padding: 0.75rem;
             width: 100%;
             font-weight: 600;
-            font-size: 0.95rem;
+            border: none;
             cursor: pointer;
             transition: all 0.3s ease;
             margin-top: 0.5rem;
@@ -208,11 +207,11 @@
             color: #9CA3AF;
             cursor: pointer;
             font-size: 1rem;
+            width: 1.5rem;
+            height: 1.5rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 1.5rem;
-            height: 1.5rem;
             transition: color 0.3s ease, transform 0.2s ease;
         }
         .password-toggle:hover {
@@ -244,7 +243,7 @@
                 font-size: 1.75rem;
             }
             .form-group input {
-                padding: 0.65rem 2.25rem 0.65rem 0.65rem;
+                padding: 0.65rem 2.5rem 0.65rem 0.65rem;
                 font-size: 0.9rem;
             }
             .password-toggle {
@@ -267,17 +266,17 @@
             <h2>Login - LOGAN CC's</h2>
             <form id="loginForm" onsubmit="event.preventDefault(); auth.login();" novalidate>
                 <div class="form-group">
-                    <input id="username" type="text" placeholder="Usuário" aria-label="Usuário" oninput="validateUsername(this)" autofocus>
+                    <input id="username" type="text" placeholder="Username" aria-label="Username" oninput="validateUsername(this)" required autofocus>
                     <span id="usernameError" class="error-text"></span>
                 </div>
                 <div class="form-group">
-                    <input id="password" type="password" placeholder="Senha" aria-label="Senha" oninput="validatePassword(this)">
-                    <button type="button" class="password-toggle" onclick="togglePassword('password', this)" aria-label="Alternar visibilidade da senha">
+                    <input id="password" type="password" placeholder="Password" aria-label="Password" oninput="validatePassword(this)" required>
+                    <button type="button" class="password-toggle" onclick="togglePassword('password', this)" aria-label="Toggle password visibility">
                         <i class="fas fa-eye"></i>
                     </button>
                     <span id="passwordError" class="error-text"></span>
                 </div>
-                <button id="loginButton" type="submit" class="action-button">Entrar</button>
+                <button id="loginButton" type="submit" class="action-button" disabled>Entrar</button>
             </form>
             <button class="secondary-button" onclick="ui.showRegisterForm()">Criar Conta</button>
         </div>
@@ -285,24 +284,24 @@
             <h2>Registrar - LOGAN CC's</h2>
             <form id="registerForm" onsubmit="event.preventDefault(); auth.register();" novalidate>
                 <div class="form-group">
-                    <input id="newUsername" type="text" placeholder="Novo Usuário" aria-label="Usuário" oninput="validateUsername(this)" autofocus>
+                    <input id="newUsername" type="text" placeholder="Username" aria-label="Username" oninput="validateUsername(this)" required autofocus>
                     <span id="newUsernameError" class="error-text"></span>
                 </div>
                 <div class="form-group">
-                    <input id="newPassword" type="password" placeholder="Nova Senha" aria-label="Nova Senha" oninput="validatePassword(this)">
-                    <button type="button" class="password-toggle" onclick="togglePassword('newPassword', this)" aria-label="Alternar visibilidade da senha">
+                    <input id="newPassword" type="password" placeholder="Password" aria-label="Password" oninput="validatePassword(this)" required>
+                    <button type="button" class="password-toggle" onclick="togglePassword('newPassword', this)" aria-label="Toggle password visibility">
                         <i class="fas fa-eye"></i>
                     </button>
                     <span id="newPasswordError" class="error-text"></span>
                 </div>
                 <div class="form-group">
-                    <input id="confirmPassword" type="password" placeholder="Confirmar Senha" aria-label="Confirmar Senha" oninput="confirmPassword(this)">
-                    <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)" aria-label="Alternar visibilidade da senha">
+                    <input id="confirmPassword" type="password" placeholder="Confirm Password" aria-label="Confirm Password" oninput="validateConfirmPassword(this)" required>
+                    <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)" aria-label="Toggle password visibility">
                         <i class="fas fa-eye"></i>
                     </button>
                     <span id="confirmPasswordError" class="error-text"></span>
                 </div>
-                <button id="registerButton" type="submit" class="action-button">Registrar</button>
+                <button id="registerButton" type="submit" class="action-button" disabled>Registrar</button>
             </form>
             <button class="secondary-button" onclick="ui.showLoginForm()">Voltar ao Login</button>
         </div>
@@ -329,46 +328,79 @@
             const value = input.value.trim();
             const regex = /^[a-zA-Z0-9_]{3,20}$/;
             errorElement.classList.remove('show');
-            if (value && !regex.test(value)) {
-                errorElement.textContent = 'Usuário deve ter 3-20 caracteres alfanuméricos.';
+            input.classList.remove('error');
+            if (!value) {
+                errorElement.textContent = 'Username é obrigatório.';
+                errorElement.classList.add('show');
+                input.classList.add('error');
+            } else if (!regex.test(value)) {
+                errorElement.textContent = 'Username deve ter 3-20 caracteres alfanuméricos.';
                 errorElement.classList.add('show');
                 input.classList.add('error');
             } else {
                 errorElement.textContent = '';
-                input.classList.remove('error');
             }
+            updateButtonState(input.closest('form').id);
         }
 
         function validatePassword(input) {
             const errorElement = document.getElementById(input.id === 'password' ? 'passwordError' : 'newPasswordError');
             const value = input.value.trim();
+            const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
             errorElement.classList.remove('show');
-            if (value && value.length < 6) {
-                errorElement.textContent = 'A senha deve ter pelo menos 6 caracteres.';
+            input.classList.remove('error');
+            if (!value) {
+                errorElement.textContent = 'Password é obrigatório!';
+                errorElement.classList.add('show');
+                input.classList.add('error');
+            } else if (!regex.test(value)) {
+                errorElement.textContent = 'Password deve ter no mínimo 8 caracteres, com letras maiúsculas, minúsculas e números.';
                 errorElement.classList.add('show');
                 input.classList.add('error');
             } else {
                 errorElement.textContent = '';
-                input.classList.remove('error');
             }
             if (input.id === 'newPassword') {
-                confirmPassword(document.getElementById('confirmPassword'));
+                validateConfirmPassword(document.getElementById('confirmPassword'));
             }
+            updateButtonState(input.closest('form').id);
         }
 
-        function confirmPassword(input) {
+        function validateConfirmPassword(input) {
             const errorElement = document.getElementById('confirmPasswordError');
             const value = input.value.trim();
             const password = document.getElementById('newPassword').value.trim();
             errorElement.classList.remove('show');
-            if (value && value !== password) {
+            input.classList.remove('error');
+            if (!value) {
+                errorElement.textContent = 'Confirmação de password é obrigatória.';
+                errorElement.classList.add('show');
+                input.classList.add('error');
+            } else if (value !== password) {
                 errorElement.textContent = 'As senhas não coincidem.';
                 errorElement.classList.add('show');
                 input.classList.add('error');
             } else {
                 errorElement.textContent = '';
-                input.classList.remove('error');
             }
+            updateButtonState(input.closest('form').id);
+        }
+
+        function updateButtonState(formId) {
+            const form = document.getElementById(formId);
+            const button = form.querySelector('.action-button');
+            const inputs = form.querySelectorAll('input');
+            const errors = form.querySelectorAll('.error-text.show');
+            let isValid = true;
+            inputs.forEach(input => {
+                if (!input.value.trim() || input.classList.contains('error')) {
+                    isValid = false;
+                }
+            });
+            if (errors.length > 0) {
+                isValid = false;
+            }
+            button.disabled = !isValid;
         }
     </script>
 </body>
