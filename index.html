@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1A2A44">
     <title>Login - LOGAN CC's</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Montserrat:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="script.js" defer></script>
     <style>
         * {
             margin: 0;
@@ -14,119 +16,125 @@
         }
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(145deg, #0F172A, #1E293B);
+            background: linear-gradient(145deg, #0F172A 0%, #1E293B 100%);
             color: #E2E8F0;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
         }
         .header {
-            background: rgba(15, 23, 42, 0.9);
-            padding: 1rem;
-            display: flex;
-            justify-content: center;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        .header .logo img {
-            height: 40px;
-            display: block;
-        }
-        main {
-            flex-grow: 1;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            width: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 1rem;
+            position: fixed;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         }
-        .auth-container {
-            background: #2D3748;
+        .header .logo img {
+            height: 45px;
+            transition: transform 0.3s ease;
+        }
+        .header .logo img:hover {
+            transform: scale(1.1);
+        }
+        .container {
+            background: rgba(30, 41, 59, 0.9);
             border-radius: 1rem;
             padding: 2rem;
-            width: 100%;
+            width: 90%;
             max-width: 400px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            border: 1px solid #38BDF8;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         h2 {
             font-family: 'Montserrat', sans-serif;
             font-size: 2rem;
+            font-weight: 700;
             color: #38BDF8;
-            margin-bottom: 1rem;
             text-align: center;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 2px 6px rgba(56, 189, 248, 0.3);
         }
         .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
             margin-bottom: 1rem;
         }
-        .form-group label {
-            font-size: 0.875rem;
-            color: #A1A1AA;
-        }
         .form-group input {
-            background: #334155;
+            background: #2D3748;
             color: #E2E8F0;
             border: 1px solid #4B5563;
             border-radius: 0.5rem;
             padding: 0.75rem;
             width: 100%;
-            font-size: 1rem;
+            transition: all 0.3s ease;
         }
         .form-group input:focus {
             border-color: #38BDF8;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
             outline: none;
-            box-shadow: 0 0 5px rgba(56, 189, 248, 0.4);
+            background: #334155;
         }
-        .form-group button {
+        .error-text {
+            color: #F87171;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+            min-height: 1.2rem;
+        }
+        .action-button {
             background: linear-gradient(90deg, #38BDF8, #2563EB);
             color: #FFFFFF;
-            border: none;
             border-radius: 0.5rem;
             padding: 0.75rem;
             width: 100%;
             font-weight: 600;
+            border: none;
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        .form-group button:hover {
+        .action-button:hover {
             background: linear-gradient(90deg, #2563EB, #1D4ED8);
+            transform: scale(1.03);
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
         }
-        .form-group button:disabled {
-            background: #6B7280;
-            cursor: not-allowed;
-        }
-        .error-text {
-            color: #F87171;
-            font-size: 0.875rem;
-            margin-top: 0.25rem;
-        }
-        .toggle-link {
-            color: #38BDF8;
-            margin-top: 1rem;
-            text-decoration: none;
-            display: block;
-            text-align: center;
-            font-size: 0.875rem;
+        .secondary-button {
+            background: #4B5563;
+            color: #E2E8F0;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            width: 100%;
+            font-weight: 600;
+            border: none;
             cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 0.5rem;
         }
-        .toggle-link:hover {
-            color: #2563EB;
+        .secondary-button:hover {
+            background: #6B7280;
+            transform: scale(1.03);
         }
         .notification {
             position: fixed;
             top: 1rem;
             right: 1rem;
+            z-index: 1000;
             padding: 0.75rem 1.5rem;
             border-radius: 0.5rem;
             color: #FFFFFF;
             font-size: 0.9rem;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
             animation: slideIn 0.3s ease;
-            max-width: 300px;
         }
         .notification.error {
             background: #F87171;
@@ -138,137 +146,65 @@
             from { opacity: 0; transform: translateX(20px); }
             to { opacity: 1; transform: translateX(0); }
         }
-        @media (max-width: 480px) {
-            .auth-container {
+        @media (max-width: 640px) {
+            .container {
                 padding: 1.5rem;
-                max-width: 95%;
             }
             h2 {
-                font-size: 1.5rem;
-            }
-            .form-group input,
-            .form-group button {
-                font-size: 0.875rem;
-                padding: 0.5rem;
+                font-size: 1.75rem;
             }
         }
     </style>
 </head>
 <body>
     <header class="header">
-        <a href="#" class="logo">
-            <img src="logo.png" alt="LOGAN CC's Logo" onerror="this.src='https://via.placeholder.com/40?text=Logo';">
-        </a>
+        <a href="index.html" class="logo"><img src="logo.png" alt="LOGAN CC's Logo"></a>
     </header>
-    <main>
-        <div id="loginContainer" class="auth-container">
+    <main class="container">
+        <div id="loginContainer">
             <h2>Login - LOGAN CC's</h2>
             <div class="form-group">
-                <label for="username">Usuário</label>
-                <input id="username" type="text" placeholder="Usuário" aria-label="Usuário" aria-describedby="usernameError" oninput="validateUsername(this)">
+                <input id="username" type="text" placeholder="Usuário" oninput="validateUsername(this)">
                 <p id="usernameError" class="error-text"></p>
-                <label for="password">Senha</label>
-                <input id="password" type="password" placeholder="Senha" aria-label="Senha" aria-describedby="passwordError" oninput="validatePassword(this)">
-                <p id="passwordError" class="error-text"></p>
-                <button id="loginButton" type="button">Entrar</button>
-                <a class="toggle-link" id="showRegisterLink">Não tem conta? Registre-se</a>
             </div>
-        </div>
-        <div id="registerContainer" class="auth-container" style="display: none;">
-            <h2>Registro - LOGAN CC's</h2>
             <div class="form-group">
-                <label for="newUsername">Novo Usuário</label>
-                <input id="newUsername" type="text" placeholder="Novo Usuário" aria-label="Novo Usuário" aria-describedby="newUsernameError" oninput="validateUsername(this)">
-                <p id="newUsernameError" class="error-text"></p>
-                <label for="newPassword">Nova Senha</label>
-                <input id="newPassword" type="password" placeholder="Nova Senha" aria-label="Nova Senha" aria-describedby="newPasswordError" oninput="validatePassword(this)">
-                <p id="newPasswordError" class="error-text"></p>
-                <button id="registerButton" type="button">Registrar</button>
-                <a class="toggle-link" id="showLoginLink">Já tem conta? Faça login</a>
+                <input id="password" type="password" placeholder="Senha">
+                <p id="passwordError" class="error-text"></p>
             </div>
+            <button id="loginButton" class="action-button" onclick="auth.login()">Entrar</button>
+            <button class="secondary-button" onclick="ui.showRegisterForm()">Criar Conta</button>
+        </div>
+        <div id="registerContainer" style="display: none;">
+            <h2>Registrar - LOGAN CC's</h2>
+            <div class="form-group">
+                <input id="newUsername" type="text" placeholder="Usuário" oninput="validateUsername(this)">
+                <p id="newUsernameError" class="error-text"></p>
+            </div>
+            <div class="form-group">
+                <input id="newPassword" type="password" placeholder="Senha">
+                <p id="newPasswordError" class="error-text"></p>
+            </div>
+            <button id="registerButton" class="action-button" onclick="auth.register()">Registrar</button>
+            <button class="secondary-button" onclick="ui.showLoginForm()">Voltar ao Login</button>
         </div>
     </main>
-    <div id="notifications"></div>
-    <script src="script.js"></script>
+    <div id="notifications" class="fixed top-4 right-4 z-30"></div>
     <script>
-        // Validações de input no frontend
         function validateUsername(input) {
             const username = input.value.trim();
-            const errorElement = document.getElementById(input.id + 'Error');
+            const errorElement = document.getElementById(input.id === 'username' ? 'usernameError' : 'newUsernameError');
             const regex = /^[a-zA-Z0-9_]{3,}$/;
-            if (!username) {
-                errorElement.textContent = 'Por favor, preencha o usuário.';
-            } else if (!regex.test(username)) {
+            if (!regex.test(username)) {
                 errorElement.textContent = 'Usuário deve ter pelo menos 3 caracteres alfanuméricos.';
             } else {
                 errorElement.textContent = '';
             }
         }
 
-        function validatePassword(input) {
-            const password = input.value.trim();
-            const errorElement = document.getElementById(input.id + 'Error');
-            if (!password) {
-                errorElement.textContent = 'Por favor, preencha a senha.';
-            } else if (password.length < 6) {
-                errorElement.textContent = 'A senha deve ter pelo menos 6 caracteres.';
-            } else {
-                errorElement.textContent = '';
-            }
-        }
-
-        // Inicialização após carregamento do DOM
         document.addEventListener('DOMContentLoaded', () => {
-            // Verifica se script.js foi carregado
-            if (typeof auth === 'undefined' || typeof ui === 'undefined') {
-                const notify = document.getElementById('notifications');
-                if (notify) {
-                    notify.innerHTML = '<div class="notification error">Erro: Sistema indisponível. Tente novamente mais tarde.</div>';
-                }
-                console.error('Erro: auth ou ui não definidos. Verifique o carregamento de script.js.');
-                return;
-            }
-
-            // Associa eventos aos botões
-            const loginButton = document.getElementById('loginButton');
-            const registerButton = document.getElementById('registerButton');
-            const showRegisterLink = document.getElementById('showRegisterLink');
-            const showLoginLink = document.getElementById('showLoginLink');
-
-            if (loginButton) {
-                loginButton.addEventListener('click', () => {
-                    try {
-                        auth.login();
-                    } catch (e) {
-                        console.error('Erro ao chamar auth.login:', e);
-                        const notify = document.getElementById('notifications');
-                        if (notify) {
-                            notify.innerHTML = '<div class="notification error">Erro interno. Tente novamente.</div>';
-                        }
-                    }
-                });
-            }
-
-            if (registerButton) {
-                registerButton.addEventListener('click', () => {
-                    try {
-                        auth.register();
-                    } catch (e) {
-                        console.error('Erro ao chamar auth.register:', e);
-                        const notify = document.getElementById('notifications');
-                        if (notify) {
-                            notify.innerHTML = '<div class="notification error">Erro interno. Tente novamente.</div>';
-                        }
-                    }
-                });
-            }
-
-            if (showRegisterLink) {
-                showRegisterLink.addEventListener('click', ui.showRegisterForm);
-            }
-
-            if (showLoginLink) {
-                showLoginLink.addEventListener('click', ui.showLoginForm);
+            if (checkAuth()) {
+                showNotification('Você já está logado.', 'success');
+                setTimeout(() => window.location.href = 'shop.html', 1000);
             }
         });
     </script>
