@@ -1,14 +1,17 @@
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm';
+
 const CONFIG = {
     SESSION_TIMEOUT_MINUTES: 30,
     MIN_PASSWORD_LENGTH: 6,
     MAX_LOGIN_ATTEMPTS: 3,
     LOGIN_BLOCK_TIME: 60000,
     NOTIFICATION_TIMEOUT: 5000,
-    JSONBIN_URL: 'https://api.jsonbin.io/v3/b/683db3318a456b7966a88cdd',
-    JSONBIN_KEY: '$2a$10$/Oqg4nCgjzZhdIp./fBtxuIISi6286hxDKDKuMUUN4gfGy8CGZIMK',
-    CARD_JSONBIN_URL: 'https://api.jsonbin.io/v3/b/683dd1e78561e97a501ec0e4',
-    CARD_JSONBIN_KEY: '$2a$10$/Oqg4nCgjzZhdIp./fBtxuIISi6286hxDKDKuMUUN4gfGy8CGZIMK'
+    SUPABASE_URL: 'https://nphqfkfdjjpiqssdyanb.supabase.co',
+    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5waHFma2ZkampwaXFzc2R5YW5iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5MjIyODgsImV4cCI6MjA2NDQ5ODI4OH0.7wKoxm1oTY0lYavpBjEtQ1dH_x6ghIO2qYsf_K8z9_g'
 };
+
+// Inicializa o cliente Supabase
+const supabase = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 
 const state = {
     users: [],
@@ -56,19 +59,17 @@ const auth = {
         toggleLoadingButton(loginButton, true);
 
         try {
-            const response = await fetch(`${CONFIG.JSONBIN_URL}/latest`, {
-                headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
-            });
-            if (response.status === 429) throw new Error('Limite de requisições excedido. Tente novamente mais tarde.');
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record } = await response.json();
-            const users = Array.isArray(record.users) ? record.users : [];
-            state.users = users;
-            const user = users.find(u => u.username === username && u.password === password);
-            if (!user) {
+            const { data: users, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('username', username)
+                .eq('password', password);
+            
+            if (error) throw new Error(error.message);
+            if (!users || users.length === 0) {
                 state.loginAttempts++;
                 if (state.loginAttempts >= CONFIG.MAX_LOGIN_ATTEMPTS) {
-                    state.loginBlockedUntil = Date.now() + CONFIG.LOING_BLOCK_TIME;
+                    state.loginBlockedUntil = Date.now() + CONFIG.LOGIN_BLOCK_TIME;
                     showNotification('Limite de tentativas atingido. Aguarde 60 segundos.');
                     if (passwordError) passwordError.textContent = 'Conta bloqueada por 60 segundos.';
                 } else {
@@ -77,6 +78,8 @@ const auth = {
                 }
                 return;
             }
+
+            const user = users[0];
             state.currentUser = {
                 username: user.username,
                 balance: user.balance || 0,
@@ -134,35 +137,31 @@ const auth = {
         toggleLoadingButton(registerButton, true);
 
         try {
-            const response = await fetch(`${CONFIG.JSONBIN_URL}/latest`, {
-                headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
-            });
-            if (response.status === 429) throw new Error('Limite de requisições excedido. Tente novamente mais tarde.');
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record } = await response.json();
-            const users = Array.isArray(record.users) ? record.users : [];
-            if (users.find(u => u.username === username)) {
+            const { data: existingUsers, error: fetchError } = await supabase
+                .from('users')
+                .select('username')
+                .eq('username', username);
+            
+            if (fetchError) throw new Error(fetchError.message);
+            if (existingUsers.length > 0) {
                 if (usernameError) usernameError.textContent = 'Usuário já existe.';
                 showNotification('Usuário já existe.');
                 return;
             }
-            users.push({ username, password, balance: 0, is_admin: false });
-            const updateResponse = await fetch(CONFIG.JSONBIN_URL, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': CONFIG.JSONBIN_KEY
-                },
-                body: JSON.stringify({ users })
-            });
-            if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
+
+            const { error: insertError } = await supabase
+                .from('users')
+                .insert([{ username, password, balance: 0, is_admin: false }]);
+            
+            if (insertError) throw new Error(insertError.message);
+
             showNotification('Registro bem-sucedido! Faça login.', 'success');
             document.getElementById('newUsername').value = '';
             document.getElementById('newPassword').value = '';
             document.getElementById('confirmPassword').value = '';
             ui.showLoginForm();
         } catch (error) {
-            showNotification(error.message || 'Erro ao conectar ao servidor.');
+            showNotification(error.message || evocative('Erro ao conectar ao servidor.');
             if (usernameError) usernameError.textContent = error.message || 'Erro ao conectar ao servidor.';
         } finally {
             toggleLoadingButton(registerButton, false);
@@ -185,13 +184,17 @@ const shop = {
             return;
         }
         try {
-            const response = await fetch(`${CONFIG.CARD_JSONBIN_URL}/latest`, {
-                headers: { 'X-Master-Key': CONFIG.CARD_JSONBIN_KEY }
-            });
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record } = await response.json();
-            state.cards = record.cards || [];
-            state.userCards = record.userCards || [];
+            const { data: cardsData, error: cardsError } = await supabase
+                .from('cards')
+                .select('*');
+            const { data: userCardsData, error: userCardsError } = await supabase
+                .from('user_cards')
+                .select('*');
+
+            if (cardsError || userCardsError) throw new Error(cardsError?.message || userCardsError?.message);
+            
+            state.cards = cardsData || [];
+            state.userCards = userCardsData || [];
             ui.filterCards();
             if (state.isAdmin) document.getElementById('adminButton')?.classList.remove('hidden');
             document.getElementById('userBalanceHeader').textContent = state.currentUser.balance.toFixed(2);
@@ -233,65 +236,72 @@ const shop = {
             return;
         }
         try {
-            const userResponse = await fetch(`${CONFIG.JSONBIN_URL}/latest`, {
-                headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
-            });
-            if (!userResponse.ok) throw new Error(`Erro HTTP: ${userResponse.status}`);
-            const { record: userRecord } = await userResponse.json();
-            const userIndex = userRecord.users.findIndex(u => u.username === state.currentUser.username);
-            if (userIndex === -1) throw new Error('Usuário não encontrado.');
+            const { data: userData, error: userError } = await supabase
+                .from('users')
+                .select('*')
+                .eq('username', state.currentUser.username)
+                .single();
+            
+            if (userError) throw new Error(userError.message);
+            if (!userData) throw new Error('Usuário não encontrado.');
 
-            const cardResponse = await fetch(`${CONFIG.CARD_JSONBIN_URL}/latest`, {
-                headers: { 'X-Master-Key': CONFIG.CARD_JSONBIN_KEY }
-            });
-            if (!cardResponse.ok) throw new Error(`Erro HTTP: ${cardResponse.status}`);
-            const { record: cardRecord } = await cardResponse.json();
-            const cards = cardRecord.cards || [];
-            const userCards = cardRecord.userCards || [];
-            const cardIndex = cards.findIndex(c => c.numero === cardNumber);
-            if (cardIndex === -1) throw new Error('Cartão não encontrado.');
+            const { data: cardData, error: cardError } = await supabase
+                .from('cards')
+                .select('*')
+                .eq('numero', cardNumber)
+                .single();
+            
+            if (cardError) throw new Error(cardError.message);
+            if (!cardData) throw new Error('Cartão não encontrado.');
 
-            userRecord.users[userIndex].balance -= price;
-            state.currentUser.balance = userRecord.users[userIndex].balance;
+            const newBalance = userData.balance - price;
+            const { error: updateUserError } = await supabase
+                .from('users')
+                .update({ balance: newBalance })
+                .eq('username', state.currentUser.username);
+            
+            if (updateUserError) throw new Error(updateUserError.message);
+
+            const { error: insertUserCardError } = await supabase
+                .from('user_cards')
+                .insert([{
+                    user: state.currentUser.username,
+                    numero: cardData.numero,
+                    cvv: cardData.cvv,
+                    validade: cardData.validade,
+                    nome: cardData.nome,
+                    cpf: cardData.cpf,
+                    bandeira: cardData.bandeira,
+                    banco: cardData.banco,
+                    nivel: cardData.nivel,
+                    bin: cardData.bin
+                }]);
+            
+            if (insertUserCardError) throw new Error(insertUserCardError.message);
+
+            const { error: deleteCardError } = await supabase
+                .from('cards')
+                .delete()
+                .eq('numero', cardNumber);
+            
+            if (deleteCardError) throw new Error(deleteCardError.message);
+
+            state.currentUser.balance = newBalance;
             localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
-
-            const card = cards[cardIndex];
-            userCards.push({
+            state.cards = state.cards.filter(c => c.numero !== cardNumber);
+            state.userCards.push({
                 user: state.currentUser.username,
-                numero: card.numero,
-                cvv: card.cvv,
-                validade: card.validade,
-                nome: card.nome,
-                cpf: card.cpf,
-                bandeira: card.bandeira,
-                banco: card.banco,
-                nivel: card.nivel,
-                bin: card.bin
+                numero: cardData.numero,
+                cvv: cardData.cvv,
+                validade: cardData.validade,
+                nome: cardData.nome,
+                cpf: cardData.cpf,
+                bandeira: cardData.bandeira,
+                banco: cardData.banco,
+                nivel: cardData.nivel,
+                bin: cardData.bin
             });
-            cards.splice(cardIndex, 1);
 
-            const updateUserResponse = await fetch(CONFIG.JSONBIN_URL, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': CONFIG.JSONBIN_KEY
-                },
-                body: JSON.stringify(userRecord)
-            });
-            if (!updateUserResponse.ok) throw new Error(`Erro HTTP: ${updateUserResponse.status}`);
-
-            const updateCardResponse = await fetch(CONFIG.CARD_JSONBIN_URL, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': CONFIG.CARD_JSONBIN_KEY
-                },
-                body: JSON.stringify({ cards, userCards })
-            });
-            if (!updateCardResponse.ok) throw new Error(`Erro HTTP: ${updateCardResponse.status}`);
-
-            state.cards = cards;
-            state.userCards = userCards;
             ui.closeConfirmPurchaseModal();
             ui.filterCards();
             ui.loadUserCards();
@@ -313,12 +323,12 @@ const admin = {
             return;
         }
         try {
-            const response = await fetch(`${CONFIG.JSONBIN_URL}/latest`, {
-                headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
-            });
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record } = await response.json();
-            state.users = record.users || [];
+            const { data, error } = await supabase
+                .from('users')
+                .select('*');
+            
+            if (error) throw new Error(error.message);
+            state.users = data || [];
             ui.displayUsers();
         } catch (error) {
             showNotification(error.message);
@@ -331,12 +341,12 @@ const admin = {
             return;
         }
         try {
-            const response = await fetch(`${CONFIG.CARD_JSONBIN_URL}/latest`, {
-                headers: { 'X-Master-Key': CONFIG.CARD_JSONBIN_KEY }
-            });
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record } = await response.json();
-            state.cards = record.cards || [];
+            const { data, error } = await supabase
+                .from('cards')
+                .select('*');
+            
+            if (error) throw new Error(error.message);
+            state.cards = data || [];
             ui.displayAdminCards();
         } catch (error) {
             showNotification(error.message);
@@ -357,29 +367,18 @@ const admin = {
         }
 
         try {
-            const response = await fetch(`${CONFIG.JSONBIN_URL}/latest`, {
-                headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
-            });
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record } = await response.json();
-            const users = record.users || [];
-            const userIndex = users.findIndex(u => u.username === username);
-            if (userIndex === -1) throw new Error('Usuário não encontrado.');
+            const { error } = await supabase
+                .from('users')
+                .update({ balance: newBalance })
+                .eq('username', username);
+            
+            if (error) throw new Error(error.message);
 
-            users[userIndex].balance = newBalance;
             if (state.currentUser.username === username) {
                 state.currentUser.balance = newBalance;
                 localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
             }
 
-            const updateResponse = await fetch(CONFIG.JSONBIN_URL, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': CONFIG.JSONBIN_KEY
-                },
-                body: JSON.stringify({ users })
-            });
             showNotification('Saldo atualizado!', 'success');
             ui.closeModal();
             admin.loadUsers();
@@ -401,25 +400,13 @@ const admin = {
             return;
         }
         try {
-            const response = await fetch(`${CONFIG.JSONBIN_URL}/latest`, {
-                headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
-            });
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record } = await response.json();
-            const users = record.users || [];
-            const userIndex = users.findIndex(u => u.username === username);
-            if (userIndex === -1) throw new Error('Usuário não encontrado.');
-            users.splice(userIndex, 1);
+            const { error } = await supabase
+                .from('users')
+                .delete()
+                .eq('username', username);
+            
+            if (error) throw new Error(error.message);
 
-            const updateResponse = await fetch(CONFIG.JSONBIN_URL, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': CONFIG.JSONBIN_KEY
-                },
-                body: JSON.stringify({ users })
-            });
-            if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
             showNotification('Usuário excluído com sucesso!', 'success');
             admin.loadUsers();
         } catch (error) {
@@ -432,26 +419,13 @@ const admin = {
             return;
         }
         try {
-            const response = await fetch(`${CONFIG.CARD_JSONBIN_URL}/latest`, {
-                headers: { 'X-Master-Key': CONFIG.CARD_JSONBIN_KEY }
-            });
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record } = await response.json();
-            const cards = record.cards || [];
-            const userCards = record.userCards || [];
-            const cardIndex = cards.findIndex(c => c.numero === cardNumber);
-            if (cardIndex === -1) throw new Error('Cartão não encontrado.');
-            cards.splice(cardIndex, 1);
+            const { error } = await supabase
+                .from('cards')
+                .delete()
+                .eq('numero', cardNumber);
+            
+            if (error) throw new Error(error.message);
 
-            const updateResponse = await fetch(CONFIG.CARD_JSONBIN_URL, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': CONFIG.CARD_JSONBIN_KEY
-                },
-                body: JSON.stringify({ cards, userCards })
-            });
-            if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
             showNotification('Cartão excluído com sucesso!', 'success');
             admin.loadAdminCards();
         } catch (error) {
@@ -556,27 +530,24 @@ const ui = {
             return;
         }
         try {
-            const response = await fetch(`${CONFIG.JSONBIN_URL}/latest`, {
-                headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
-            });
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record } = await response.json();
-            const users = record.users || [];
-            const userIndex = users.findIndex(u => u.username === state.currentUser.username);
-            if (userIndex === -1) throw new Error('Usuário não encontrado.');
-            users[userIndex].balance += amount;
-            state.currentUser.balance = users[userIndex].balance;
-            localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
+            const { data: userData, error: fetchError } = await supabase
+                .from('users')
+                .select('balance')
+                .eq('username', state.currentUser.username)
+                .single();
+            
+            if (fetchError) throw new Error(fetchError.message);
 
-            const updateResponse = await fetch(CONFIG.JSONBIN_URL, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': CONFIG.JSONBIN_KEY
-                },
-                body: JSON.stringify({ users })
-            });
-            if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
+            const newBalance = userData.balance + amount;
+            const { error: updateError } = await supabase
+                .from('users')
+                .update({ balance: newBalance })
+                .eq('username', state.currentUser.username);
+            
+            if (updateError) throw new Error(updateError.message);
+
+            state.currentUser.balance = newBalance;
+            localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
             document.getElementById('userBalanceHeader').textContent = state.currentUser.balance.toFixed(2);
             document.getElementById('userBalanceAccount').textContent = `R$ ${state.currentUser.balance.toFixed(2)}`;
             showNotification('Saldo adicionado!', 'success');
@@ -692,7 +663,7 @@ const ui = {
         const username = document.getElementById('newUsername').value.trim();
         const password = document.getElementById('newPassword').value.trim();
         const balance = parseFloat(document.getElementById('newBalance').value) || 0;
-        const isAdmin = document.getElementById('isAdmin').value === 'true';
+        const isAdmin = document.getElementById('newIsAdmin').value === 'true';
 
         if (!username || !password) {
             showNotification('Usuário e senha são obrigatórios.');
@@ -708,26 +679,23 @@ const ui = {
         }
 
         try {
-            const response = await fetch(`${CONFIG.JSONBIN_URL}/latest`, {
-                headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
-            });
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record } = await response.json();
-            const users = record.users || [];
-            if (users.find(u => u.username === username)) {
+            const { data: existingUsers, error: fetchError } = await supabase
+                .from('users')
+                .select('username')
+                .eq('username', username);
+            
+            if (fetchError) throw new Error(fetchError.message);
+            if (existingUsers.length > 0) {
                 showNotification('Usuário já existe.');
                 return;
             }
-            users.push({ username, password, balance, is_admin: isAdmin });
-            const updateResponse = await fetch(CONFIG.JSONBIN_URL, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': CONFIG.JSONBIN_KEY
-                },
-                body: JSON.stringify({ users })
-            });
-            if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
+
+            const { error: insertError } = await supabase
+                .from('users')
+                .insert([{ username, password, balance, is_admin: isAdmin }]);
+            
+            if (insertError) throw new Error(insertError.message);
+
             showNotification('Usuário adicionado!', 'success');
             ui.closeModal();
             admin.loadUsers();
@@ -771,27 +739,23 @@ const ui = {
         }
 
         try {
-            const response = await fetch(`${CONFIG.CARD_JSONBIN_URL}/latest`, {
-                headers: { 'X-Master-Key': CONFIG.CARD_JSONBIN_KEY }
-            });
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record } = await response.json();
-            const cards = record.cards || [];
-            const userCards = record.userCards || [];
-            if (cards.find(c => c.numero === cardData.numero)) {
+            const { data: existingCards, error: fetchError } = await supabase
+                .from('cards')
+                .select('numero')
+                .eq('numero', cardData.numero);
+            
+            if (fetchError) throw new Error(fetchError.message);
+            if (existingCards.length > 0) {
                 showNotification('Cartão já existe.');
                 return;
             }
-            cards.push(cardData);
-            const updateResponse = await fetch(CONFIG.CARD_JSONBIN_URL, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': CONFIG.CARD_JSONBIN_KEY
-                },
-                body: JSON.stringify({ cards, userCards })
-            });
-            if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
+
+            const { error: insertError } = await supabase
+                .from('cards')
+                .insert([cardData]);
+            
+            if (insertError) throw new Error(insertError.message);
+
             showNotification('Cartão adicionado!', 'success');
             ui.closeModal();
             admin.loadAdminCards();
@@ -854,25 +818,13 @@ const ui = {
         }
 
         try {
-            const response = await fetch(`${CONFIG.CARD_JSONBIN_URL}/latest`, {
-                headers: { 'X-Master-Key': CONFIG.CARD_JSONBIN_KEY }
-            });
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-            const { record } = await response.json();
-            const cards = record.cards || [];
-            const userCards = record.userCards || [];
-            const cardIndex = cards.findIndex(c => c.numero === document.getElementById('editCardModal').dataset.cardNumber);
-            if (cardIndex === -1) throw new Error('Cartão não encontrado.');
-            cards[cardIndex] = cardData;
-            const updateResponse = await fetch(CONFIG.CARD_JSONBIN_URL, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': CONFIG.CARD_JSONBIN_KEY
-                },
-                body: JSON.stringify({ cards, userCards })
-            });
-            if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
+            const { error } = await supabase
+                .from('cards')
+                .update(cardData)
+                .eq('numero', document.getElementById('editCardModal').dataset.cardNumber);
+            
+            if (error) throw new Error(error.message);
+
             showNotification('Cartão atualizado!', 'success');
             ui.closeModal();
             admin.loadAdminCards();
@@ -951,11 +903,9 @@ function validateCpf(cpf) {
 }
 
 function formatCardNumber(input) {
-    let value = input.value;
-.replace(/\D/g, '');
+    let value = input.value.replace(/\D/g, '');
     value = value.match(/.{1,4}/g)?.join(' ') || value;
-    input.value = value;
-.slice(0, 19);
+    input.value = value.slice(0, 19);
 }
 
 function restrictCvv(input) {
@@ -963,29 +913,25 @@ function restrictCvv(input) {
 }
 
 function formatExpiry(input) {
-    let value = input.c;
-    .replace(/\D/g, '');
+    let value = input.value.replace(/\D/g, '');
     if (value.length > 2) {
         value = value.slice(0, 2) + '/' + value.slice(2, 4);
     }
-    input.value = value;
-.slice(0,5);
+    input.value = value.slice(0, 5);
 }
 
-function formatCpf(cpf) {
-    let value = input.cpf;
-    .replace(/\D/g, '');
+function formatCpf(input) {
+    let value = input.value.replace(/\D/g, '');
     if (value.length > 3) {
-        value = value.slice(0,3) + '.' + value.slice(3);
+        value = value.slice(0, 3) + '.' + value.slice(3);
     }
     if (value.length > 7) {
-        value = value.slice(0,7) + '.' + value.slice(7);
+        value = value.slice(0, 7) + '.' + value.slice(7);
     }
     if (value.length > 11) {
-        value = value.slice(0,11) + '-' + value.slice(11);
+        value = value.slice(0, 11) + '-' + value.slice(11);
     }
-    input.value = value;
-.slice(0,14);
+    input.value = value.slice(0, 14);
 }
 
 function showNotification(message, type = 'error') {
@@ -999,7 +945,7 @@ function showNotification(message, type = 'error') {
 
 function toggleLoadingButton(button, isLoading) {
     button.disabled = isLoading;
-    button.textContent = isLoading ? 'Carregando...' : button.getAttribute('loginButton') ? 'Entrar' : 'Registrar';
+    button.textContent = isLoading ? 'Carregando...' : button.getAttribute('id') === 'loginButton' ? 'Entrar' : 'Registrar';
 }
 
 document.addEventListener('DOMContentLoaded', () => {
