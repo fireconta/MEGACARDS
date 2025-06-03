@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#1A2A44">
     <title>Admin Dashboard - LOGAN CC's</title>
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Montserrat:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="script.js" defer></script>
@@ -203,26 +202,28 @@
 </head>
 <body>
     <header class="header">
-        <a href="logo.png" class="logo"><img src="logo.png" alt="LOGAN CC's Logo"></a>
+        <a href="shop.html" class="logo"><img src="logo.png" alt="LOGAN CC's Logo"></a>
     </header>
     <main class="container mx-auto px-4 py-6">
         <h2>Admin Dashboard - LOGAN CC's</h2>
         <div class="mb-6">
             <h3>Gerenciar Usuários</h3>
-            <button onclick="document.getElementById('addUserModal').classList.remove('hidden')" class="mb-4 p-2 rounded-lg">Adicionar Usuário</button>
+            <button onclick="document.getElementById('addUserModal').classList.remove('hidden')" class="mb-4 p-2 rounded-lg action-button">Adicionar Usuário</button>
             <div id="userList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </div>
         <div>
             <h3>Gerenciar Cartões</h3>
-            <button onclick="document.getElementById('cardModal').classList.remove('hidden')" class="mb-4 p-2 rounded-lg">Adicionar Cartão</button>
+            <button onclick="document.getElementById('cardModal').classList.remove('hidden')" class="mb-4 p-2 rounded-lg action-button">Adicionar Cartão</button>
             <div id="adminCardList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </div>
     </main>
     <div id="addUserModal" class="modal hidden">
         <div class="modal-content">
             <h2>Adicionar Usuário</h2>
-            <input id="newUsername" type="text" placeholder="Usuário">
+            <input id="newUsername" type="text" placeholder="Usuário" oninput="validateUsername(this)">
+            <p id="newUsernameError" class="error-text"></p>
             <input id="newPassword" type="password" placeholder="Senha">
+            <p id="newPasswordError" class="error-text"></p>
             <input id="newBalance" type="number" placeholder="Saldo Inicial (R$)" step="0.01">
             <select id="isAdmin">
                 <option value="false">Não é Admin</option>
@@ -266,5 +267,30 @@
         </div>
     </div>
     <div id="notifications" class="fixed top-4 right-4 z-30"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!checkAuth()) {
+                showNotification('Você precisa estar logado.', 'error');
+                window.location.href = 'index.html';
+            } else if (!state.isAdmin) {
+                showNotification('Acesso negado. Apenas administradores.', 'error');
+                window.location.href = 'shop.html';
+            } else {
+                admin.loadUsers();
+                admin.loadAdminCards();
+            }
+        });
+
+        function validateUsername(input) {
+            const username = input.value.trim();
+            const errorElement = document.getElementById('newUsernameError');
+            const regex = /^[a-zA-Z0-9_]{3,}$/;
+            if (!regex.test(username)) {
+                errorElement.textContent = 'Usuário deve ter pelo menos 3 caracteres alfanuméricos.';
+            } else {
+                errorElement.textContent = '';
+            }
+        }
+    </script>
 </body>
 </html>
