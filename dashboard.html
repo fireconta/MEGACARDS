@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#1A2A44">
-    <title>Admin Dashboard - LOGAN CC's</title>
+    <title>Dashboard - LOGAN CC's</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Montserrat:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2c9QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <script src="script.js" defer></script>
     <style>
         * {
@@ -21,7 +21,6 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow-x: hidden;
         }
         .header {
             background: rgba(15, 23, 42, 0.95);
@@ -45,7 +44,7 @@
         main {
             flex-grow: 1;
             padding: 2rem 1rem;
-            background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.1), transparent 50%);
+            background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.1), transparent 50%);
         }
         h2 {
             font-family: 'Montserrat', sans-serif;
@@ -56,60 +55,76 @@
             margin-bottom: 2rem;
             text-shadow: 0 2px 6px rgba(56, 189, 248, 0.3);
         }
-        h3 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 1.75rem;
-            font-weight: 600;
-            color: #38BDF8;
-            margin-bottom: 1.5rem;
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            justify-content: center;
         }
-        .card-item {
+        .tab-button {
+            background: #2D3748;
+            color: #E2E8F0;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        .tab-button.active {
+            background: linear-gradient(90deg, #38BDF8, #2563EB);
+            color: #FFFFFF;
+        }
+        .tab-button:hover {
+            background: #334155;
+        }
+        .table-container {
             background: rgba(30, 41, 59, 0.9);
             border-radius: 1rem;
             padding: 1.5rem;
-            margin-bottom: 1rem;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-            transition: all 0.3s ease;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-left: 5px solid transparent;
-            background: linear-gradient(to right, rgba(56, 189, 248, 0.2), transparent);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            overflow-x: auto;
         }
-        .card-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 30px rgba(56, 189, 248, 0.3);
-            border-left-color: #38BDF8;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: #E2E8F0;
+        }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #4B5563;
+        }
+        th {
+            background: #1E293B;
+            font-weight: 600;
         }
         .action-button {
             background: linear-gradient(90deg, #38BDF8, #2563EB);
             color: #FFFFFF;
-            border-radius: 0.5rem;
             padding: 0.5rem 1rem;
-            font-weight: 600;
+            border-radius: 0.5rem;
             border: none;
             cursor: pointer;
             transition: all 0.3s ease;
+            margin-right: 0.5rem;
         }
         .action-button:hover {
             background: linear-gradient(90deg, #2563EB, #1D4ED8);
             transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
         }
         .delete-button {
-            background: linear-gradient(90deg, #F87171, #EF4444);
+            background: #F87171;
             color: #FFFFFF;
-            border-radius: 0.5rem;
             padding: 0.5rem 1rem;
-            font-weight: 600;
+            border-radius: 0.5rem;
             border: none;
             cursor: pointer;
             transition: all 0.3s ease;
         }
         .delete-button:hover {
-            background: linear-gradient(90deg, #EF4444, #DC2626);
+            background: #EF4444;
             transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(248, 113, 113, 0.4);
         }
         .modal {
             background: rgba(0, 0, 0, 0.8);
@@ -153,7 +168,6 @@
             border-color: #38BDF8;
             box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
             outline: none;
-            background: #334155;
         }
         .modal-content button {
             background: linear-gradient(90deg, #38BDF8, #2563EB);
@@ -163,11 +177,17 @@
             width: 100%;
             font-weight: 600;
             transition: all 0.3s ease;
+            margin-top: 0.5rem;
         }
         .modal-content button:hover {
             background: linear-gradient(90deg, #2563EB, #1D4ED8);
             transform: scale(1.03);
-            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
+        }
+        .modal-content button.secondary {
+            background: #4B5563;
+        }
+        .modal-content button.secondary:hover {
+            background: #6B7280;
         }
         .notification {
             position: fixed;
@@ -191,106 +211,369 @@
             from { opacity: 0; transform: translateX(20px); }
             to { opacity: 1; transform: translateX(0); }
         }
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        .loading-spinner.active {
+            display: block;
+        }
+        .loading-spinner::after {
+            content: '';
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #38BDF8;
+            border-top: 3px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .hidden {
+            display: none !important;
+        }
+        @media (min-width: 640px) {
+            .modal-content {
+                width: 80%;
+            }
+        }
         @media (max-width: 640px) {
-            .card-item {
-                flex-direction: column;
-                text-align: center;
-                gap: 1rem;
+            .table-container {
+                padding: 1rem;
+            }
+            th, td {
+                padding: 0.5rem;
+            }
+            .action-button, .delete-button {
+                padding: 0.5rem;
+                font-size: 0.9rem;
             }
         }
     </style>
 </head>
 <body>
     <header class="header">
-        <a href="shop.html" class="logo"><img src="logo.png" alt="LOGAN CC's Logo"></a>
+        <a href="shop.html" class="logo"><img src="logo.png" alt="Logo da LOGAN CC's" aria-label="Logo da LOGAN CC's"></a>
+        <button class="action-button" onclick="auth.logout()">Sair</button>
     </header>
     <main class="container mx-auto px-4 py-6">
-        <h2>Admin Dashboard - LOGAN CC's</h2>
-        <div class="mb-6">
-            <h3>Gerenciar Usuários</h3>
-            <button onclick="document.getElementById('addUserModal').classList.remove('hidden')" class="mb-4 p-2 rounded-lg action-button">Adicionar Usuário</button>
-            <div id="userList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        <h2>Dashboard Administrativo</h2>
+        <div class="tabs">
+            <button id="usersTab" class="tab-button active" onclick="showTab('users')">Usuários</button>
+            <button id="cardsTab" class="tab-button" onclick="showTab('cards')">Cartões</button>
         </div>
-        <div>
-            <h3>Gerenciar Cartões</h3>
-            <button onclick="document.getElementById('cardModal').classList.remove('hidden')" class="mb-4 p-2 rounded-lg action-button">Adicionar Cartão</button>
-            <div id="adminCardList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        <div id="usersSection" class="table-container">
+            <button class="action-button mb-4" onclick="showAddUserModal()">Adicionar Usuário</button>
+            <table id="userList">
+                <thead>
+                    <tr>
+                        <th>Usuário</th>
+                        <th>Saldo</th>
+                        <th>Admin</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
         </div>
+        <div id="cardsSection" class="table-container hidden">
+            <button class="action-button mb-4" onclick="showAddCardModal()">Adicionar Cartão</button>
+            <table id="adminCardList">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Bandeira</th>
+                        <th>Banco</th>
+                        <th>Nível</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div id="loadingSpinner" class="loading-spinner" aria-label="Carregando dados"></div>
     </main>
-    <div id="addUserModal" class="modal hidden">
+    <div id="editUserModal" class="modal hidden" role="dialog">
+        <div class="modal-content">
+            <h2>Editar Usuário</h2>
+            <input id="editUsername" type="text" placeholder="Usuário" aria-label="Nome de usuário" readonly>
+            <input id="editPassword" type="password" placeholder="Nova senha" aria-label="Nova senha">
+            <input id="editBalance" type="number" placeholder="Saldo (R$)" step="0.01" aria-label="Saldo">
+            <select id="editIsAdmin" aria-label="Status de administrador">
+                <option value="true">Sim</option>
+                <option value="false">Não</option>
+            </select>
+            <button onclick="saveUserEdit()">Salvar</button>
+            <button onclick="ui.closeModal()" class="secondary">Cancelar</button>
+        </div>
+    </div>
+    <div id="addUserModal" class="modal hidden" role="dialog">
         <div class="modal-content">
             <h2>Adicionar Usuário</h2>
-            <input id="newUsername" type="text" placeholder="Usuário" oninput="validateUsername(this)">
-            <p id="newUsernameError" class="error-text"></p>
-            <input id="newPassword" type="password" placeholder="Senha">
-            <p id="newPasswordError" class="error-text"></p>
-            <input id="newBalance" type="number" placeholder="Saldo Inicial (R$)" step="0.01">
-            <select id="isAdmin">
-                <option value="false">Não é Admin</option>
-                <option value="true">É Admin</option>
+            <input id="newUsername" type="text" placeholder="Usuário" aria-label="Nome de usuário">
+            <input id="newPassword" type="password" placeholder="Senha" aria-label="Senha">
+            <input id="newBalance" type="number" placeholder="Saldo inicial (R$)" step="0.01" aria-label="Saldo inicial">
+            <select id="isAdmin" aria-label="Status de administrador">
+                <option value="true">Sim</option>
+                <option value="false">Não</option>
             </select>
             <button onclick="ui.addUser()">Adicionar</button>
-            <button onclick="ui.closeModal()" class="mt-2 bg-gray-600 p-2 rounded-lg hover:bg-gray-500 transition">Fechar</button>
+            <button onclick="ui.closeModal()" class="secondary">Cancelar</button>
         </div>
     </div>
-    <div id="editBalanceModal" class="modal hidden" data-username="">
+    <div id="editCardModal" class="modal hidden" role="dialog">
         <div class="modal-content">
-            <h2>Editar Saldo</h2>
-            <input id="editBalanceAmount" type="number" placeholder="Novo Saldo (R$)" step="0.01">
-            <button onclick="admin.editUserBalance()">Salvar</button>
-            <button onclick="ui.closeModal()" class="mt-2 bg-gray-600 p-2 rounded-lg hover:bg-gray-500 transition">Fechar</button>
-        </div>
-    </div>
-    <div id="cardModal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Adicionar Cartão</h2>
-            <input id="cardNumber" type="text" placeholder="Número do Cartão" oninput="formatCardNumber(this)">
-            <input id="cardCvv" type="text" placeholder="CVV" oninput="restrictCvv(this)">
-            <input id="cardExpiry" type="text" placeholder="Validade (MM/AA)" oninput="formatExpiry(this)">
-            <input id="cardName" type="text" placeholder="Nome no Cartão">
-            <input id="cardCpf" type="text" placeholder="CPF" oninput="formatCpf(this)">
-            <select id="cardBrand">
+            <h2>Editar Cartão</h2>
+            <input id="editCardNumber" type="text" placeholder="Número do cartão" aria-label="Número do cartão" oninput="formatCardNumber(this)">
+            <input id="editCardCvv" type="text" placeholder="CVV" aria-label="CVV" oninput="restrictCvv(this)">
+            <input id="editCardExpiry" type="text" placeholder="MM/AA" aria-label="Validade" oninput="formatExpiry(this)">
+            <input id="editCardName" type="text" placeholder="Nome no cartão" aria-label="Nome no cartão">
+            <input id="editCardCpf" type="text" placeholder="CPF" aria-label="CPF" oninput="formatCpf(this)">
+            <select id="editCardBrand" aria-label="Bandeira">
                 <option value="visa">Visa</option>
                 <option value="mastercard">Mastercard</option>
+                <option value="amex">American Express</option>
+                <option value="discover">Discover</option>
+                <option value="elo">Elo</option>
+                <option value="hipercard">Hipercard</option>
             </select>
-            <select id="cardBank">
+            <select id="editCardBank" aria-label="Banco">
                 <option value="nubank">Nubank</option>
                 <option value="itau">Itaú</option>
+                <option value="bradesco">Bradesco</option>
+                <option value="bancodobrasil">Banco do Brasil</option>
+                <option value="santander">Santander</option>
+                <option value="caixa">Caixa Econômica</option>
             </select>
-            <input id="cardCountry" type="text" placeholder="País">
-            <select id="cardLevel">
+            <select id="editCardCountry" aria-label="País">
+                <option value="brasil">Brasil</option>
+                <option value="eua">EUA</option>
+                <option value="canada">Canadá</option>
+                <option value="uk">Reino Unido</option>
+                <option value="australia">Austrália</option>
+                <option value="argentina">Argentina</option>
+            </select>
+            <select id="editCardLevel" aria-label="Nível">
+                <option value="standard">Standard</option>
                 <option value="gold">Gold</option>
                 <option value="platinum">Platinum</option>
+                <option value="black">Black</option>
+                <option value="infinite">Infinite</option>
             </select>
-            <button onclick="ui.saveCard()">Salvar</button>
-            <button onclick="ui.closeModal()" class="mt-2 bg-gray-600 p-2 rounded-lg hover:bg-gray-500 transition">Fechar</button>
+            <input id="editCardBin" type="text" placeholder="BIN" aria-label="BIN" readonly>
+            <button onclick="saveCardEdit()">Salvar</button>
+            <button onclick="ui.closeModal()" class="secondary">Cancelar</button>
         </div>
     </div>
-    <div id="notifications" class="fixed top-4 right-4 z-30"></div>
+    <div id="addCardModal" class="modal hidden" role="dialog">
+        <div class="modal-content">
+            <h2>Adicionar Cartão</h2>
+            <input id="cardNumber" type="text" placeholder="Número do cartão" aria-label="Número do cartão" oninput="formatCardNumber(this)">
+            <input id="cardCvv" type="text" placeholder="CVV" aria-label="CVV" oninput="restrictCvv(this)">
+            <input id="cardExpiry" type="text" placeholder="MM/AA" aria-label="Validade" oninput="formatExpiry(this)">
+            <input id="cardName" type="text" placeholder="Nome no cartão" aria-label="Nome no cartão">
+            <input id="cardCpf" type="text" placeholder="CPF" aria-label="CPF" oninput="formatCpf(this)">
+            <select id="cardBrand" aria-label="Bandeira">
+                <option value="visa">Visa</option>
+                <option value="mastercard">Mastercard</option>
+                <option value="amex">American Express</option>
+                <option value="discover">Discover</option>
+                <option value="elo">Elo</option>
+                <option value="hipercard">Hipercard</option>
+            </select>
+            <select id="cardBank" aria-label="Banco">
+                <option value="nubank">Nubank</option>
+                <option value="itau">Itaú</option>
+                <option value="bradesco">Bradesco</option>
+                <option value="bancodobrasil">Banco do Brasil</option>
+                <option value="santander">Santander</option>
+                <option value="caixa">Caixa Econômica</option>
+            </select>
+            <select id="cardCountry" aria-label="País">
+                <option value="brasil">Brasil</option>
+                <option value="eua">EUA</option>
+                <option value="canada">Canadá</option>
+                <option value="uk">Reino Unido</option>
+                <option value="australia">Austrália</option>
+                <option value="argentina">Argentina</option>
+            </select>
+            <select id="cardLevel" aria-label="Nível">
+                <option value="standard">Standard</option>
+                <option value="gold">Gold</option>
+                <option value="platinum">Platinum</option>
+                <option value="black">Black</option>
+                <option value="infinite">Infinite</option>
+            </select>
+            <button onclick="ui.saveCard()">Adicionar</button>
+            <button onclick="ui.closeModal()" class="secondary">Cancelar</button>
+        </div>
+    </div>
+    <div id="notifications" class="fixed top-4 right-4 z-30" role="alert"></div>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!checkAuth()) {
-                showNotification('Você precisa estar logado.', 'error');
-                window.location.href = 'index.html';
-            } else if (!state.isAdmin) {
-                showNotification('Acesso negado. Apenas administradores.', 'error');
-                window.location.href = 'shop.html';
-            } else {
-                admin.loadUsers();
-                admin.loadAdminCards();
-            }
-        });
+        function showTab(tab) {
+            document.getElementById('usersSection').classList.toggle('hidden', tab !== 'users');
+            document.getElementById('cardsSection').classList.toggle('hidden', tab !== 'cards');
+            document.getElementById('usersTab').classList.toggle('active', tab === 'users');
+            document.getElementById('cardsTab').classList.toggle('active', tab === 'cards');
+            if (tab === 'users') admin.loadUsers();
+            else admin.loadAdminCards();
+        }
 
-        function validateUsername(input) {
-            const username = input.value.trim();
-            const errorElement = document.getElementById('newUsernameError');
-            const regex = /^[a-zA-Z0-9_]{3,}$/;
-            if (!regex.test(username)) {
-                errorElement.textContent = 'Usuário deve ter pelo menos 3 caracteres alfanuméricos.';
-            } else {
-                errorElement.textContent = '';
+        function showAddUserModal() {
+            document.getElementById('addUserModal').classList.remove('hidden');
+            document.getElementById('addUserModal').classList.add('show');
+        }
+
+        function showAddCardModal() {
+            document.getElementById('addCardModal').classList.remove('hidden');
+            document.getElementById('addCardModal').classList.add('show');
+        }
+
+        function showEditUserModal(username) {
+            const user = state.users.find(u => u.username === username);
+            if (user) {
+                document.getElementById('editUsername').value = user.username;
+                document.getElementById('editPassword').value = '';
+                document.getElementById('editBalance').value = user.balance;
+                document.getElementById('editIsAdmin').value = user.is_admin.toString();
+                document.getElementById('editUserModal').classList.remove('hidden');
+                document.getElementById('editUserModal').classList.add('show');
             }
         }
+
+        function showEditCardModal(cardNumber) {
+            const card = state.cards.find(c => c.numero === cardNumber);
+            if (card) {
+                document.getElementById('editCardNumber').value = card.numero;
+                document.getElementById('editCardCvv').value = card.cvv;
+                document.getElementById('editCardExpiry').value = card.validade;
+                document.getElementById('editCardName').value = card.nome;
+                document.getElementById('editCardCpf').value = card.cpf;
+                document.getElementById('editCardBrand').value = card.bandeira;
+                document.getElementById('editCardBank').value = card.banco;
+                document.getElementById('editCardCountry').value = card.pais;
+                document.getElementById('editCardLevel').value = card.nivel;
+                document.getElementById('editCardBin').value = card.bin;
+                document.getElementById('editCardModal').classList.remove('hidden');
+                document.getElementById('editCardModal').classList.add('show');
+            }
+        }
+
+        async function saveUserEdit() {
+            const username = document.getElementById('editUsername').value;
+            const password = document.getElementById('editPassword').value.trim();
+            const balance = parseFloat(document.getElementById('editBalance').value);
+            const isAdmin = document.getElementById('editIsAdmin').value === 'true';
+
+            if (isNaN(balance) || balance < 0) {
+                showNotification('Saldo inválido.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${CONFIG.JSONBIN_URL}/latest`, {
+                    headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
+                });
+                if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+                const { record } = await response.json();
+                const users = record.users || [];
+                const userIndex = users.findIndex(u => u.username === username);
+                if (userIndex === -1) throw new Error('Usuário não encontrado.');
+
+                users[userIndex].balance = balance;
+                users[userIndex].is_admin = isAdmin;
+                if (password) users[userIndex].password = password;
+
+                const updateResponse = await fetch(CONFIG.JSONBIN_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': CONFIG.JSONBIN_KEY
+                    },
+                    body: JSON.stringify({ users })
+                });
+                if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
+                showNotification('Usuário atualizado com sucesso!', 'success');
+                ui.closeModal();
+                admin.loadUsers();
+            } catch (error) {
+                showNotification(error.message || 'Erro ao conectar ao servidor.');
+            }
+        }
+
+        async function saveCardEdit() {
+            const cardData = {
+                numero: document.getElementById('editCardNumber').value.trim(),
+                cvv: document.getElementById('editCardCvv').value.trim(),
+                validade: document.getElementById('editCardExpiry').value.trim(),
+                nome: document.getElementById('editCardName').value.trim(),
+                cpf: document.getElementById('editCardCpf').value.trim(),
+                bandeira: document.getElementById('editCardBrand').value,
+                banco: document.getElementById('editCardBank').value,
+                pais: document.getElementById('editCardCountry').value,
+                nivel: document.getElementById('editCardLevel').value,
+                bin: document.getElementById('editCardNumber').value.trim().replace(/\s/g, '').substring(0, 6)
+            };
+
+            if (!validateCardNumber(cardData.numero)) {
+                showNotification('Número de cartão inválido.');
+                return;
+            }
+            if (!validateCvv(cardData.cvv)) {
+                showNotification('CVV inválido.');
+                return;
+            }
+            if (!validateExpiry(cardData.validade)) {
+                showNotification('Validade inválida ou expirada.');
+                return;
+            }
+            if (!validateCpf(cardData.cpf)) {
+                showNotification('CPF inválido.');
+                return;
+            }
+            if (!cardData.bandeira || !cardData.banco || !cardData.pais || !cardData.nivel) {
+                showNotification('Preencha todos os campos obrigatórios.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${CONFIG.CARD_JSONBIN_URL}/latest`, {
+                    headers: { 'X-Master-Key': CONFIG.CARD_JSONBIN_KEY }
+                });
+                if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+                const { record } = await response.json();
+                const cards = record.cards || [];
+                const userCards = record.userCards || [];
+                const cardIndex = cards.findIndex(c => c.numero === cardData.numero);
+                if (cardIndex === -1) throw new Error('Cartão não encontrado.');
+
+                cards[cardIndex] = cardData;
+
+                const updateResponse = await fetch(CONFIG.CARD_JSONBIN_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': CONFIG.CARD_JSONBIN_KEY
+                    },
+                    body: JSON.stringify({ cards, userCards })
+                });
+                if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
+                showNotification('Cartão atualizado com sucesso!', 'success');
+                ui.closeModal();
+                admin.loadAdminCards();
+            } catch (error) {
+                showNotification(error.message || 'Erro ao conectar ao servidor.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            if (loadingSpinner) loadingSpinner.classList.add('active');
+            showTab('users');
+        });
     </script>
 </body>
 </html>
