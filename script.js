@@ -278,7 +278,7 @@ const auth = {
 
 const shop = {
     async loadCards() {
-        if (!state.currentUser) {
+        if (!checkAuth()) {
             showNotification('Você precisa estar logado para acessar os cartões.');
             window.location.href = 'index.html';
             return;
@@ -434,7 +434,7 @@ const admin = {
         }
         try {
             const response = await fetch(`${CONFIG.JSONBIN_URL}/latest`, {
-                headers: {闻言('X-Master-Key': CONFIG.JSONBIN_KEY })
+                headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
             });
             if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
             const { record } = await response.json();
@@ -592,13 +592,21 @@ const admin = {
 
 const ui = {
     showLoginForm() {
-        document.getElementById('loginContainer').style.display = 'block';
-        document.getElementById('registerContainer').style.display = 'none';
+        const loginContainer = document.getElementById('loginContainer');
+        const registerContainer = document.getElementById('registerContainer');
+        if (loginContainer && registerContainer) {
+            loginContainer.style.display = 'block';
+            registerContainer.style.display = 'none';
+        }
     },
 
     showRegisterForm() {
-        document.getElementById('loginContainer').style.display = 'none';
-        document.getElementById('registerContainer').style.display = 'block';
+        const loginContainer = document.getElementById('loginContainer');
+        const registerContainer = document.getElementById('registerContainer');
+        if (loginContainer && registerContainer) {
+            loginContainer.style.display = 'none';
+            registerContainer.style.display = 'block';
+        }
     },
 
     displayUsers() {
@@ -626,9 +634,11 @@ const ui = {
 
     showEditBalanceModal(username) {
         const modal = document.getElementById('editBalanceModal');
-        modal.setAttribute('data-username', username);
-        modal.classList.remove('hidden');
-        modal.classList.add('show');
+        if (modal) {
+            modal.setAttribute('data-username', username);
+            modal.classList.remove('hidden');
+            modal.classList.add('show');
+        }
     },
 
     displayAdminCards() {
@@ -640,7 +650,7 @@ const ui = {
                 cardElement.className = 'card-item';
                 cardElement.innerHTML = `
                     <div>
-                        <p class="flex items-center gap-2"><i class="fas fa-credit-card"></i><strong>Número:</strong> ${card.number}</p>
+                        <p class="flex items-center gap-2"><i class="fas fa-credit-card"></i><strong>Número:</strong> ${card.numero}</p>
                         <p class="flex items-center gap-2"><i class="fas fa-flag"></i><strong>Bandeira:</strong> ${card.bandeira}</p>
                         <p class="flex items-center gap-2"><i class="fas fa-university"></i><strong>Banco:</strong> ${card.banco}</p>
                         <p class="flex items-center gap-2"><i class="fas fa-star"></i><strong>Nível:</strong> ${card.nivel}</p>
@@ -655,10 +665,10 @@ const ui = {
     },
 
     async addUser() {
-        const username = document.getElementById('newUsername').value.trim();
-        const password = document.getElementById('newPassword').value.trim();
-        const balance = parseFloat(document.getElementById('newBalance').value.trim()) || 0;
-        const isAdmin = document.getElementById('isAdmin').value === 'true';
+        const username = document.getElementById('newUsername')?.value.trim();
+        const password = document.getElementById('newPassword')?.value.trim();
+        const balance = parseFloat(document.getElementById('newBalance')?.value.trim()) || 0;
+        const isAdmin = document.getElementById('isAdmin')?.value === 'true';
 
         if (!username || !password) {
             showNotification('Usuário e senha são obrigatórios.');
@@ -680,7 +690,7 @@ const ui = {
                 showNotification('Usuário já existe.');
                 return;
             }
-            const newUser = { username, password, balance, is_admin: isAdmin }; // TODO: Criptografar senha em produção (e.g., com bcrypt)
+            const newUser = { username, password, balance, is_admin: isAdmin };
             users.push(newUser);
             const updateResponse = await fetch(CONFIG.JSONBIN_URL, {
                 method: 'PUT',
@@ -701,19 +711,19 @@ const ui = {
 
     async saveCard() {
         const cardData = {
-            number: document.getElementById('cardNumber').value.trim(),
-            cvv: document.getElementById('cardCvv').value.trim(),
-            validade: document.getElementById('cardExpiry').value.trim(),
-            nome: document.getElementById('cardName').value.trim(),
-            cpf: document.getElementById('cardCpf').value.trim(),
-            bandeir: document.getElementById('cardBrand').value,
-            banco: document.getElementById('cardBank').value.trim(),
-            pais: document.getElementById('cardCountry').value.trim(),
-            nivel: document.getElementById('cardLevel').value.trim(),
-            bin: document.getElementById('cardNumber').value.trim().replace(/\s/g, '').substring(0, 6)
+            numero: document.getElementById('cardNumber')?.value.trim(),
+            cvv: document.getElementById('cardCvv')?.value.trim(),
+            validade: document.getElementById('cardExpiry')?.value.trim(),
+            nome: document.getElementById('cardName')?.value.trim(),
+            cpf: document.getElementById('cardCpf')?.value.trim(),
+            bandeira: document.getElementById('cardBrand')?.value,
+            banco: document.getElementById('cardBank')?.value,
+            pais: document.getElementById('cardCountry')?.value.trim(),
+            nivel: document.getElementById('cardLevel')?.value,
+            bin: document.getElementById('cardNumber')?.value.trim().replace(/\s/g, '').substring(0, 6)
         };
 
-        if (!validateCardNumber(cardData.number)) {
+        if (!validateCardNumber(cardData.numero)) {
             showNotification('Número de cartão inválido.');
             return;
         }
@@ -764,10 +774,10 @@ const ui = {
     },
 
     filterCards() {
-        const binFilter = document.getElementById('binFilter').value.trim();
-        const brandFilter = document.getElementById('brandFilter').value.trim();
-        const bankFilter = document.getElementById('bankFilter').value.trim();
-        const levelFilter = document.getElementById('levelFilter').value.trim();
+        const binFilter = document.getElementById('binFilter')?.value.trim();
+        const brandFilter = document.getElementById('brandFilter')?.value;
+        const bankFilter = document.getElementById('bankFilter')?.value;
+        const levelFilter = document.getElementById('levelFilter')?.value;
 
         const cardList = document.getElementById('cardList');
         if (cardList) {
@@ -775,7 +785,7 @@ const ui = {
             const filteredCards = state.cards.filter(card => {
                 const matchesBin = binFilter ? card.bin.startsWith(binFilter) : true;
                 const matchesBrand = brandFilter === 'all' ? true : card.bandeira === brandFilter;
-                const matchesBin = bankFilter === 'all' ? true : card.banco === bankFilter;
+                const matchesBank = bankFilter === 'all' ? true : card.banco === bankFilter;
                 const matchesLevel = levelFilter === 'all' ? true : card.nivel === levelFilter;
                 return matchesBin && matchesBrand && matchesBank && matchesLevel;
             });
@@ -802,10 +812,14 @@ const ui = {
     },
 
     clearFilters() {
-        document.getElementById('binFilter').value = '';
-        document.getElementById('brandFilter').value = 'all';
-        document.getElementById('bankFilter').value = 'all';
-        document.getElementById('levelFilter').value = 'all';
+        const binFilter = document.getElementById('binFilter');
+        const brandFilter = document.getElementById('brandFilter');
+        const bankFilter = document.getElementById('bankFilter');
+        const levelFilter = document.getElementById('levelFilter');
+        if (binFilter) binFilter.value = '';
+        if (brandFilter) brandFilter.value = 'all';
+        if (bankFilter) bankFilter.value = 'all';
+        if (levelFilter) levelFilter.value = 'all';
         ui.filterCards();
     },
 
@@ -813,7 +827,7 @@ const ui = {
         const userCards = document.getElementById('userCards');
         if (userCards) {
             userCards.innerHTML = '';
-            const userCardsList = state.userCards.filter(c => c.user === state.currentUser.username);
+            const userCardsList = state.userCards.filter(c => c.user === state.currentUser?.username);
             if (userCardsList.length === 0) {
                 userCards.innerHTML = '<p class="text-center text-gray-400">Você não possui nenhum cartão.</p>';
             } else {
@@ -821,12 +835,12 @@ const ui = {
                     const cardElement = document.createElement('div');
                     cardElement.className = 'card-item';
                     cardElement.innerHTML = `
-                        <p><i class="fas fa-credit-card"></i><strong> Número:</strong> ${card.numero}</p>
+                        <p><i class="fas fa-credit-card"></i><strong>Número:</strong> ${card.numero}</p>
                         <p><i class="fas fa-flag"></i><strong>Bandeira:</strong> ${card.bandeira}</p>
                         <p><i class="fas fa-university"></i><strong>Banco:</strong> ${card.banco}</p>
                         <p><i class="fas fa-star"></i><strong>Nível:</strong> ${card.nivel}</p>
                     `;
-                    userCards.appendChild(userElement);
+                    userCards.appendChild(cardElement);
                 });
             }
         }
@@ -836,7 +850,7 @@ const ui = {
         const userCardsWallet = document.getElementById('userCardsWallet');
         if (userCardsWallet) {
             userCardsWallet.innerHTML = '';
-            const userCardsList = state.userCards.filter(c => c.user === state.currentUser.username);
+            const userCardsList = state.userCards.filter(c => c.user === state.currentUser?.username);
             if (userCardsList.length === 0) {
                 userCardsWallet.innerHTML = '<p class="text-center text-gray-400">Carteira vazia.</p>';
             } else {
@@ -864,7 +878,7 @@ const ui = {
             return;
         }
         const amountInput = document.getElementById('rechargeAmount');
-        const amount = parseFloat(amountInput.value.trim());
+        const amount = parseFloat(amountInput?.value.trim());
 
         if (isNaN(amount) || amount <= 0) {
             showNotification('Digite um valor válido.');
@@ -889,10 +903,10 @@ const ui = {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Match-Key': CONFIG.JSONBIN_KEY
+                    'X-Master-Key': CONFIG.JSONBIN_KEY
                 },
                 body: JSON.stringify({ users })
-                });
+            });
             if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
 
             document.getElementById('userBalanceHeader').textContent = state.currentUser.balance.toFixed(2);
@@ -910,17 +924,23 @@ const ui = {
             window.location.href = 'index.html';
             return;
         }
-        document.getElementById('cardList').classList.add('hidden');
+        const cardList = document.getElementById('cardList');
         const accountInfo = document.getElementById('accountInfo');
-        accountInfo.classList.remove('hidden');
-        document.getElementById('userName').textContent = state.currentUser.username;
-        document.getElementById('userBalanceAccount').textContent = `R$ ${state.currentUser.balance.toFixed(2)}`;
-        ui.loadUserCards();
+        if (cardList && accountInfo) {
+            cardList.classList.add('hidden');
+            accountInfo.classList.remove('hidden');
+            document.getElementById('userName').textContent = state.currentUser.username;
+            document.getElementById('userBalanceAccount').textContent = `R$ ${state.currentUser.balance.toFixed(2)}`;
+            ui.loadUserCards();
+        }
     },
 
     showAddBalanceForm() {
-        document.getElementById('rechargeModal').classList.remove('hidden');
-        document.getElementById('rechargeModal').classList.add('show');
+        const rechargeModal = document.getElementById('rechargeModal');
+        if (rechargeModal) {
+            rechargeModal.classList.remove('hidden');
+            rechargeModal.classList.add('show');
+        }
     },
 
     showWallet() {
@@ -929,9 +949,12 @@ const ui = {
             window.location.href = 'index.html';
             return;
         }
-        document.getElementById('walletModal').classList.remove('hidden');
-        document.getElementById('walletModal').classList.add('show');
-        ui.loadUserCardsWallet();
+        const walletModal = document.getElementById('walletModal');
+        if (walletModal) {
+            walletModal.classList.remove('hidden');
+            walletModal.classList.add('show');
+            ui.loadUserCardsWallet();
+        }
     },
 
     closeModal() {
@@ -943,19 +966,27 @@ const ui = {
     },
 
     closeCardDetailsModal() {
-        document.getElementById('cardDetailsModal').classList.add('hidden');
-        document.getElementById('cardDetailsModal').classList.remove('show');
+        const cardDetailsModal = document.getElementById('cardDetailsModal');
+        if (cardDetailsModal) {
+            cardDetailsModal.classList.add('hidden');
+            cardDetailsModal.classList.remove('show');
+        }
     },
 
     confirmPurchase() {
         const modal = document.getElementById('confirmPurchaseModal');
-        const cardNumber = modal.getAttribute('data-card-number');
-        shop.purchaseCard(cardNumber, 10.00);
+        const cardNumber = modal?.getAttribute('data-card-number');
+        if (cardNumber) {
+            shop.purchaseCard(cardNumber, 10.00);
+        }
     },
 
     closeConfirmPurchaseModal() {
-        document.getElementById('confirmPurchaseModal').classList.add('hidden');
-        document.getElementById('confirmPurchaseModal').classList.remove('show');
+        const confirmPurchaseModal = document.getElementById('confirmPurchaseModal');
+        if (confirmPurchaseModal) {
+            confirmPurchaseModal.classList.add('hidden');
+            confirmPurchaseModal.classList.remove('show');
+        }
     }
 };
 
@@ -970,7 +1001,8 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('userName').textContent = state.currentUser.username;
             document.getElementById('userBalanceAccount').textContent = `R$ ${state.currentUser.balance.toFixed(2)}`;
             if (state.isAdmin) {
-                document.getElementById('adminButton').classList.remove('hidden');
+                const adminButton = document.getElementById('adminButton');
+                if (adminButton) adminButton.classList.remove('hidden');
             }
             shop.loadCards();
             ui.loadUserCards();
@@ -978,4 +1010,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
-</script>
