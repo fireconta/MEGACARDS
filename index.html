@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - LOGAN CC's</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+    <script src="script.js" defer></script>
     <style>
         * {
             margin: 0;
@@ -52,6 +53,7 @@
             font-size: 2rem;
             color: #38BDF8;
             margin-bottom: 1rem;
+            text-align: center;
         }
         .form-group {
             display: flex;
@@ -70,6 +72,7 @@
         .form-group input:focus {
             border-color: #38BDF8;
             outline: none;
+            box-shadow: 0 0 5px rgba(56, 189, 248, 0.4);
         }
         .form-group button {
             background: linear-gradient(90deg, #38BDF8, #2563EB);
@@ -80,9 +83,14 @@
             width: 100%;
             font-weight: 600;
             cursor: pointer;
+            transition: all 0.3s ease;
         }
         .form-group button:hover {
             background: linear-gradient(90deg, #2563EB, #1D4ED8);
+        }
+        .form-group button:disabled {
+            background: #6B7280;
+            cursor: not-allowed;
         }
         .error-text {
             color: #F87171;
@@ -94,6 +102,8 @@
             margin-top: 1rem;
             text-decoration: none;
             display: inline-block;
+            text-align: center;
+            width: 100%;
         }
         .toggle-link:hover {
             color: #2563EB;
@@ -102,11 +112,23 @@
             position: fixed;
             top: 1rem;
             right: 1rem;
-            padding: 0.5rem 1rem;
-            background: #34D399;
-            color: #FFFFFF;
+            padding: 0.75rem 1.5rem;
             border-radius: 0.5rem;
-            z-index: 20;
+            color: #FFFFFF;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        .notification.error {
+            background: #F87171;
+        }
+        .notification.success {
+            background: #34D399;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
         }
         @media (max-width: 480px) {
             .auth-container {
@@ -127,114 +149,38 @@
         <div id="loginContainer" class="auth-container">
             <h2>Login - LOGAN CC's</h2>
             <div class="form-group">
-                <input id="loginUsername" type="text" placeholder="Usuário">
-                <p id="loginUsernameError" class="error-text"></p>
-                <input id="loginPassword" type="password" placeholder="Senha">
-                <p id="loginPasswordError" class="error-text"></p>
-                <button onclick="handleLogin()">Entrar</button>
-                <a class="toggle-link" onclick="toggleForms('register')">Não tem conta? Registre-se</a>
+                <input id="username" type="text" placeholder="Usuário" oninput="validateUsername(this)">
+                <p id="usernameError" class="error-text"></p>
+                <input id="password" type="password" placeholder="Senha">
+                <p id="passwordError" class="error-text"></p>
+                <button id="loginButton" onclick="auth.login()">Entrar</button>
+                <a class="toggle-link" onclick="ui.showRegisterForm()">Não tem conta? Registre-se</a>
             </div>
         </div>
         <div id="registerContainer" class="auth-container" style="display: none;">
             <h2>Registro - LOGAN CC's</h2>
             <div class="form-group">
-                <input id="registerUsername" type="text" placeholder="Novo Usuário">
-                <p id="registerUsernameError" class="error-text"></p>
-                <input id="registerPassword" type="password" placeholder="Nova Senha">
-                <p id="registerPasswordError" class="error-text"></p>
-                <button onclick="handleRegister()">Registrar</button>
-                <a class="toggle-link" onclick="toggleForms('login')">Já tem conta? Faça login</a>
+                <input id="newUsername" type="text" placeholder="Novo Usuário" oninput="validateUsername(this)">
+                <p id="newUsernameError" class="error-text"></p>
+                <input id="newPassword" type="password" placeholder="Nova Senha">
+                <p id="newPasswordError" class="error-text"></p>
+                <button id="registerButton" onclick="auth.register()">Registrar</button>
+                <a class="toggle-link" onclick="ui.showLoginForm()">Já tem conta? Faça login</a>
             </div>
         </div>
     </main>
-    <div id="notification" class="notification" style="display: none;"></div>
+    <div id="notifications"></div>
     <script>
-        // Função para alternar entre formulários
-        function toggleForms(formType) {
-            const loginContainer = document.getElementById('loginContainer');
-            const registerContainer = document.getElementById('registerContainer');
-            if (formType === 'login') {
-                loginContainer.style.display = 'block';
-                registerContainer.style.display = 'none';
+        function validateUsername(input) {
+            const username = input.value.trim();
+            const errorElement = input.nextElementSibling;
+            const regex = /^[a-zA-Z0-9_]{3,}$/;
+            if (!regex.test(username)) {
+                errorElement.textContent = 'Usuário deve ter pelo menos 3 caracteres alfanuméricos.';
             } else {
-                loginContainer.style.display = 'none';
-                registerContainer.style.display = 'block'; // Corrigido o erro de sintaxe aqui
+                errorElement.textContent = '';
             }
         }
-
-        // Função para exibir notificações
-        function showNotification(message) {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.style.display = 'block';
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 3000);
-        }
-
-        // Função para lidar com o login
-        function handleLogin() {
-            const username = document.getElementById('loginUsername').value;
-            const password = document.getElementById('loginPassword').value;
-            const usernameError = document.getElementById('loginUsernameError');
-            const passwordError = document.getElementById('loginPasswordError');
-
-            usernameError.textContent = '';
-            passwordError.textContent = '';
-
-            if (!username || !password) {
-                if (!username) usernameError.textContent = 'Usuário é obrigatório.';
-                if (!password) passwordError.textContent = 'Senha é obrigatória.';
-                showNotification('Preencha todos os campos!');
-                return;
-            }
-
-            const users = JSON.parse(localStorage.getItem('users') || '[]');
-            const user = users.find(u => u.username === username && u.password === password);
-
-            if (user) {
-                showNotification('Login bem-sucedido!');
-                setTimeout(() => window.location.href = 'shop.html', 1000);
-            } else {
-                passwordError.textContent = 'Usuário ou senha inválidos.';
-                showNotification('Credenciais inválidas!');
-            }
-        }
-
-        // Função para lidar com o registro
-        function handleRegister() {
-            const username = document.getElementById('registerUsername').value;
-            const password = document.getElementById('registerPassword').value;
-            const usernameError = document.getElementById('registerUsernameError');
-            const passwordError = document.getElementById('registerPasswordError');
-
-            usernameError.textContent = '';
-            passwordError.textContent = '';
-
-            if (!username || !password) {
-                if (!username) usernameError.textContent = 'Usuário é obrigatório.';
-                if (!password) passwordError.textContent = 'Senha é obrigatória.';
-                showNotification('Preencha todos os campos!');
-                return;
-            }
-
-            const users = JSON.parse(localStorage.getItem('users') || '[]');
-            if (users.find(u => u.username === username)) {
-                usernameError.textContent = 'Usuário já existe.';
-                showNotification('Usuário já registrado!');
-                return;
-            }
-
-            users.push({ username, password });
-            localStorage.setItem('users', JSON.stringify(users));
-            showNotification('Registro bem-sucedido!');
-            toggleForms('login');
-        }
-
-        // Inicializa a página mostrando o formulário de login
-        document.addEventListener('DOMContentLoaded', () => {
-            toggleForms('login');
-        });
     </script>
 </body>
 </html>
