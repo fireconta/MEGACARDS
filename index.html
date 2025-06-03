@@ -6,8 +6,8 @@
     <meta name="theme-color" content="#1A2A44">
     <title>Login - LOGAN CC's</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Montserrat:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <script src="script.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script type="module" src="script.js" defer></script>
     <style>
         * {
             margin: 0;
@@ -39,21 +39,24 @@
             z-index: 100;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         }
-        .header .logo img {
-            height: 45px;
+        .header .logo i {
+            font-size: 2.5rem;
+            color: #38BDF8;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
             transition: transform 0.3s ease;
         }
-        .header .logo img:hover {
-            transform: scale(1.1);
+        .header .logo i:hover {
+            transform: rotate(10deg) scale(1.1);
         }
         .container {
-            background: rgba(30, 41, 59, 0.9);
-            border-radius: 1rem;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(12px);
             padding: 2rem;
-            width: 90%;
-            max-width: 400px;
+            border-radius: 1rem;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(56, 189, 248, 0.2);
+            width: 90%;
+            max-width: 400px;
             animation: fadeIn 0.5s ease-out;
         }
         @keyframes fadeIn {
@@ -63,7 +66,6 @@
         h2 {
             font-family: 'Montserrat', sans-serif;
             font-size: 2rem;
-            font-weight: 700;
             color: #38BDF8;
             text-align: center;
             margin-bottom: 1.5rem;
@@ -87,73 +89,91 @@
             border-color: #38BDF8;
             box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
             outline: none;
-            background: #334155;
+        }
+        .form-group input.error {
+            border-color: #F87171;
+            animation: shake 0.3s ease;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
         }
         .error-text {
             color: #F87171;
             font-size: 0.8rem;
             margin-top: 0.25rem;
             min-height: 1.2rem;
-            line-height: 1.2;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
-        .action-button {
+        .error-text.show {
+            opacity: 1;
+        }
+        button {
             background: linear-gradient(90deg, #38BDF8, #2563EB);
             color: #FFFFFF;
+            border: none;
             border-radius: 0.5rem;
             padding: 0.75rem;
             width: 100%;
             font-weight: 600;
-            border: none;
+            font-size: 0.95rem;
             cursor: pointer;
             transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
         }
-        .action-button:hover:not(:disabled) {
+        button:hover:not(:disabled) {
             background: linear-gradient(90deg, #2563EB, #1D4ED8);
             transform: scale(1.03);
-            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
         }
-        .action-button:disabled {
-            background: #6B7280;
+        button:disabled {
+            background: #4B5563;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
-            animation: pulse 1.5s infinite;
         }
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
+        button::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        button:hover::after {
+            left: 100%;
         }
         .secondary-button {
             background: #4B5563;
             color: #E2E8F0;
-            border-radius: 0.5rem;
-            padding: 0.75rem;
-            width: 100%;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
             margin-top: 0.5rem;
         }
-        .secondary-button:hover {
+        .secondary-button:hover:not(:disabled) {
             background: #6B7280;
             transform: scale(1.03);
         }
-        .notification {
+        .notification-container {
             position: fixed;
             top: 1rem;
             right: 1rem;
             z-index: 1000;
+            max-width: 350px;
+        }
+        .notification {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             padding: 0.75rem 1.5rem;
             border-radius: 0.5rem;
             color: #FFFFFF;
             font-size: 0.9rem;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            margin-bottom: 0.5rem;
             animation: slideIn 0.3s ease;
         }
         .notification.error {
@@ -175,12 +195,22 @@
             border: none;
             color: #9CA3AF;
             cursor: pointer;
-            transition: color 0.3s ease, transform 0.2s ease;
             font-size: 1rem;
+            transition: color 0.3s ease, transform 0.2s ease;
         }
         .password-toggle:hover {
             color: #E2E8F0;
             transform: translateY(-50%) scale(1.1);
+        }
+        .error-fallback {
+            text-align: center;
+            color: #F87171;
+            font-size: 1.2rem;
+            padding: 2rem;
+            display: none;
+        }
+        .error-fallback.show {
+            display: block;
         }
         .hidden {
             display: none !important;
@@ -197,147 +227,84 @@
                 font-size: 1.75rem;
             }
             .form-group input {
-                font-size: 0.9rem;
                 padding: 0.65rem 2.5rem 0.65rem 0.65rem;
+                font-size: 0.9rem;
             }
         }
     </style>
 </head>
 <body>
     <header class="header">
-        <a href="index.html" class="logo"><img src="logo.png" alt="LOGAN CC's Logo"></a>
+        <a href="index.html" class="logo"><i class="fas fa-credit-card" aria-hidden="true"></i></a>
     </header>
     <main class="container">
         <div id="loginContainer">
             <h2>Login - LOGAN CC's</h2>
-            <form id="loginForm" onsubmit="event.preventDefault(); auth.login();" novalidate>
-                <div class="form-group">
-                    <input id="username" type="text" placeholder="Digite seu usuário" oninput="validateUsername(this)" autofocus>
-                    <p id="usernameError" class="error-text"></p>
-                </div>
-                <div class="form-group">
-                    <input id="password" type="password" placeholder="Digite sua senha (mín. 6 caracteres)" oninput="validatePassword(this)">
-                    <button type="button" class="password-toggle" onclick="togglePassword('password', this)">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <p id="passwordError" class="error-text"></p>
-                </div>
-                <button id="loginButton" type="submit" class="action-button">
-                    <span>Entrar</span>
-                    <i class="fas fa-spinner fa-spin hidden"></i>
+            <div class="form-group">
+                <input id="username" type="text" placeholder="Digite seu usuário" aria-label="Usuário" autofocus>
+                <span id="usernameError" class="error-text"></span>
+            </div>
+            <div class="form-group">
+                <input id="password" type="password" placeholder="Digite sua senha" aria-label="Senha">
+                <button type="button" class="password-toggle" onclick="togglePassword('password', this)">
+                    <i class="fas fa-eye"></i>
                 </button>
-            </form>
-            <button class="secondary-button" onclick="showRegisterForm()">Criar Conta</button>
+                <span id="passwordError" class="error-text"></span>
+            </div>
+            <button id="loginButton" onclick="auth.login()" class="action-button">Entrar</button>
+            <button class="secondary-button" onclick="ui.showRegisterForm()">Criar Conta</button>
         </div>
         <div id="registerContainer" class="hidden">
             <h2>Registrar - LOGAN CC's</h2>
-            <form id="registerForm" onsubmit="event.preventDefault(); auth.register();" novalidate>
-                <div class="form-group">
-                    <input id="newUsername" type="text" placeholder="Escolha um usuário" oninput="validateUsername(this)" autofocus>
-                    <p id="newUsernameError" class="error-text"></p>
-                </div>
-                <div class="form-group">
-                    <input id="newPassword" type="password" placeholder="Crie uma senha (mín. 6 caracteres)" oninput="validatePassword(this)">
-                    <button type="button" class="password-toggle" onclick="togglePassword('newPassword', this)">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <p id="newPasswordError" class="error-text"></p>
-                </div>
-                <div class="form-group">
-                    <input id="confirmPassword" type="password" placeholder="Confirme sua senha" oninput="validateConfirmPassword(this)">
-                    <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <p id="confirmPasswordError" class="error-text"></p>
-                </div>
-                <button id="registerButton" type="submit" class="action-button">
-                    <span>Registrar</span>
-                    <i class="fas fa-spinner fa-spin hidden"></i>
+            <div class="form-group">
+                <input id="newUsername" type="text" placeholder="Escolha um usuário" aria-label="Usuário" autofocus>
+                <span id="newUsernameError" class="error-text"></span>
+            </div>
+            <div class="form-group">
+                <input id="newPassword" type="password" placeholder="Crie uma senha" aria-label="Senha">
+                <button type="button" class="password-toggle" onclick="togglePassword('newPassword', this)">
+                    <i class="fas fa-eye"></i>
                 </button>
-            </form>
-            <button class="secondary-button" onclick="showLoginForm()">Voltar ao Login</button>
+                <span id="newPasswordError" class="error-text"></span>
+            </div>
+            <div class="form-group">
+                <input id="confirmPassword" type="password" placeholder="Confirme sua senha" aria-label="Confirmar Senha">
+                <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <span id="confirmPasswordError" class="error-text"></span>
+            </div>
+            <button id="registerButton" onclick="auth.register()" class="action-button">Registrar</button>
+            <button class="secondary-button" onclick="ui.showLoginForm()">Voltar ao Login</button>
         </div>
     </main>
-    <div id="notifications" class="fixed top-4 right-4 z-30"></div>
+    <div id="notifications" class="notification-container" role="alert" aria-live="polite"></div>
+    <div id="errorFallback" class="error-fallback">
+        <p>Ocorreu um erro ao carregar a página. Verifique sua conexão ou tente novamente.</p>
+    </div>
     <script>
-        function validateUsername(input) {
-            const username = input.value.trim();
-            const errorElement = document.getElementById(input.id === 'username' ? 'usernameError' : 'newUsernameError');
-            const regex = /^[a-zA-Z0-9_]{3,20}$/;
-            if (username && !regex.test(username)) {
-                errorElement.textContent = 'Usuário deve ter 3-20 caracteres alfanuméricos.';
-            } else {
-                errorElement.textContent = '';
-            }
-        }
-
-        function validatePassword(input) {
-            const password = input.value.trim();
-            const errorElement = document.getElementById(input.id === 'password' ? 'passwordError' : 'newPasswordError');
-            if (password && password.length < 6) {
-                errorElement.textContent = 'A senha deve ter pelo menos 6 caracteres.';
-            } else {
-                errorElement.textContent = '';
-            }
-            if (input.id === 'newPassword') {
-                validateConfirmPassword(document.getElementById('confirmPassword'));
-            }
-        }
-
-        function validateConfirmPassword(input) {
-            const confirmPassword = input.value.trim();
-            const password = document.getElementById('newPassword').value.trim();
-            const errorElement = document.getElementById('confirmPasswordError');
-            if (confirmPassword && confirmPassword !== password) {
-                errorElement.textContent = 'As senhas não coincidem.';
-            } else {
-                errorElement.textContent = '';
-            }
-        }
-
         function togglePassword(inputId, button) {
             const input = document.getElementById(inputId);
             const icon = button.querySelector('i');
             if (input.type === 'password') {
                 input.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
             } else {
                 input.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
             }
         }
 
-        function clearFormFields(containerId) {
-            const container = document.getElementById(containerId);
-            const inputs = container.querySelectorAll('input');
-            const errorElements = container.querySelectorAll('.error-text');
-            inputs.forEach(input => input.value = '');
-            errorElements.forEach(element => element.textContent = '');
-        }
-
-        function showLoginForm() {
-            clearFormFields('registerContainer');
-            document.getElementById('loginContainer').classList.remove('hidden');
-            document.getElementById('registerContainer').classList.add('hidden');
-        }
-
-        function showRegisterForm() {
-            clearFormFields('loginContainer');
-            document.getElementById('loginContainer').classList.add('hidden');
-            document.getElementById('registerContainer').classList.remove('hidden');
-        }
-
-        function setError(fieldId, message) {
-            const errorElement = document.getElementById(`${fieldId}Error`);
-            if (errorElement) errorElement.textContent = message;
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
-            if (typeof checkAuth === 'function' && checkAuth()) {
-                showNotification('Você já está logado.', 'success');
-                setTimeout(() => window.location.href = 'shop.html', 1000);
+            try {
+                ui.showLoginForm();
+                if (checkAuth()) {
+                    showNotification('success', 'Você já está logado.');
+                    setTimeout(() => window.location.href = 'shop.html', 1000);
+                }
+            } catch (e) {
+                console.error('Erro ao inicializar:', e);
+                document.getElementById('errorFallback').classList.add('show');
             }
         });
     </script>
