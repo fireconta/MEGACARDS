@@ -70,6 +70,7 @@
         }
         .form-group {
             margin-bottom: 1rem;
+            position: relative;
         }
         .form-group input {
             background: #2D3748;
@@ -107,6 +108,12 @@
             background: linear-gradient(90deg, #2563EB, #1D4ED8);
             transform: scale(1.03);
             box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
+        }
+        .action-button:disabled {
+            background: #6B7280;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         .secondary-button {
             background: #4B5563;
@@ -146,6 +153,23 @@
             from { opacity: 0; transform: translateX(20px); }
             to { opacity: 1; transform: translateX(0); }
         }
+        .password-toggle {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #9CA3AF;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        .password-toggle:hover {
+            color: #E2E8F0;
+        }
+        .hidden {
+            display: none !important;
+        }
         @media (max-width: 640px) {
             .container {
                 padding: 1.5rem;
@@ -163,28 +187,45 @@
     <main class="container">
         <div id="loginContainer">
             <h2>Login - LOGAN CC's</h2>
-            <div class="form-group">
-                <input id="username" type="text" placeholder="Usuário" oninput="validateUsername(this)">
-                <p id="usernameError" class="error-text"></p>
-            </div>
-            <div class="form-group">
-                <input id="password" type="password" placeholder="Senha">
-                <p id="passwordError" class="error-text"></p>
-            </div>
-            <button id="loginButton" class="action-button" onclick="auth.login()">Entrar</button>
+            <form id="loginForm" onsubmit="event.preventDefault(); auth.login();">
+                <div class="form-group">
+                    <input id="username" type="text" placeholder="Usuário" oninput="validateUsername(this)" autofocus>
+                    <p id="usernameError" class="error-text"></p>
+                </div>
+                <div class="form-group">
+                    <input id="password" type="password" placeholder="Senha">
+                    <button type="button" class="password-toggle" onclick="togglePassword('password', this)">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <p id="passwordError" class="error-text"></p>
+                </div>
+                <button id="loginButton" type="submit" class="action-button">Entrar</button>
+            </form>
             <button class="secondary-button" onclick="ui.showRegisterForm()">Criar Conta</button>
         </div>
-        <div id="registerContainer" style="display: none;">
+        <div id="registerContainer" class="hidden">
             <h2>Registrar - LOGAN CC's</h2>
-            <div class="form-group">
-                <input id="newUsername" type="text" placeholder="Usuário" oninput="validateUsername(this)">
-                <p id="newUsernameError" class="error-text"></p>
-            </div>
-            <div class="form-group">
-                <input id="newPassword" type="password" placeholder="Senha">
-                <p id="newPasswordError" class="error-text"></p>
-            </div>
-            <button id="registerButton" class="action-button" onclick="auth.register()">Registrar</button>
+            <form id="registerForm" onsubmit="event.preventDefault(); auth.register();">
+                <div class="form-group">
+                    <input id="newUsername" type="text" placeholder="Usuário" oninput="validateUsername(this)" autofocus>
+                    <p id="newUsernameError" class="error-text"></p>
+                </div>
+                <div class="form-group">
+                    <input id="newPassword" type="password" placeholder="Senha" oninput="validatePassword(this)">
+                    <button type="button" class="password-toggle" onclick="togglePassword('newPassword', this)">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <p id="newPasswordError" class="error-text"></p>
+                </div>
+                <div class="form-group">
+                    <input id="confirmPassword" type="password" placeholder="Confirmar Senha" oninput="validateConfirmPassword(this)">
+                    <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <p id="confirmPasswordError" class="error-text"></p>
+                </div>
+                <button id="registerButton" type="submit" class="action-button">Registrar</button>
+            </form>
             <button class="secondary-button" onclick="ui.showLoginForm()">Voltar ao Login</button>
         </div>
     </main>
@@ -194,11 +235,65 @@
             const username = input.value.trim();
             const errorElement = document.getElementById(input.id === 'username' ? 'usernameError' : 'newUsernameError');
             const regex = /^[a-zA-Z0-9_]{3,}$/;
-            if (!regex.test(username)) {
+            if (username && !regex.test(username)) {
                 errorElement.textContent = 'Usuário deve ter pelo menos 3 caracteres alfanuméricos.';
             } else {
                 errorElement.textContent = '';
             }
+        }
+
+        function validatePassword(input) {
+            const password = input.value.trim();
+            const errorElement = document.getElementById('newPasswordError');
+            if (password && password.length < 6) {
+                errorElement.textContent = 'A senha deve ter pelo menos 6 caracteres.';
+            } else {
+                errorElement.textContent = '';
+            }
+            validateConfirmPassword(document.getElementById('confirmPassword'));
+        }
+
+        function validateConfirmPassword(input) {
+            const confirmPassword = input.value.trim();
+            const password = document.getElementById('newPassword').value.trim();
+            const errorElement = document.getElementById('confirmPasswordError');
+            if (confirmPassword && confirmPassword !== password) {
+                errorElement.textContent = 'As senhas não coincidem.';
+            } else {
+                errorElement.textContent = '';
+            }
+        }
+
+        function togglePassword(inputId, button) {
+            const input = document.getElementById(inputId);
+            const icon = button.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        function clearFormFields(containerId) {
+            const container = document.getElementById(containerId);
+            const inputs = container.querySelectorAll('input');
+            const errorElements = container.querySelectorAll('.error-text');
+            inputs.forEach(input => input.value = '');
+            errorElements.forEach(element => element.textContent = '');
+        }
+
+        function showLoginForm() {
+            clearFormFields('registerContainer');
+            ui.showLoginForm();
+        }
+
+        function showRegisterForm() {
+            clearFormFields('loginContainer');
+            ui.showRegisterForm();
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -206,6 +301,16 @@
                 showNotification('Você já está logado.', 'success');
                 setTimeout(() => window.location.href = 'shop.html', 1000);
             }
+            document.getElementById('loginForm').addEventListener('submit', (event) => {
+                event.preventDefault();
+                auth.login();
+            });
+            document.getElementById('registerForm').addEventListener('submit', (event) => {
+                event.preventDefault();
+                auth.register();
+            });
+            document.getElementById('loginContainer').querySelector('.secondary-button').addEventListener('click', showRegisterForm);
+            document.getElementById('registerContainer').querySelector('.secondary-button').addEventListener('click', showLoginForm);
         });
     </script>
 </body>
