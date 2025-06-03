@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#1A2A44">
-    <title>Login - LOGAN CC's</title>
+    <title>LOGAN CC's - Login</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Montserrat:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <script type="module" src="script.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="script.js" defer></script>
     <style>
         * {
             margin: 0;
@@ -20,100 +21,72 @@
             color: #E2E8F0;
             min-height: 100vh;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             overflow-x: hidden;
-            padding-top: 80px;
-        }
-        .header {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 1rem 2rem;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: fixed;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-        }
-        .header .logo i {
-            font-size: 2.5rem;
-            color: #38BDF8;
-            text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
-            transition: transform 0.3s ease;
-        }
-        .header .logo i:hover {
-            transform: rotate(10deg) scale(1.1);
         }
         .container {
-            background: rgba(30, 41, 59, 0.95);
-            backdrop-filter: blur(12px);
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
             padding: 2rem;
             border-radius: 1rem;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(56, 189, 248, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             width: 90%;
             max-width: 400px;
-            animation: fadeIn 0.5s ease-out;
+            text-align: center;
+            border: 1px solid rgba(56, 189, 248, 0.2);
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .logo img {
+            height: 60px;
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+        .logo img:hover {
+            transform: scale(1.1);
         }
         h2 {
             font-family: 'Montserrat', sans-serif;
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 700;
             color: #38BDF8;
-            text-align: center;
             margin-bottom: 1.5rem;
             text-shadow: 0 2px 6px rgba(56, 189, 248, 0.3);
         }
         .form-group {
-            margin-bottom: 1.25rem;
-            position: relative;
-            display: flex;
-            align-items: center;
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: #A0BFE0;
+            margin-bottom: 0.3rem;
         }
         .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
             background: #2D3748;
             color: #E2E8F0;
             border: 1px solid #4B5563;
-            border-radius: 0.5rem;
-            padding: 0.75rem 2.5rem 0.75rem 0.75rem;
-            width: 100%;
-            font-size: 0.95rem;
             transition: all 0.3s ease;
         }
         .form-group input:focus {
             border-color: #38BDF8;
             box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
             outline: none;
+            background: #334155;
         }
-        .form-group input.error {
-            border-color: #F87171;
-            animation: shake 0.3s ease;
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-        .error-text {
+        .error {
             color: #F87171;
             font-size: 0.8rem;
-            margin-top: 0.25rem;
-            min-height: 1.2rem;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            margin-top: 0.3rem;
+            display: none;
         }
-        .error-text.show {
-            opacity: 1;
+        .error.show {
+            display: block;
         }
-        .action-button {
+        button {
             background: linear-gradient(90deg, #38BDF8, #2563EB);
             color: #FFFFFF;
             border-radius: 0.5rem;
@@ -123,63 +96,32 @@
             border: none;
             cursor: pointer;
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .action-button:hover:not(:disabled) {
-            background: linear-gradient(90deg, #2563EB, #1D4ED8);
-            transform: scale(1.03);
-            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
-        }
-        .action-button:disabled {
-            background: #4B5563;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        .action-button::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s ease;
-        }
-        .action-button:hover::after {
-            left: 100%;
-        }
-        .secondary-button {
-            background: #4B5563;
-            color: #E2E8F0;
-            border-radius: 0.5rem;
-            padding: 0.75rem;
-            width: 100%;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
             margin-top: 0.5rem;
         }
-        .secondary-button:hover:not(:disabled) {
-            background: #6B7280;
+        button:hover {
+            background: linear-gradient(90deg, #2563EB, #1D4ED8);
             transform: scale(1.03);
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
         }
-        .notification-container {
+        .switch-form {
+            margin-top: 1rem;
+            color: #A0BFE0;
+            font-size: 0.9rem;
+        }
+        .switch-form a {
+            color: #38BDF8;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        .switch-form a:hover {
+            color: #2563EB;
+        }
+        .notification {
             position: fixed;
             top: 1rem;
             right: 1rem;
             z-index: 1000;
-            max-width: 350px;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .notification {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
             padding: 0.75rem 1.5rem;
             border-radius: 0.5rem;
             color: #FFFFFF;
@@ -197,211 +139,62 @@
             from { opacity: 0; transform: translateX(20px); }
             to { opacity: 1; transform: translateX(0); }
         }
-        .password-toggle {
-            position: absolute;
-            right: 0.75rem;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: #9CA3AF;
-            cursor: pointer;
-            font-size: 1rem;
-            width: 1.5rem;
-            height: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color 0.3s ease, transform 0.2s ease;
-        }
-        .password-toggle:hover {
-            color: #E2E8F0;
-            transform: translateY(-50%) scale(1.1);
-        }
-        .error-fallback {
-            text-align: center;
-            color: #F87171;
-            font-size: 1.2rem;
-            padding: 2rem;
-            display: none;
-        }
-        .error-fallback.show {
-            display: block;
-        }
-        .hidden {
-            display: none !important;
-        }
         @media (max-width: 640px) {
-            body {
-                padding-top: 70px;
-            }
             .container {
                 padding: 1.5rem;
                 width: 95%;
             }
             h2 {
-                font-size: 1.75rem;
-            }
-            .form-group input {
-                padding: 0.65rem 2.5rem 0.65rem 0.65rem;
-                font-size: 0.9rem;
-            }
-            .password-toggle {
-                right: 0.5rem;
-                font-size: 0.9rem;
-                width: 1.25rem;
-                height: 1.25rem;
+                font-size: 1.5rem;
             }
         }
     </style>
 </head>
 <body>
-    <header class="header">
-        <a href="index.html" class="logo" aria-label="LOGAN CC's Home">
-            <i class="fas fa-credit-card" aria-hidden="true"></i>
-        </a>
-    </header>
-    <main class="container">
+    <div class="container">
+        <div class="logo">
+            <img src="logo.png" alt="Logo da LOGAN CC's" aria-label="Logo da LOGAN CC's">
+        </div>
         <div id="loginContainer">
-            <h2>Login - LOGAN CC's</h2>
-            <form id="loginForm" onsubmit="event.preventDefault(); auth.login();" novalidate>
-                <div class="form-group">
-                    <input id="username" type="text" placeholder="Username" aria-label="Username" oninput="validateUsername(this)" required autofocus>
-                    <span id="usernameError" class="error-text"></span>
-                </div>
-                <div class="form-group">
-                    <input id="password" type="password" placeholder="Password" aria-label="Password" oninput="validatePassword(this)" required>
-                    <button type="button" class="password-toggle" onclick="togglePassword('password', this)" aria-label="Toggle password visibility">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <span id="passwordError" class="error-text"></span>
-                </div>
-                <button id="loginButton" type="submit" class="action-button" disabled>Entrar</button>
-            </form>
-            <button class="secondary-button" onclick="ui.showRegisterForm()">Criar Conta</button>
+            <h2>Login</h2>
+            <div class="form-group">
+                <label for="username">Usuário</label>
+                <input type="text" id="username" placeholder="Digite seu usuário" aria-label="Usuário">
+                <div id="usernameError" class="error"></div>
+            </div>
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" placeholder="Digite sua senha" aria-label="Senha">
+                <div id="passwordError" class="error"></div>
+            </div>
+            <button id="loginButton" onclick="auth.login()">Entrar</button>
+            <div class="switch-form">
+                Não tem uma conta? <a href="#" onclick="ui.showRegisterForm()">Registre-se</a>
+            </div>
         </div>
         <div id="registerContainer" class="hidden">
-            <h2>Registrar - LOGAN CC's</h2>
-            <form id="registerForm" onsubmit="event.preventDefault(); auth.register();" novalidate>
-                <div class="form-group">
-                    <input id="newUsername" type="text" placeholder="Username" aria-label="Username" oninput="validateUsername(this)" required autofocus>
-                    <span id="newUsernameError" class="error-text"></span>
-                </div>
-                <div class="form-group">
-                    <input id="newPassword" type="password" placeholder="Password" aria-label="Password" oninput="validatePassword(this)" required>
-                    <button type="button" class="password-toggle" onclick="togglePassword('newPassword', this)" aria-label="Toggle password visibility">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <span id="newPasswordError" class="error-text"></span>
-                </div>
-                <div class="form-group">
-                    <input id="confirmPassword" type="password" placeholder="Confirm Password" aria-label="Confirm Password" oninput="validateConfirmPassword(this)" required>
-                    <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)" aria-label="Toggle password visibility">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <span id="confirmPasswordError" class="error-text"></span>
-                </div>
-                <button id="registerButton" type="submit" class="action-button" disabled>Registrar</button>
-            </form>
-            <button class="secondary-button" onclick="ui.showLoginForm()">Voltar ao Login</button>
+            <h2>Registro</h2>
+            <div class="form-group">
+                <label for="newUsername">Usuário</label>
+                <input type="text" id="newUsername" placeholder="Escolha um usuário" aria-label="Novo usuário">
+                <div id="newUsernameError" class="error"></div>
+            </div>
+            <div class="form-group">
+                <label for="newPassword">Senha</label>
+                <input type="password" id="newPassword" placeholder="Digite uma senha" aria-label="Nova senha">
+                <div id="newPasswordError" class="error"></div>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirmar Senha</label>
+                <input type="password" id="confirmPassword" placeholder="Confirme sua senha" aria-label="Confirmação de senha">
+                <div id="confirmPasswordError" class="error"></div>
+            </div>
+            <button id="registerButton" onclick="auth.register()">Registrar</button>
+            <div class="switch-form">
+                Já tem uma conta? <a href="#" onclick="ui.showLoginForm()">Faça login</a>
+            </div>
         </div>
-    </main>
-    <div id="notifications" class="notification-container" role="alert" aria-live="polite"></div>
-    <div id="errorFallback" class="error-fallback">
-        <p>Ocorreu um erro ao carregar a página. Verifique sua conexão ou tente novamente.</p>
     </div>
-    <script>
-        function togglePassword(inputId, button) {
-            const input = document.getElementById(inputId);
-            const icon = button.querySelector('i');
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.replace('fa-eye', 'fa-eye-slash');
-            } else {
-                input.type = 'password';
-                icon.classList.replace('fa-eye-slash', 'fa-eye');
-            }
-        }
-
-        function validateUsername(input) {
-            const errorElement = document.getElementById(input.id === 'username' ? 'usernameError' : 'newUsernameError');
-            const value = input.value.trim();
-            const regex = /^[a-zA-Z0-9_]{3,20}$/;
-            errorElement.classList.remove('show');
-            input.classList.remove('error');
-            if (!value) {
-                errorElement.textContent = 'Username é obrigatório.';
-                errorElement.classList.add('show');
-                input.classList.add('error');
-            } else if (!regex.test(value)) {
-                errorElement.textContent = 'Username deve ter 3-20 caracteres alfanuméricos.';
-                errorElement.classList.add('show');
-                input.classList.add('error');
-            } else {
-                errorElement.textContent = '';
-            }
-            updateButtonState(input.closest('form').id);
-        }
-
-        function validatePassword(input) {
-            const errorElement = document.getElementById(input.id === 'password' ? 'passwordError' : 'newPasswordError');
-            const value = input.value.trim();
-            const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
-            errorElement.classList.remove('show');
-            input.classList.remove('error');
-            if (!value) {
-                errorElement.textContent = 'Password é obrigatório!';
-                errorElement.classList.add('show');
-                input.classList.add('error');
-            } else if (!regex.test(value)) {
-                errorElement.textContent = 'Password deve ter no mínimo 8 caracteres, com letras maiúsculas, minúsculas e números.';
-                errorElement.classList.add('show');
-                input.classList.add('error');
-            } else {
-                errorElement.textContent = '';
-            }
-            if (input.id === 'newPassword') {
-                validateConfirmPassword(document.getElementById('confirmPassword'));
-            }
-            updateButtonState(input.closest('form').id);
-        }
-
-        function validateConfirmPassword(input) {
-            const errorElement = document.getElementById('confirmPasswordError');
-            const value = input.value.trim();
-            const password = document.getElementById('newPassword').value.trim();
-            errorElement.classList.remove('show');
-            input.classList.remove('error');
-            if (!value) {
-                errorElement.textContent = 'Confirmação de password é obrigatória.';
-                errorElement.classList.add('show');
-                input.classList.add('error');
-            } else if (value !== password) {
-                errorElement.textContent = 'As senhas não coincidem.';
-                errorElement.classList.add('show');
-                input.classList.add('error');
-            } else {
-                errorElement.textContent = '';
-            }
-            updateButtonState(input.closest('form').id);
-        }
-
-        function updateButtonState(formId) {
-            const form = document.getElementById(formId);
-            const button = form.querySelector('.action-button');
-            const inputs = form.querySelectorAll('input');
-            const errors = form.querySelectorAll('.error-text.show');
-            let isValid = true;
-            inputs.forEach(input => {
-                if (!input.value.trim() || input.classList.contains('error')) {
-                    isValid = false;
-                }
-            });
-            if (errors.length > 0) {
-                isValid = false;
-            }
-            button.disabled = !isValid;
-        }
-    </script>
+    <div id="notifications" class="fixed top-4 right-4 z-30" role="alert"></div>
 </body>
 </html>
