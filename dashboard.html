@@ -5,36 +5,189 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#1A2A44">
     <title>Dashboard - LOGAN CC's</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Montserrat:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="script.js" defer></script>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             font-family: 'Poppins', sans-serif;
             background: linear-gradient(145deg, #0F172A 0%, #1E293B 100%);
+            color: #E2E8F0;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+        .header .logo img {
+            height: 45px;
+            transition: transform 0.3s ease;
+        }
+        .header .logo img:hover {
+            transform: scale(1.1);
+        }
+        main {
+            flex-grow: 1;
+            padding: 2rem 1rem;
+            background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.1), transparent 50%);
+        }
+        h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #38BDF8;
+            text-align: center;
+            margin-bottom: 2rem;
+            text-shadow: 0 2px 6px rgba(56, 189, 248, 0.3);
+        }
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+        }
+        .tab-button {
+            background: #2D3748;
+            color: #E2E8F0;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        .tab-button.active {
+            background: linear-gradient(90deg, #38BDF8, #2563EB);
+            color: #FFFFFF;
+        }
+        .tab-button:hover {
+            background: #334155;
+        }
+        .table-container {
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: #E2E8F0;
+        }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #4B5563;
+        }
+        th {
+            background: #1E293B;
+            font-weight: 600;
+        }
+        .action-button {
+            background: linear-gradient(90deg, #38BDF8, #2563EB);
+            color: #FFFFFF;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 0.5rem;
+        }
+        .action-button:hover {
+            background: linear-gradient(90deg, #2563EB, #1D4ED8);
+            transform: scale(1.05);
+        }
+        .delete-button {
+            background: #F87171;
+            color: #FFFFFF;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .delete-button:hover {
+            background: #EF4444;
+            transform: scale(1.05);
         }
         .modal {
-            display: none;
+            background: rgba(0, 0, 0, 0.8);
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
+            inset: 0;
+            display: flex;
             justify-content: center;
             align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            z-index: 1000;
         }
         .modal.show {
-            display: flex;
+            opacity: 1;
         }
         .modal-content {
-            background: #1E293B;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            width: 100%;
+            background: linear-gradient(135deg, #1E293B, #0F172A);
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 90%;
             max-width: 500px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            transform: translateY(-20px);
+            transition: transform 0.3s ease-in-out;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+        .modal-content input, .modal-content select {
+            background: #2D3748;
+            color: #E2E8F0;
+            border: 1px solid #4B5563;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            width: 100%;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        .modal-content input:focus, .modal-content select:focus {
+            border-color: #38BDF8;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+            outline: none;
+        }
+        .modal-content button {
+            background: linear-gradient(90deg, #38BDF8, #2563EB);
+            color: #FFFFFF;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            width: 100%;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 0.5rem;
+        }
+        .modal-content button:hover {
+            background: linear-gradient(90deg, #2563EB, #1D4ED8);
+            transform: scale(1.03);
+        }
+        .modal-content button.secondary {
+            background: #4B5563;
+        }
+        .modal-content button.secondary:hover {
+            background: #6B7280;
         }
         .notification {
             position: fixed;
@@ -74,278 +227,250 @@
             border: 3px solid #38BDF8;
             border-top: 3px solid transparent;
             border-radius: 50%;
-            animation: spin 0.6s linear infinite;
+            animation: spin 1s linear infinite;
         }
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        .tab-button.active {
-            background: #38BDF8;
-            color: white;
+        .hidden {
+            display: none !important;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        @media (min-width: 640px) {
+            .modal-content {
+                width: 80%;
+            }
         }
-        th, td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid #4B5563;
-        }
-        th {
-            background: #1E293B;
-            font-weight: 600;
-        }
-        .action-button {
-            background: #38BDF8;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 0.25rem;
-            margin-right: 0.5rem;
-        }
-        .delete-button {
-            background: #F87171;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 0.25rem;
+        @media (max-width: 640px) {
+            .table-container {
+                padding: 1rem;
+            }
+            th, td {
+                padding: 0.5rem;
+            }
+            .action-button, .delete-button {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
-    <script src="script.js" defer></script>
 </head>
-<body class="flex flex-col">
-    <header class="w-full bg-gray-900 bg-opacity-95 backdrop-blur-lg py-4 px-6 fixed top-0 z-50 shadow-lg">
-        <div class="flex justify-between items-center">
-            <a href="index.html" class="logo"><img src="logo.png" alt="Logo da LOGAN CC's" class="h-12 transform hover:scale-110 transition-transform duration-300" aria-label="Logotipo da LOGAN"></a>
-            <button class="bg-red-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-red-700" onclick="auth.logout()">Sair</button>
-        </div>
+<body>
+    <header class="header">
+        <a href="shop.html" class="logo"><img src="logo.png" alt="Logo da LOGAN CC's" aria-label="Logo da LOGAN CC's"></a>
+        <button class="action-button" onclick="auth.logout()">Sair</button>
     </header>
-    <main class="flex-grow w-full px-4 py-20">
-        <div class="max-w-6xl mx-auto">
-            <h2 class="text-2xl font-bold text-sky-400 mb-6">Dashboard Administrativo</h2>
-            <div class="flex space-x-2 mb-6">
-                <button id="usersTab" class="tab-button bg-gray-600 text-gray-200 py-2 px-4 rounded-lg font-semibold hover:bg-gray-500 active" onclick="showTab('users')">Usuários</button>
-                <button id="cardsTab" class="tab-button bg-gray-600 text-gray-200 py-2 px-4 rounded-lg font-semibold hover:bg-gray-500" onclick="showTab('cards')">Cartões</button>
-            </div>
-            <div id="usersSection">
-                <div class="flex justify-end mb-4">
-                    <button class="bg-sky-400 text-white py-2 px-4 rounded-lg font-semibold hover:bg-sky-500" onclick="showAddUserModal()">Adicionar Usuário</button>
-                </div>
-                <div class="bg-gray-800 p-6 rounded-lg">
-                    <table id="userList">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Usuário</th>
-                                <th>Saldo</th>
-                                <th>Admin</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-            <div id="cardsSection" class="hidden">
-                <div class="flex justify-end mb-4">
-                    <button class="bg-sky-400 text-white py-2 px-4 rounded-lg font-semibold hover:bg-sky-500" onclick="showAddCardModal()">Adicionar Cartão</button>
-                </div>
-                <div class="bg-gray-800 p-6 rounded-lg">
-                    <table id="adminCardList">
-                        <thead>
-                            <tr>
-                                <th>Número</th>
-                                <th>Bandeira</th>
-                                <th>Banco</th>
-                                <th>Nível</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
+    <main class="container mx-auto px-4 py-6">
+        <h2>Dashboard Administrativo</h2>
+        <div class="tabs">
+            <button id="usersTab" class="tab-button active" onclick="showTab('users')">Usuários</button>
+            <button id="cardsTab" class="tab-button" onclick="showTab('cards')">Cartões</button>
         </div>
+        <div id="usersSection" class="table-container">
+            <button class="action-button mb-4" onclick="showAddUserModal()">Adicionar Usuário</button>
+            <table id="userList">
+                <thead>
+                    <tr>
+                        <th>Usuário</th>
+                        <th>Saldo</th>
+                        <th>Admin</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div id="cardsSection" class="table-container hidden">
+            <button class="action-button mb-4" onclick="showAddCardModal()">Adicionar Cartão</button>
+            <table id="adminCardList">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Bandeira</th>
+                        <th>Banco</th>
+                        <th>Nível</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div id="loadingSpinner" class="loading-spinner" aria-label="Carregando dados"></div>
     </main>
-    <div id="addUserModal" class="modal">
+    <div id="editUserModal" class="modal hidden" role="dialog">
         <div class="modal-content">
-            <h3 class="text-lg font-semibold text-sky-400 mb-4">Adicionar Usuário</h3>
-            <div class="space-y-4">
-                <div class="form-group">
-                    <label for="newUsername" class="block text-sm font-semibold">Usuário</label>
-                    <input type="text" id="newUsername" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2">
-                </div>
-                <div class="form-group">
-                    <label for="newPassword" class="block text-sm font-semibold">Senha</label>
-                    <input type="password" id="newPassword" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2">
-                </div>
-                <div class="form-group">
-                    <label for="newBalance" class="block text-sm font-semibold">Saldo</label>
-                    <input type="number" id="newBalance" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2" step="0.01" min="0">
-                </div>
-                <div class="form-group">
-                    <label for="newIsAdmin" class="block text-sm font-semibold">Administrador</label>
-                    <select id="newIsAdmin" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2">
-                        <option value="false">Não</option>
-                        <option value="true">Sim</option>
-                    </select>
-                </div>
-                <div class="flex space-x-2">
-                    <button class="bg-sky-400 text-white py-2 px-4 rounded-lg font-semibold hover:bg-sky-500" onclick="ui.addUser()">Salvar</button>
-                    <button class="bg-gray-600 text-gray-200 py-2 px-4 rounded-lg font-semibold hover:bg-gray-500" onclick="ui.closeModal()">Cancelar</button>
-                </div>
-                <div id="addUserLoading" class="loading-spinner mt-4"></div>
-            </div>
+            <h2>Editar Usuário</h2>
+            <input id="editUsername" type="text" placeholder="Usuário" aria-label="Nome de usuário" readonly>
+            <input id="editPassword" type="password" placeholder="Nova senha" aria-label="Nova senha">
+            <input id="editBalance" type="number" placeholder="Saldo (R$)" step="0.01" aria-label="Saldo">
+            <select id="editIsAdmin" aria-label="Status de administrador">
+                <option value="true">Sim</option>
+                <option value="false">Não</option>
+            </select>
+            <button onclick="admin.editUser(
+                document.getElementById('editUsername').value,
+                document.getElementById('editPassword').value.trim(),
+                parseFloat(document.getElementById('editBalance').value),
+                document.getElementById('editIsAdmin').value === 'true'
+            )">Salvar</button>
+            <button onclick="ui.closeModal()" class="secondary">Cancelar</button>
         </div>
     </div>
-    <div id="editUserModal" class="modal">
+    <div id="addUserModal" class="modal hidden" role="dialog">
         <div class="modal-content">
-            <h3 class="text-lg font-semibold text-sky-400 mb-4">Editar Usuário</h3>
-            <div class="space-y-4">
-                <div class="form-group">
-                    <label for="editUsername" class="block text-sm font-semibold">Usuário</label>
-                    <input type="text" id="editUsername" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2" readonly>
-                </div>
-                <div class="form-group">
-                    <label for="editPassword" class="block text-sm font-semibold">Nova Senha (opcional)</label>
-                    <input type="password" id="editPassword" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2">
-                </div>
-                <div class="form-group">
-                    <label for="editBalance" class="block text-sm font-semibold">Saldo</label>
-                    <input type="number" id="editBalance" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2" step="0.01" min="0">
-                </div>
-                <div class="form-group">
-                    <label for="editIsAdmin" class="block text-sm font-semibold">Administrador</label>
-                    <select id="editIsAdmin" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2">
-                        <option value="false">Não</option>
-                        <option value="true">Sim</option>
-                    </select>
-                </div>
-                <div class="flex space-x-2">
-                    <button class="bg-sky-400 text-white py-2 px-4 rounded-lg font-semibold hover:bg-sky-500" onclick="admin.editUser()">Salvar</button>
-                    <button class="bg-gray-600 text-gray-200 py-2 px-4 rounded-lg font-semibold hover:bg-gray-500" onclick="ui.closeModal()">Cancelar</button>
-                </div>
-                <div id="editUserLoading" class="loading-spinner mt-4"></div>
-            </div>
+            <h2>Adicionar Usuário</h2>
+            <input id="newUsername" type="text" placeholder="Usuário" aria-label="Nome de usuário">
+            <input id="newPassword" type="password" placeholder="Senha" aria-label="Senha">
+            <input id="newBalance" type="number" placeholder="Saldo inicial (R$)" step="0.01" aria-label="Saldo inicial">
+            <select id="newIsAdmin" aria-label="Status de administrador">
+                <option value="true">Sim</option>
+                <option value="false">Não</option>
+            </select>
+            <button onclick="ui.addUser()">Adicionar</button>
+            <button onclick="ui.closeModal()" class="secondary">Cancelar</button>
         </div>
     </div>
-    <div id="addCardModal" class="modal">
+    <div id="editCardModal" class="modal hidden" role="dialog">
         <div class="modal-content">
-            <h3 class="text-lg font-semibold text-sky-400 mb-4">Adicionar Cartão</h3>
-            <div class="space-y-4">
-                <div class="form-group">
-                    <label for="cardNumber" class="block text-sm font-semibold">Número do Cartão</label>
-                    <input type="text" id="cardNumber" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2" oninput="formatCardNumber(this)" maxlength="19">
-                </div>
-                <div class="form-group">
-                    <label for="cardCvv" class="block text-sm font-semibold">CVV</label>
-                    <input type="text" id="cardCvv" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2" oninput="restrictCvv(this)" maxlength="3">
-                </div>
-                <div class="form-group">
-                    <label for="cardExpiry" class="block text-sm font-semibold">Validade (MM/AA)</label>
-                    <input type="text" id="cardExpiry" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2" oninput="formatExpiry(this)" maxlength="5">
-                </div>
-                <div class="form-group">
-                    <label for="nome" class="block text-sm font-semibold">Nome</label>
-                    <input type="text" id="cardName" class="w-full bg-gray-700 text-white border-gray-600 rounded-lg p-2" />
-                </div>
-                <div class="form-group">
-                    <label for="cardCpf" class="block text-sm font-semibold">CPF</label>
-                    <input type="text" id="cardCpf" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2" oninput="formatCpf(this)" maxlength="14">
-                </div>
-                <div class="form-group">
-                    <label for="cardBrand" class="block text-sm font-semibold">Bandeira</label>
-                    <select id="cardBrand" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2">
-                        <option value="visa">Visa</option>
-                        <option value="mastercard">Mastercard</option>
-                        <option value="amex">Amex</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="cardBank" class="block text-sm font-semibold">Banco</label>
-                    <select id="cardBank" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2">
-                        <option value="nubank">Nubank</option>
-                        <option value="itau">Itaú</option>
-                        <option value="bradesco">Bradesco</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="cardLevel" class="block text-sm font-semibold">Nível</label>
-                    <select id="cardLevel" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2">
-                        <option value="classic">Classic</option>
-                        <option value="gold">Gold</option>
-                        <option value="platinum">Platinum</option>
-                    </select>
-                </div>
-                <div class="flex space-x-2">
-                    <button class="bg-sky-400 text-white py-2 px-4 rounded-lg font-semibold hover:bg-sky-500" onclick="ui.saveCard()">Salvar</button>
-                    <button class="bg-gray-600 text-gray-200 py-2 px-4 rounded-lg font-semibold hover:bg-gray-500" onclick="ui.closeModal()">Cancelar</button>
-                </div>
-                <div id="addCardLoading" class="loading-spinner mt-4"></div>
-            </div>
+            <h2>Editar Cartão</h2>
+            <input id="editCardNumber" type="text" placeholder="Número do cartão" aria-label="Número do cartão" oninput="formatCardNumber(this)">
+            <input id="editCardCvv" type="text" placeholder="CVV" aria-label="CVV" oninput="restrictCvv(this)">
+            <input id="editCardExpiry" type="text" placeholder="MM/AA" aria-label="Validade" oninput="formatExpiry(this)">
+            <input id="editCardName" type="text" placeholder="Nome no cartão" aria-label="Nome no cartão">
+            <input id="editCardCpf" type="text" placeholder="CPF" aria-label="CPF" oninput="formatCpf(this)">
+            <select id="editCardBrand" aria-label="Bandeira">
+                <option value="visa">Visa</option>
+                <option value="mastercard">Mastercard</option>
+                <option value="amex">American Express</option>
+                <option value="discover">Discover</option>
+                <option value="elo">Elo</option>
+                <option value="hipercard">Hipercard</option>
+            </select>
+            <select id="editCardBank" aria-label="Banco">
+                <option value="nubank">Nubank</option>
+                <option value="itau">Itaú</option>
+                <option value="bradesco">Bradesco</option>
+                <option value="bancodobrasil">Banco do Brasil</option>
+                <option value="santander">Santander</option>
+                <option value="caixa">Caixa Econômica</option>
+                <option value="inter">Banco Inter</option>
+                <option value="c6">C6 Bank</option>
+                <option value="neon">Neon</option>
+                <option value="original">Original</option>
+                <option value="btg">BTG Pactual</option>
+            </select>
+            <select id="editCardLevel" aria-label="Nível">
+                <option value="standard">Standard</option>
+                <option value="gold">Gold</option>
+                <option value="platinum">Platinum</option>
+                <option value="black">Black</option>
+                <option value="infinite">Infinite</option>
+            </select>
+            <input id="editCardBin" type="text" placeholder="BIN" aria-label="BIN" readonly>
+            <button onclick="admin.editCard({
+                numero: document.getElementById('editCardNumber').value.trim(),
+                cvv: document.getElementById('editCardCvv').value.trim(),
+                validade: document.getElementById('editCardExpiry').value.trim(),
+                nome: document.getElementById('editCardName').value.trim(),
+                cpf: document.getElementById('editCardCpf').value.trim(),
+                bandeira: document.getElementById('editCardBrand').value,
+                banco: document.getElementById('editCardBank').value,
+                pais: 'brasil',
+                nivel: document.getElementById('editCardLevel').value,
+                bin: document.getElementById('editCardNumber').value.trim().replace(/\s/g, '').substring(0, 6)
+            })">Salvar</button>
+            <button onclick="ui.closeModal()" class="secondary">Cancelar</button>
         </div>
     </div>
-    <div id="editCardModal" class="modal">
+    <div id="addCardModal" class="modal hidden" role="dialog">
         <div class="modal-content">
-            <h3 class="text-lg font-semibold text-sky-400 mb-4">Editar Cartão</h3>
-            <div class="space-y-4">
-                <div class="form-group">
-                    <label for="editCardNumber" class="block text-sm font-semibold">Número do Cartão</label>
-                    <input type="text" id="editCardNumber" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2" oninput="formatCardNumber(this)" maxlength="19">
-                </div>
-                <div class="form-group">
-                    <label for="editCardCvv" class="block text-sm font-semibold">CVV</label>
-                    <input type="text" id="editCardCvv" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2" oninput="restrictCvv(this)" maxlength="3">
-                </div>
-                <div class="form-group">
-                    <label for="editCardExpiry" class="block text-sm font-semibold">Validade (MM/AA)</label>
-                    <input type="text" id="editCardExpiry" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2" oninput="formatExpiry(this)" maxlength="5">
-                </div>
-                <div class="form-group">
-                    <label for="editCardName" class="block text-sm font-semibold">Nome</label>
-                    <input type="text" id="editCardName" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2">
-                </div>
-                <div class="form-group">
-                    <label for="editCardCpf" class="block text-sm font-semibold">CPF</label>
-                    <input type="text" id="editCardCpf" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2" oninput="formatCpf(this)" maxlength="14">
-                </div>
-                <div class="form-group">
-                    <label for="editCardBrand" class="block text-sm font-semibold">Bandeira</label>
-                    <select id="editCardBrand" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2">
-                        <option value="visa">Visa</option>
-                        <option value="mastercard">Mastercard</option>
-                        <option value="amex">Amex</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="editCardBank" class="block text-sm font-semibold">Banco</label>
-                    <select id="editCardBank" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2">
-                        <option value="nubank">Nubank</option>
-                        <option value="itau">Itaú</option>
-                        <option value="bradesco">Bradesco</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="editCardLevel" class="block text-sm font-semibold">Nível</label>
-                    <select id="editCardLevel" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2">
-                        <option value="classic">Classic</option>
-                        <option value="gold">Gold</option>
-                        <option value="platinum">Platinum</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="editCardBin" class="block text-sm font-semibold">BIN</label>
-                    <input type="text" id="editCardBin" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2" readonly>
-                </div>
-                <div class="flex space-x-2">
-                    <button class="bg-sky-400 text-white py-2 px-4 rounded-lg font-semibold hover:bg-sky-500" onclick="admin.editCard()">Salvar</button>
-                    <button class="bg-gray-600 text-gray-200 py-2 px-4 rounded-lg font-semibold hover:bg-gray-500" onclick="ui.closeModal()">Cancelar</button>
-                </div>
-                <div id="editCardLoading" class="loading-spinner mt-4"></div>
-            </div>
+            <h2>Adicionar Cartão</h2>
+            <input id="cardNumber" type="text" placeholder="Número do cartão" aria-label="Número do cartão" oninput="formatCardNumber(this)">
+            <input id="cardCvv" type="text" placeholder="CVV" aria-label="CVV" oninput="restrictCvv(this)">
+            <input id="cardExpiry" type="text" placeholder="MM/AA" aria-label="Validade" oninput="formatExpiry(this)">
+            <input id="cardName" type="text" placeholder="Nome no cartão" aria-label="Nome no cartão">
+            <input id="cardCpf" type="text" placeholder="CPF" aria-label="CPF" oninput="formatCpf(this)">
+            <select id="cardBrand" aria-label="Bandeira">
+                <option value="visa">Visa</option>
+                <option value="mastercard">Mastercard</option>
+                <option value="amex">American Express</option>
+                <option value="discover">Discover</option>
+                <option value="elo">Elo</option>
+                <option value="hipercard">Hipercard</option>
+            </select>
+            <select id="cardBank" aria-label="Banco">
+                <option value="nubank">Nubank</option>
+                <option value="itau">Itaú</option>
+                <option value="bradesco">Bradesco</option>
+                <option value="bancodobrasil">Banco do Brasil</option>
+                <option value="santander">Santander</option>
+                <option value="caixa">Caixa Econômica</option>
+                <option value="inter">Banco Inter</option>
+                <option value="c6">C6 Bank</option>
+                <option value="neon">Neon</option>
+                <option value="original">Original</option>
+                <option value="btg">BTG Pactual</option>
+            </select>
+            <select id="cardLevel" aria-label="Nível">
+                <option value="standard">Standard</option>
+                <option value="gold">Gold</option>
+                <option value="platinum">Platinum</option>
+                <option value="black">Black</option>
+                <option value="infinite">Infinite</option>
+            </select>
+            <button onclick="ui.saveCard()">Adicionar</button>
+            <button onclick="ui.closeModal()" class="secondary">Cancelar</button>
         </div>
     </div>
-    <div id="notifications"></div>
-    <div id="loadingSpinner" class="loading-spinner"></div>
+    <div id="notifications" class="fixed top-4 right-4 z-30" role="alert"></div>
+    <script>
+        function showTab(tab) {
+            document.getElementById('usersSection').classList.toggle('hidden', tab !== 'users');
+            document.getElementById('cardsSection').classList.toggle('hidden', tab !== 'cards');
+            document.getElementById('usersTab').classList.toggle('active', tab === 'users');
+            document.getElementById('cardsTab').classList.toggle('active', tab === 'cards');
+            if (tab === 'users') admin.loadUsers();
+            else admin.loadAdminCards();
+        }
+        function showAddUserModal() {
+            document.getElementById('addUserModal').classList.remove('hidden');
+            document.getElementById('addUserModal').classList.add('show');
+        }
+        function showAddCardModal() {
+            document.getElementById('addCardModal').classList.remove('hidden');
+            document.getElementById('addCardModal').classList.add('show');
+        }
+        function showEditUserModal(username) {
+            const user = state.users.find(u => u.username === username);
+            if (user) {
+                document.getElementById('editUsername').value = user.username;
+                document.getElementById('editPassword').value = '';
+                document.getElementById('editBalance').value = user.balance;
+                document.getElementById('editIsAdmin').value = user.is_admin.toString();
+                document.getElementById('editUserModal').classList.remove('hidden');
+                document.getElementById('editUserModal').classList.add('show');
+            }
+        }
+        function showEditCardModal(cardNumber) {
+            const card = state.cards.find(c => c.numero === cardNumber);
+            if (card) {
+                document.getElementById('editCardNumber').value = card.numero;
+                document.getElementById('editCardCvv').value = card.cvv;
+                document.getElementById('editCardExpiry').value = card.validade;
+                document.getElementById('editCardName').value = card.nome;
+                document.getElementById('editCardCpf').value = card.cpf;
+                document.getElementById('editCardBrand').value = card.bandeira;
+                document.getElementById('editCardBank').value = card.banco;
+                document.getElementById('editCardLevel').value = card.nivel;
+                document.getElementById('editCardBin').value = card.bin;
+                document.getElementById('editCardModal').classList.remove('hidden');
+                document.getElementById('editCardModal').classList.add('show');
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            if (loadingSpinner) loadingSpinner.classList.add('active');
+            showTab('users');
+        });
+    </script>
 </body>
 </html>

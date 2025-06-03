@@ -5,13 +5,144 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#1A2A44">
     <title>Login - LOGAN CC's</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="script.js" defer></script>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             font-family: 'Poppins', sans-serif;
             background: linear-gradient(145deg, #0F172A 0%, #1E293B 100%);
+            color: #E2E8F0;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            padding-top: 80px;
+        }
+        .header {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+        .header .logo img {
+            height: 45px;
+            transition: transform 0.3s ease;
+        }
+        .header .logo img:hover {
+            transform: scale(1.1);
+        }
+        .container {
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 1rem;
+            padding: 2rem;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #38BDF8;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 2px 6px rgba(56, 189, 248, 0.3);
+        }
+        .form-group {
+            margin-bottom: 1.25rem;
+            position: relative;
+        }
+        .form-group input {
+            background: #2D3748;
+            color: #E2E8F0;
+            border: 1px solid #4B5563;
+            border-radius: 0.5rem;
+            padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+            width: 100%;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+        .form-group input:focus {
+            border-color: #38BDF8;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+            outline: none;
+            background: #334155;
+        }
+        .error-text {
+            color: #F87171;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+            min-height: 1.2rem;
+            line-height: 1.2;
+        }
+        .action-button {
+            background: linear-gradient(90deg, #38BDF8, #2563EB);
+            color: #FFFFFF;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            width: 100%;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .action-button:hover:not(:disabled) {
+            background: linear-gradient(90deg, #2563EB, #1D4ED8);
+            transform: scale(1.03);
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
+        }
+        .action-button:disabled {
+            background: #6B7280;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        .secondary-button {
+            background: #4B5563;
+            color: #E2E8F0;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            width: 100%;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 0.5rem;
+        }
+        .secondary-button:hover {
+            background: #6B7280;
+            transform: scale(1.03);
         }
         .notification {
             position: fixed;
@@ -35,79 +166,180 @@
             from { opacity: 0; transform: translateX(20px); }
             to { opacity: 1; transform: translateX(0); }
         }
-        .loading-spinner {
-            display: none;
-            text-align: center;
-            padding: 2rem;
+        .password-toggle {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #9CA3AF;
+            cursor: pointer;
+            transition: color 0.3s ease, transform 0.2s ease;
+            font-size: 1rem;
         }
-        .loading-spinner.active {
-            display: block;
+        .password-toggle:hover {
+            color: #E2E8F0;
+            transform: translateY(-50%) scale(1.1);
         }
-        .loading-spinner::after {
-            content: '';
-            display: inline-block;
-            width: 24px;
-            height: 24px;
-            border: 3px solid #38BDF8;
-            border-top: 3px solid transparent;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
+        .hidden {
+            display: none !important;
         }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        @media (max-width: 640px) {
+            body {
+                padding-top: 70px;
+            }
+            .container {
+                padding: 1.5rem;
+                width: 95%;
+            }
+            h2 {
+                font-size: 1.75rem;
+            }
+            .form-group input {
+                font-size: 0.9rem;
+                padding: 0.65rem 2.5rem 0.65rem 0.65rem;
+            }
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
-    <script src="script.js" defer></script>
 </head>
-<body class="flex flex-col items-center justify-center">
-    <header class="w-full bg-gray-900 bg-opacity-95 backdrop-blur-lg py-4 px-6 fixed top-0 z-50 shadow-lg">
-        <div class="flex justify-center">
-            <a href="index.html" class="logo"><img src="logo.png" alt="Logo da LOGAN CC's" class="h-12 transform hover:scale-110 transition-transform duration-300" aria-label="Logotipo da LOGAN"></a>
-        </div>
+<body>
+    <header class="header">
+        <a href="index.html" class="logo"><img src="logo.png" alt="LOGAN CC's Logo"></a>
     </header>
-    <main class="flex-grow w-full flex items-center justify-center px-4 py-8">
-        <div id="loginContainer" class="bg-gray-800 bg-opacity-90 rounded-xl p-6 shadow-2xl border border-sky-400 border-opacity-20 w-full max-w-md">
-            <h2 class="text-2xl font-bold text-sky-400 text-center mb-6">Login</h2>
-            <div class="space-y-4">
+    <main class="container">
+        <div id="loginContainer">
+            <h2>Login - LOGAN CC's</h2>
+            <form id="loginForm" onsubmit="event.preventDefault(); auth.login();" novalidate>
                 <div class="form-group">
-                    <label for="username" class="block text-sm font-semibold">Usuário</label>
-                    <input type="text" id="username" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2 focus:border-sky-400 focus:ring-2 focus:ring-sky-400 focus:outline-none transition-all" required>
-                    <p id="usernameError" class="text-red-400 text-xs mt-1 hidden"></p>
+                    <input id="username" type="text" placeholder="Digite seu usuário" oninput="validateUsername(this)" autofocus>
+                    <p id="usernameError" class="error-text"></p>
                 </div>
                 <div class="form-group">
-                    <label for="password" class="block text-sm font-semibold">Senha</label>
-                    <input type="password" id="password" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2 focus:border-sky-400 focus:ring-2 focus:ring-sky-400 focus:outline-none transition-all" required>
-                    <p id="passwordError" class="text-red-400 text-xs mt-1 hidden"></p>
+                    <input id="password" type="password" placeholder="Digite sua senha (mín. 6 caracteres)" oninput="validatePassword(this)">
+                    <button type="button" class="password-toggle" onclick="togglePassword('password', this)">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <p id="passwordError" class="error-text"></p>
                 </div>
-                <button id="loginButton" class="w-full bg-gradient-to-r from-sky-400 to-blue-600 text-white py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-800 transform hover:scale-105 transition-all" onclick="auth.login()">Entrar</button>
-                <button class="w-full bg-gray-600 text-gray-200 py-2 rounded-lg font-semibold hover:bg-gray-500 transform hover:scale-105 transition-all" onclick="ui.showRegisterForm()">Registrar</button>
-            </div>
+                <button id="loginButton" type="submit" class="action-button">
+                    <span>Entrar</span>
+                    <i class="fas fa-spinner fa-spin hidden"></i>
+                </button>
+            </form>
+            <button class="secondary-button" onclick="showRegisterForm()">Criar Conta</button>
         </div>
-        <div id="registerContainer" class="bg-gray-800 bg-opacity-90 rounded-xl p-6 shadow-2xl border border-sky-400 border-opacity-20 w-full max-w-md hidden">
-            <h2 class="text-2xl font-bold text-sky-400 text-center mb-6">Registro</h2>
-            <div class="space-y-4">
+        <div id="registerContainer" class="hidden">
+            <h2>Registrar - LOGAN CC's</h2>
+            <form id="registerForm" onsubmit="event.preventDefault(); auth.register();" novalidate>
                 <div class="form-group">
-                    <label for="newUsername" class="block text-sm font-semibold">Usuário</label>
-                    <input type="text" id="newUsername" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2 focus:border-sky-400 focus:ring-2 focus:ring-sky-400 focus:outline-none transition-all" required>
-                    <p id="newUsernameError" class="text-red-400 text-xs mt-1 hidden"></p>
+                    <input id="newUsername" type="text" placeholder="Escolha um usuário" oninput="validateUsername(this)" autofocus>
+                    <p id="newUsernameError" class="error-text"></p>
                 </div>
                 <div class="form-group">
-                    <label for="newPassword" class="block text-sm font-semibold">Senha</label>
-                    <input type="password" id="newPassword" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2 focus:border-sky-400 focus:ring-2 focus:ring-sky-400 focus:outline-none transition-all" required>
-                    <p id="newPasswordError" class="text-red-400 text-xs mt-1 hidden"></p>
+                    <input id="newPassword" type="password" placeholder="Crie uma senha (mín. 6 caracteres)" oninput="validatePassword(this)">
+                    <button type="button" class="password-toggle" onclick="togglePassword('newPassword', this)">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <p id="newPasswordError" class="error-text"></p>
                 </div>
                 <div class="form-group">
-                    <label for="confirmPassword" class="block text-sm font-semibold">Confirmar Senha</label>
-                    <input type="password" id="confirmPassword" class="w-full bg-gray-700 text-white border-gray-600 rounded-lg p-2 focus:border-sky-400 focus:ring-2 focus:ring-sky-400 focus:outline-none transition-all" required>
-                    <p id="confirmPasswordError" class="text-red-400 text-xs mt-1 hidden"></p>
+                    <input id="confirmPassword" type="password" placeholder="Confirme sua senha" oninput="validateConfirmPassword(this)">
+                    <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <p id="confirmPasswordError" class="error-text"></p>
                 </div>
-                <button id="registerButton" class="w-full bg-gradient-to-r from-sky-400 to-blue-600 text-white py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-800 transform hover:scale-105 transition-allergy" onclick="auth.register()">Criar Conta</button>
-                <button class="w-full bg-gray-600 text-gray-200 py-2 rounded-lg font-semibold hover:bg-gray-500 transform hover:scale-105 transition-all" onclick="ui.showLoginForm()">Voltar ao Login</button>
-            </div>
+                <button id="registerButton" type="submit" class="action-button">
+                    <span>Registrar</span>
+                    <i class="fas fa-spinner fa-spin hidden"></i>
+                </button>
+            </form>
+            <button class="secondary-button" onclick="showLoginForm()">Voltar ao Login</button>
         </div>
     </main>
-    <div id="notifications"></div>
-    <div id="loadingSpinner" class="loading-spinner"></div>
+    <div id="notifications" class="fixed top-4 right-4 z-30"></div>
+    <script>
+        function validateUsername(input) {
+            const username = input.value.trim();
+            const errorElement = document.getElementById(input.id === 'username' ? 'usernameError' : 'newUsernameError');
+            const regex = /^[a-zA-Z0-9_]{3,20}$/;
+            if (username && !regex.test(username)) {
+                errorElement.textContent = 'Usuário deve ter 3-20 caracteres alfanuméricos.';
+            } else {
+                errorElement.textContent = '';
+            }
+        }
+
+        function validatePassword(input) {
+            const password = input.value.trim();
+            const errorElement = document.getElementById(input.id === 'password' ? 'passwordError' : 'newPasswordError');
+            if (password && password.length < 6) {
+                errorElement.textContent = 'A senha deve ter pelo menos 6 caracteres.';
+            } else {
+                errorElement.textContent = '';
+            }
+            if (input.id === 'newPassword') {
+                validateConfirmPassword(document.getElementById('confirmPassword'));
+            }
+        }
+
+        function validateConfirmPassword(input) {
+            const confirmPassword = input.value.trim();
+            const password = document.getElementById('newPassword').value.trim();
+            const errorElement = document.getElementById('confirmPasswordError');
+            if (confirmPassword && confirmPassword !== password) {
+                errorElement.textContent = 'As senhas não coincidem.';
+            } else {
+                errorElement.textContent = '';
+            }
+        }
+
+        function togglePassword(inputId, button) {
+            const input = document.getElementById(inputId);
+            const icon = button.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        function clearFormFields(containerId) {
+            const container = document.getElementById(containerId);
+            const inputs = container.querySelectorAll('input');
+            const errorElements = container.querySelectorAll('.error-text');
+            inputs.forEach(input => input.value = '');
+            errorElements.forEach(element => element.textContent = '');
+        }
+
+        function showLoginForm() {
+            clearFormFields('registerContainer');
+            document.getElementById('loginContainer').classList.remove('hidden');
+            document.getElementById('registerContainer').classList.add('hidden');
+        }
+
+        function showRegisterForm() {
+            clearFormFields('loginContainer');
+            document.getElementById('loginContainer').classList.add('hidden');
+            document.getElementById('registerContainer').classList.remove('hidden');
+        }
+
+        function setError(fieldId, message) {
+            const errorElement = document.getElementById(`${fieldId}Error`);
+            if (errorElement) errorElement.textContent = message;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof checkAuth === 'function' && checkAuth()) {
+                showNotification('Você já está logado.', 'success');
+                setTimeout(() => window.location.href = 'shop.html', 1000);
+            }
+        });
+    </script>
 </body>
 </html>
