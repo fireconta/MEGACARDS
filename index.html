@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - LOGAN CC's</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Montserrat:wght@700&display=swap" rel="stylesheet">
-    <script src="script.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         * {
             margin: 0;
@@ -31,6 +31,7 @@
         }
         .header .logo img {
             height: 40px;
+            display: block;
         }
         main {
             flex-grow: 1;
@@ -59,6 +60,11 @@
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            font-size: 0.875rem;
+            color: #A1A1AA;
         }
         .form-group input {
             background: #334155;
@@ -101,9 +107,10 @@
             color: #38BDF8;
             margin-top: 1rem;
             text-decoration: none;
-            display: inline-block;
+            display: block;
             text-align: center;
-            width: 100%;
+            font-size: 0.875rem;
+            cursor: pointer;
         }
         .toggle-link:hover {
             color: #2563EB;
@@ -119,6 +126,7 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
             z-index: 1000;
             animation: slideIn 0.3s ease;
+            max-width: 300px;
         }
         .notification.error {
             background: #F87171;
@@ -133,54 +141,136 @@
         @media (max-width: 480px) {
             .auth-container {
                 padding: 1.5rem;
-                max-width: 90%;
+                max-width: 95%;
             }
             h2 {
                 font-size: 1.5rem;
+            }
+            .form-group input,
+            .form-group button {
+                font-size: 0.875rem;
+                padding: 0.5rem;
             }
         }
     </style>
 </head>
 <body>
     <header class="header">
-        <a href="#" class="logo"><img src="logo.png" alt="LOGAN CC's Logo"></a>
+        <a href="#" class="logo">
+            <img src="logo.png" alt="LOGAN CC's Logo" onerror="this.src='https://via.placeholder.com/40?text=Logo';">
+        </a>
     </header>
     <main>
         <div id="loginContainer" class="auth-container">
             <h2>Login - LOGAN CC's</h2>
             <div class="form-group">
-                <input id="username" type="text" placeholder="Usuário" oninput="validateUsername(this)">
+                <label for="username">Usuário</label>
+                <input id="username" type="text" placeholder="Usuário" aria-label="Usuário" aria-describedby="usernameError" oninput="validateUsername(this)">
                 <p id="usernameError" class="error-text"></p>
-                <input id="password" type="password" placeholder="Senha">
+                <label for="password">Senha</label>
+                <input id="password" type="password" placeholder="Senha" aria-label="Senha" aria-describedby="passwordError" oninput="validatePassword(this)">
                 <p id="passwordError" class="error-text"></p>
-                <button id="loginButton" onclick="auth.login()">Entrar</button>
-                <a class="toggle-link" onclick="ui.showRegisterForm()">Não tem conta? Registre-se</a>
+                <button id="loginButton" type="button">Entrar</button>
+                <a class="toggle-link" id="showRegisterLink">Não tem conta? Registre-se</a>
             </div>
         </div>
         <div id="registerContainer" class="auth-container" style="display: none;">
             <h2>Registro - LOGAN CC's</h2>
             <div class="form-group">
-                <input id="newUsername" type="text" placeholder="Novo Usuário" oninput="validateUsername(this)">
+                <label for="newUsername">Novo Usuário</label>
+                <input id="newUsername" type="text" placeholder="Novo Usuário" aria-label="Novo Usuário" aria-describedby="newUsernameError" oninput="validateUsername(this)">
                 <p id="newUsernameError" class="error-text"></p>
-                <input id="newPassword" type="password" placeholder="Nova Senha">
+                <label for="newPassword">Nova Senha</label>
+                <input id="newPassword" type="password" placeholder="Nova Senha" aria-label="Nova Senha" aria-describedby="newPasswordError" oninput="validatePassword(this)">
                 <p id="newPasswordError" class="error-text"></p>
-                <button id="registerButton" onclick="auth.register()">Registrar</button>
-                <a class="toggle-link" onclick="ui.showLoginForm()">Já tem conta? Faça login</a>
+                <button id="registerButton" type="button">Registrar</button>
+                <a class="toggle-link" id="showLoginLink">Já tem conta? Faça login</a>
             </div>
         </div>
     </main>
     <div id="notifications"></div>
+    <script src="script.js"></script>
     <script>
+        // Validações de input no frontend
         function validateUsername(input) {
             const username = input.value.trim();
-            const errorElement = input.nextElementSibling;
+            const errorElement = document.getElementById(input.id + 'Error');
             const regex = /^[a-zA-Z0-9_]{3,}$/;
-            if (!regex.test(username)) {
+            if (!username) {
+                errorElement.textContent = 'Por favor, preencha o usuário.';
+            } else if (!regex.test(username)) {
                 errorElement.textContent = 'Usuário deve ter pelo menos 3 caracteres alfanuméricos.';
             } else {
                 errorElement.textContent = '';
             }
         }
+
+        function validatePassword(input) {
+            const password = input.value.trim();
+            const errorElement = document.getElementById(input.id + 'Error');
+            if (!password) {
+                errorElement.textContent = 'Por favor, preencha a senha.';
+            } else if (password.length < 6) {
+                errorElement.textContent = 'A senha deve ter pelo menos 6 caracteres.';
+            } else {
+                errorElement.textContent = '';
+            }
+        }
+
+        // Inicialização após carregamento do DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            // Verifica se script.js foi carregado
+            if (typeof auth === 'undefined' || typeof ui === 'undefined') {
+                const notify = document.getElementById('notifications');
+                if (notify) {
+                    notify.innerHTML = '<div class="notification error">Erro: Sistema indisponível. Tente novamente mais tarde.</div>';
+                }
+                console.error('Erro: auth ou ui não definidos. Verifique o carregamento de script.js.');
+                return;
+            }
+
+            // Associa eventos aos botões
+            const loginButton = document.getElementById('loginButton');
+            const registerButton = document.getElementById('registerButton');
+            const showRegisterLink = document.getElementById('showRegisterLink');
+            const showLoginLink = document.getElementById('showLoginLink');
+
+            if (loginButton) {
+                loginButton.addEventListener('click', () => {
+                    try {
+                        auth.login();
+                    } catch (e) {
+                        console.error('Erro ao chamar auth.login:', e);
+                        const notify = document.getElementById('notifications');
+                        if (notify) {
+                            notify.innerHTML = '<div class="notification error">Erro interno. Tente novamente.</div>';
+                        }
+                    }
+                });
+            }
+
+            if (registerButton) {
+                registerButton.addEventListener('click', () => {
+                    try {
+                        auth.register();
+                    } catch (e) {
+                        console.error('Erro ao chamar auth.register:', e);
+                        const notify = document.getElementById('notifications');
+                        if (notify) {
+                            notify.innerHTML = '<div class="notification error">Erro interno. Tente novamente.</div>';
+                        }
+                    }
+                });
+            }
+
+            if (showRegisterLink) {
+                showRegisterLink.addEventListener('click', ui.showRegisterForm);
+            }
+
+            if (showLoginLink) {
+                showLoginLink.addEventListener('click', ui.showLoginForm);
+            }
+        });
     </script>
 </body>
 </html>
