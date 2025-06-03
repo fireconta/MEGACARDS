@@ -44,7 +44,7 @@ const auth = {
         }
         if (password.length < CONFIG.MIN_PASSWORD_LENGTH) {
             if (passwordError) passwordError.textContent = `A senha deve ter pelo menos ${CONFIG.MIN_PASSWORD_LENGTH} caracteres.`;
-            showNotification('Senha muito curta.');
+            showNotification('Senha inválida.');
             return;
         }
         if (state.loginBlockedUntil > Date.now()) {
@@ -53,23 +53,27 @@ const auth = {
             return;
         }
 
-        toggleLoadingButton(loginButton, true, 'Entrar');
+        toggleLoadingButton(loginButton, true);
 
         try {
             const response = await fetch(`${CONFIG.JSONBIN_URL}/latest`, {
                 headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
             });
+            if (response.status === 429) throw new Error('Limite de requisições excedido. Tente novamente mais tarde.');
             if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
             const { record } = await response.json();
-            state.users = record.users || [];
-            const user = state.users.find(u => u.username === username && u.password === password);
+            const users = Array.isArray(record.users) ? record.users : [];
+            state.users = users;
+            const user = users.find(u => u.username === username && u.password === password);
             if (!user) {
                 state.loginAttempts++;
                 if (state.loginAttempts >= CONFIG.MAX_LOGIN_ATTEMPTS) {
-                    state.loginBlockedUntil = Date.now() + CONFIG.LOGIN_BLOCK_TIME;
+                    state.loginBlockedUntil = Date.now() + CONFIG.LOING_BLOCK_TIME;
                     showNotification('Limite de tentativas atingido. Aguarde 60 segundos.');
+                    if (passwordError) passwordError.textContent = 'Conta bloqueada por 60 segundos.';
                 } else {
-                    showNotification('Usuário ou senha inválidos.');
+                    showNotification('Usuário ou senha incorretos.');
+                    if (passwordError) passwordError.textContent = 'Usuário ou senha incorretos.';
                 }
                 return;
             }
@@ -83,11 +87,14 @@ const auth = {
             localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
             localStorage.setItem('sessionStart', Date.now().toString());
             showNotification('Login bem-sucedido!', 'success');
-            window.location.href = 'shop.html';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            setTimeout(() => window.location.href = 'shop.html', 1000);
         } catch (error) {
-            showNotification(error.message);
+            showNotification(error.message || 'Erro ao conectar ao servidor.');
+            if (passwordError) passwordError.textContent = error.message || 'Erro ao conectar ao servidor.';
         } finally {
-            toggleLoadingButton(loginButton, false, 'Entrar');
+            toggleLoadingButton(loginButton, false);
         }
     },
     async register() {
@@ -124,18 +131,20 @@ const auth = {
             return;
         }
 
-        toggleLoadingButton(registerButton, true, 'Registrar');
+        toggleLoadingButton(registerButton, true);
 
         try {
             const response = await fetch(`${CONFIG.JSONBIN_URL}/latest`, {
                 headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY }
             });
+            if (response.status === 429) throw new Error('Limite de requisições excedido. Tente novamente mais tarde.');
             if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
             const { record } = await response.json();
-            const users = record.users || [];
+            const users = Array.isArray(record.users) ? record.users : [];
             if (users.find(u => u.username === username)) {
                 if (usernameError) usernameError.textContent = 'Usuário já existe.';
-                throw new Error('Usuário já existe.');
+                showNotification('Usuário já existe.');
+                return;
             }
             users.push({ username, password, balance: 0, is_admin: false });
             const updateResponse = await fetch(CONFIG.JSONBIN_URL, {
@@ -148,11 +157,15 @@ const auth = {
             });
             if (!updateResponse.ok) throw new Error(`Erro HTTP: ${updateResponse.status}`);
             showNotification('Registro bem-sucedido! Faça login.', 'success');
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
             ui.showLoginForm();
         } catch (error) {
-            showNotification(error.message);
+            showNotification(error.message || 'Erro ao conectar ao servidor.');
+            if (usernameError) usernameError.textContent = error.message || 'Erro ao conectar ao servidor.';
         } finally {
-            toggleLoadingButton(registerButton, false, 'Registrar');
+            toggleLoadingButton(registerButton, false);
         }
     },
     logout() {
@@ -428,13 +441,13 @@ const admin = {
             const userCards = record.userCards || [];
             const cardIndex = cards.findIndex(c => c.numero === cardNumber);
             if (cardIndex === -1) throw new Error('Cartão não encontrado.');
-            cards.splice(cards, 1);
+            cards.splice(cardIndex, 1);
 
             const updateResponse = await fetch(CONFIG.CARD_JSONBIN_URL, {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application' application,
-                    'X-Master-Key': CONFIG.CARD_JSONBIN_KEY'
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': CONFIG.CARD_JSONBIN_KEY
                 },
                 body: JSON.stringify({ cards, userCards })
             });
@@ -889,7 +902,9 @@ const ui = {
 };
 
 function checkAuth() {
-    if (!state.currentUser) return false;
+    if (!state.currentUser) {
+        return false;
+    }
     const sessionTimeout = CONFIG.SESSION_TIMEOUT_MINUTES * 60 * 1000;
     if (Date.now() - state.sessionStart > sessionTimeout) {
         auth.logout();
@@ -907,7 +922,9 @@ function validateCardNumber(number) {
         let digit = parseInt(number[i]);
         if (even) {
             digit *= 2;
-            if (digit > 9) digit -= 9;
+            if (digit > 9) {
+                digit -= 9;
+            }
         }
         sum += digit;
         even = !even;
@@ -920,7 +937,9 @@ function validateCvv(cvv) {
 }
 
 function validateExpiry(expiry) {
-    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry)) return false;
+    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry)) {
+        return false;
+    }
     const [month, year] = expiry.split('/').map(Number);
     const currentDate = new Date();
     const expiryDate = new Date(2000 + year, month - 1);
@@ -932,9 +951,11 @@ function validateCpf(cpf) {
 }
 
 function formatCardNumber(input) {
-    let value = input.value.replace(/\D/g, '');
+    let value = input.value;
+.replace(/\D/g, '');
     value = value.match(/.{1,4}/g)?.join(' ') || value;
-    input.value = value.slice(0, 19);
+    input.value = value;
+.slice(0, 19);
 }
 
 function restrictCvv(input) {
@@ -942,37 +963,52 @@ function restrictCvv(input) {
 }
 
 function formatExpiry(input) {
-    let value = input.value.replace(/\D/g, '');
-    if (value.length > 2) value = value.slice(0, 2) + '/' + value.slice(2, 4);
-    input.value = value.slice(0, 5);
+    let value = input.c;
+    .replace(/\D/g, '');
+    if (value.length > 2) {
+        value = value.slice(0, 2) + '/' + value.slice(2, 4);
+    }
+    input.value = value;
+.slice(0,5);
 }
 
-function formatCpf(input) {
-    let value = input.value.replace(/\D/g, '');
-    if (value.length > 3) value = value.slice(0, 3) + '.' + value.slice(3);
-    if (value.length > 7) value = value.slice(0, 7) + '.' + value.slice(7);
-    if (value.length > 11) value = value.slice(0, 11) + '-' + value.slice(11);
-    input.value = value.slice(0, 14);
+function formatCpf(cpf) {
+    let value = input.cpf;
+    .replace(/\D/g, '');
+    if (value.length > 3) {
+        value = value.slice(0,3) + '.' + value.slice(3);
+    }
+    if (value.length > 7) {
+        value = value.slice(0,7) + '.' + value.slice(7);
+    }
+    if (value.length > 11) {
+        value = value.slice(0,11) + '-' + value.slice(11);
+    }
+    input.value = value;
+.slice(0,14);
 }
 
 function showNotification(message, type = 'error') {
     const notifications = document.getElementById('notifications');
-    const content = document.createElement('div');
+    const content = document.createElement('p');
     content.className = `notification ${type}`;
     content.textContent = message;
     notifications.appendChild(content);
     setTimeout(() => content.remove(), CONFIG.NOTIFICATION_TIMEOUT);
 }
 
-function toggleLoadingButton(button, isLoading, originalText) {
+function toggleLoadingButton(button, isLoading) {
     button.disabled = isLoading;
-    button.textContent = isLoading ? 'Carregando...' : originalText;
+    button.textContent = isLoading ? 'Carregando...' : button.getAttribute('loginButton') ? 'Entrar' : 'Registrar';
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     if (window.location.pathname.includes('shop.html')) {
-        if (checkAuth()) shop.loadCards();
-        else window.location.href = 'index.html';
+        if (checkAuth()) {
+            shop.loadCards();
+        } else {
+            window.location.href = 'index.html';
+        }
     } else if (window.location.pathname.includes('dashboard.html')) {
         if (checkAuth() && state.isAdmin) {
             admin.loadUsers();
