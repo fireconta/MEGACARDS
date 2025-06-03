@@ -24,6 +24,7 @@
             justify-content: center;
             align-items: center;
             overflow-x: hidden;
+            padding-top: 80px;
         }
         .header {
             background: rgba(15, 23, 42, 0.95);
@@ -69,7 +70,7 @@
             text-shadow: 0 2px 6px rgba(56, 189, 248, 0.3);
         }
         .form-group {
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
             position: relative;
         }
         .form-group input {
@@ -77,8 +78,9 @@
             color: #E2E8F0;
             border: 1px solid #4B5563;
             border-radius: 0.5rem;
-            padding: 0.75rem;
+            padding: 0.75rem 2.5rem 0.75rem 0.75rem;
             width: 100%;
+            font-size: 0.95rem;
             transition: all 0.3s ease;
         }
         .form-group input:focus {
@@ -92,6 +94,7 @@
             font-size: 0.8rem;
             margin-top: 0.25rem;
             min-height: 1.2rem;
+            line-height: 1.2;
         }
         .action-button {
             background: linear-gradient(90deg, #38BDF8, #2563EB);
@@ -104,7 +107,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        .action-button:hover {
+        .action-button:hover:not(:disabled) {
             background: linear-gradient(90deg, #2563EB, #1D4ED8);
             transform: scale(1.03);
             box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
@@ -114,6 +117,12 @@
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
         }
         .secondary-button {
             background: #4B5563;
@@ -162,20 +171,30 @@
             border: none;
             color: #9CA3AF;
             cursor: pointer;
-            transition: color 0.3s ease;
+            transition: color 0.3s ease, transform 0.2s ease;
+            font-size: 1rem;
         }
         .password-toggle:hover {
             color: #E2E8F0;
+            transform: translateY(-50%) scale(1.1);
         }
         .hidden {
             display: none !important;
         }
         @media (max-width: 640px) {
+            body {
+                padding-top: 70px;
+            }
             .container {
                 padding: 1.5rem;
+                width: 95%;
             }
             h2 {
                 font-size: 1.75rem;
+            }
+            .form-group input {
+                font-size: 0.9rem;
+                padding: 0.65rem 2.5rem 0.65rem 0.65rem;
             }
         }
     </style>
@@ -189,11 +208,11 @@
             <h2>Login - LOGAN CC's</h2>
             <form id="loginForm" onsubmit="event.preventDefault(); auth.login();">
                 <div class="form-group">
-                    <input id="username" type="text" placeholder="Usuário" oninput="validateUsername(this)" autofocus>
+                    <input id="username" type="text" placeholder="Digite seu usuário" oninput="validateUsername(this)" autofocus>
                     <p id="usernameError" class="error-text"></p>
                 </div>
                 <div class="form-group">
-                    <input id="password" type="password" placeholder="Senha">
+                    <input id="password" type="password" placeholder="Digite sua senha (mín. 6 caracteres)" oninput="validatePassword(this)">
                     <button type="button" class="password-toggle" onclick="togglePassword('password', this)">
                         <i class="fas fa-eye"></i>
                     </button>
@@ -201,24 +220,24 @@
                 </div>
                 <button id="loginButton" type="submit" class="action-button">Entrar</button>
             </form>
-            <button class="secondary-button" onclick="ui.showRegisterForm()">Criar Conta</button>
+            <button class="secondary-button" onclick="showRegisterForm()">Criar Conta</button>
         </div>
         <div id="registerContainer" class="hidden">
             <h2>Registrar - LOGAN CC's</h2>
             <form id="registerForm" onsubmit="event.preventDefault(); auth.register();">
                 <div class="form-group">
-                    <input id="newUsername" type="text" placeholder="Usuário" oninput="validateUsername(this)" autofocus>
+                    <input id="newUsername" type="text" placeholder="Escolha um usuário" oninput="validateUsername(this)" autofocus>
                     <p id="newUsernameError" class="error-text"></p>
                 </div>
                 <div class="form-group">
-                    <input id="newPassword" type="password" placeholder="Senha" oninput="validatePassword(this)">
+                    <input id="newPassword" type="password" placeholder="Crie uma senha (mín. 6 caracteres)" oninput="validatePassword(this)">
                     <button type="button" class="password-toggle" onclick="togglePassword('newPassword', this)">
                         <i class="fas fa-eye"></i>
                     </button>
                     <p id="newPasswordError" class="error-text"></p>
                 </div>
                 <div class="form-group">
-                    <input id="confirmPassword" type="password" placeholder="Confirmar Senha" oninput="validateConfirmPassword(this)">
+                    <input id="confirmPassword" type="password" placeholder="Confirme sua senha" oninput="validateConfirmPassword(this)">
                     <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)">
                         <i class="fas fa-eye"></i>
                     </button>
@@ -226,7 +245,7 @@
                 </div>
                 <button id="registerButton" type="submit" class="action-button">Registrar</button>
             </form>
-            <button class="secondary-button" onclick="ui.showLoginForm()">Voltar ao Login</button>
+            <button class="secondary-button" onclick="showLoginForm()">Voltar ao Login</button>
         </div>
     </main>
     <div id="notifications" class="fixed top-4 right-4 z-30"></div>
@@ -244,13 +263,15 @@
 
         function validatePassword(input) {
             const password = input.value.trim();
-            const errorElement = document.getElementById('newPasswordError');
+            const errorElement = document.getElementById(input.id === 'password' ? 'passwordError' : 'newPasswordError');
             if (password && password.length < 6) {
                 errorElement.textContent = 'A senha deve ter pelo menos 6 caracteres.';
             } else {
                 errorElement.textContent = '';
             }
-            validateConfirmPassword(document.getElementById('confirmPassword'));
+            if (input.id === 'newPassword') {
+                validateConfirmPassword(document.getElementById('confirmPassword'));
+            }
         }
 
         function validateConfirmPassword(input) {
@@ -301,16 +322,6 @@
                 showNotification('Você já está logado.', 'success');
                 setTimeout(() => window.location.href = 'shop.html', 1000);
             }
-            document.getElementById('loginForm').addEventListener('submit', (event) => {
-                event.preventDefault();
-                auth.login();
-            });
-            document.getElementById('registerForm').addEventListener('submit', (event) => {
-                event.preventDefault();
-                auth.register();
-            });
-            document.getElementById('loginContainer').querySelector('.secondary-button').addEventListener('click', showRegisterForm);
-            document.getElementById('registerContainer').querySelector('.secondary-button').addEventListener('click', showLoginForm);
         });
     </script>
 </body>
