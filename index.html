@@ -277,7 +277,7 @@
             if (typeof auth !== 'undefined' && typeof auth.login === 'function') {
                 loginButton.disabled = true;
                 loginButton.textContent = 'Carregando...';
-                auth.login().finally(() => {
+                auth.login(username, password).finally(() => {
                     loginButton.disabled = false;
                     loginButton.textContent = 'Entrar';
                 });
@@ -339,7 +339,7 @@
             if (typeof auth !== 'undefined' && typeof auth.register === 'function') {
                 registerButton.disabled = true;
                 registerButton.textContent = 'Carregando...';
-                auth.register().finally(() => {
+                auth.register(username, password).finally(() => {
                     registerButton.disabled = false;
                     registerButton.textContent = 'Registrar';
                 });
