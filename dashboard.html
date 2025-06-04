@@ -39,7 +39,7 @@
             align-items: center;
             gap: 1rem;
         }
-        .navbar .user-info span {
+        .navbar span {
             font-weight: 600;
         }
         .navbar button {
@@ -65,17 +65,17 @@
             color: #38BDF8;
             margin-bottom: 1.5rem;
         }
-        .section {
+        .table-container {
             background: rgba(15, 23, 42, 0.95);
             border-radius: 1rem;
-            padding: 2rem;
+            padding: 1.5rem;
             margin-bottom: 2rem;
             border: 1px solid rgba(56, 189, 248, 0.2);
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 1rem;
+            color: #A0BFE0;
         }
         th, td {
             padding: 0.75rem;
@@ -83,27 +83,28 @@
             border-bottom: 1px solid #4B5563;
         }
         th {
-            color: #A0BFE0;
             font-weight: 600;
+            color: #38BDF8;
         }
         td i {
             margin-right: 0.5rem;
         }
         .action-button {
-            background: #38BDF8;
+            background: linear-gradient(90deg, #38BDF8, #2563EB);
             color: #FFFFFF;
             border-radius: 0.5rem;
             padding: 0.5rem 1rem;
             border: none;
             cursor: pointer;
+            margin-right: 0.5rem;
             transition: all 0.3s ease;
         }
         .action-button:hover {
-            background: #2563EB;
+            background: linear-gradient(90deg, #2563EB, #1D4ED8);
             transform: scale(1.03);
         }
         .delete-button {
-            background: #F87171;
+            background: linear-gradient(90deg, #F87171, #DC2626);
             color: #FFFFFF;
             border-radius: 0.5rem;
             padding: 0.5rem 1rem;
@@ -112,7 +113,7 @@
             transition: all 0.3s ease;
         }
         .delete-button:hover {
-            background: #DC2626;
+            background: linear-gradient(90deg, #DC2626, #B91C1C);
             transform: scale(1.03);
         }
         .modal {
@@ -238,9 +239,9 @@
         </div>
     </nav>
     <div class="container">
-        <div class="section">
+        <div class="table-container">
             <h2>Gerenciar Usuários</h2>
-            <button class="action-button" onclick="document.getElementById('addUserModal').classList.remove('hidden'); document.getElementById('addUserModal').classList.add('show')">Adicionar Usuário</button>
+            <button class="action-button" onclick="ui.showAddUserModal()">Adicionar Usuário</button>
             <table id="userList">
                 <thead>
                     <tr>
@@ -253,9 +254,9 @@
                 <tbody></tbody>
             </table>
         </div>
-        <div class="section">
+        <div class="table-container">
             <h2>Gerenciar Cartões</h2>
-            <button class="action-button" onclick="document.getElementById('addCardModal').classList.remove('hidden'); document.getElementById('addCardModal').classList.add('show')">Adicionar Cartão</button>
+            <button class="action-button" onclick="ui.showAddCardModal()">Adicionar Cartão</button>
             <table id="adminCardList">
                 <thead>
                     <tr>
@@ -270,9 +271,46 @@
             </table>
         </div>
     </div>
+    <div id="editBalanceModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Editar Saldo</h2>
+            <div class="form-group">
+                <label for="editBalanceAmount">Novo Saldo (R$)</label>
+                <input type="number" id="editBalanceAmount" placeholder="Digite o novo saldo">
+            </div>
+            <button onclick="admin.editUserBalance()">Salvar</button>
+            <button onclick="ui.closeModal()">Cancelar</button>
+        </div>
+    </div>
+    <div id="editUserModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Editar Usuário</h2>
+            <div class="form-group">
+                <label for="editUsername">Usuário</label>
+                <input type="text" id="editUsername" disabled>
+            </div>
+            <div class="form-group">
+                <label for="editBalance">Saldo (R$)</label>
+                <input type="number" id="editBalance">
+            </div>
+            <div class="form-group">
+                <label for="editPassword">Nova Senha (opcional)</label>
+                <input type="password" id="editPassword" placeholder="Deixe em branco para não alterar">
+            </div>
+            <div class="form-group">
+                <label for="editIsAdmin">Admin</label>
+                <select id="editIsAdmin">
+                    <option value="true">Sim</option>
+                    <option value="false">Não</option>
+                </select>
+            </div>
+            <button onclick="admin.editUser(document.getElementById('editUsername').value, parseFloat(document.getElementById('editBalance').value), document.getElementById('editIsAdmin').value === 'true')">Salvar</button>
+            <button onclick="ui.closeModal()">Cancelar</button>
+        </div>
+    </div>
     <div id="addUserModal" class="modal hidden">
         <div class="modal-content">
-            <h2>Adicionar Usuário</h3>
+            <h2>Adicionar Usuário</h2>
             <div class="form-group">
                 <label for="newUsername">Usuário</label>
                 <input type="text" id="newUsername" placeholder="Digite o usuário">
@@ -282,105 +320,17 @@
                 <input type="password" id="newPassword" placeholder="Digite a senha">
             </div>
             <div class="form-group">
-                <label for="newBalance">Saldo Inicial</label>
-                <input type="number" id="newBalance" value="0" step="0.01">
+                <label for="newBalance">Saldo Inicial (R$)</label>
+                <input type="number" id="newBalance" placeholder="Digite o saldo inicial">
             </div>
             <div class="form-group">
-                <label for="newIsAdmin">Administrador?</label>
+                <label for="newIsAdmin">Admin</label>
                 <select id="newIsAdmin">
-                    <option value="false">Sim</option>
-                    <option value="true">Não</option>
-                </select>
-            </div>
-            <button onclick="admin.addUser()">Salvar</button>
-            <button onclick="ui.closeModal()">Cancel</button>
-        </div>
-    </div>
-    <div id="editBalanceModal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Editar Saldo</h2>
-            <div class="form-group">
-                <label for="editBalanceAmount">Novo Saldo</label>
-                <input type="number" id="editBalanceAmount" placeholder="Digite o novo saldo" step="0.01">
-            </div>
-            <button onclick="admin.editUserBalance()">Salvar</button>
-            <button onclick="ui.closeModal()">Cancel</button>
-        </div>
-    </div>
-    <div id="editUserModal" class="modal hidden">
-        <div class="modalContent">
-            <h2>Editar Usuário</h2>
-            <div class="formGroup">
-                <label for="editUsername">Usuário</label>
-                <input type="text" id="editUsername" disabled>
-            </div>
-            <div class="formGroup">
-                <label for="editPassword">Nova Senha (opcional)</label>
-                <input type="password" id="editPassword" placeholder="Digite a nova senha">
-            </div>
-            <div class="formGroup">
-                <label for="editBalance">Saldo</label>
-                <input type="number" id="editBalance" step="0.01">
-            </div>
-            <div class="formGroup">
-                <label for="editIsAdmin">Administrador?</label>
-                <select id="editIsAdmin">
-                    <option value="true">Sim</option>
                     <option value="false">Não</option>
+                    <option value="true">Sim</option>
                 </select>
             </div>
-            <button onclick="admin.editUser(document.getElementById('editUsername').value, parseFloat(document.getElementById('editBalance').value), document.getElementById('editIsAdmin').value === 'true')">Salvar</button>
-            <button onclick="ui.closeModal()">Cancel</button>
-        </div>
-    </div>
-    <div id="addCardModal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Adicionar Cartão</h2>
-            <div class="form-group">
-                <label for="cardNumber">Número do Cartão</label>
-                <input type="text" id="cardNumber" placeholder="XXXX XXXX XXXX XXXX" oninput="formatCardNumber(this)">
-            </div>
-            <div class="form-group">
-                <label for="cardCvv">CVV</label>
-                <input type="text" id="cardCvv" placeholder="XXX" oninput="restrictCvv(this)">
-            </div>
-            <div class="form-group">
-                <label for="cardExpiry">Validade</label>
-                <input type="text" id="cardExpiry" placeholder="MM/AA" oninput="formatExpiry(this)">
-            </div>
-            <div class="form-group">
-                <label for="cardName">Nome</label>
-                <input type="text" id="cardName" placeholder="Nome no cartão">
-            </div>
-            <div class="form-group">
-                <label for="cardCpf">CPF</label>
-                <input type="text" id="cardCpf" placeholder="XXX.XXX.XXX-XX" oninput="formatCpf(this)">
-            </div>
-            <div class="form-group">
-                <label for="cardBrand">Bandeira</label>
-                <select id="cardBrand">
-                    <option value="Visa">Visa</option>
-                    <option value="Mastercard">Mastercard</option>
-                    <option value="Amex">Amex</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="cardBank">Banco</label>
-                <select id="cardBank">
-                    <option value="Nubank">Nubank</option>
-                    <option value="Itaú">Itaú</option>
-                    <option value="Bradesco">Bradesco</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="cardLevel">Nível</label>
-                <select id="cardLevel">
-                    <option value="Classic">Classic</option>
-                    <option value="Gold">Gold</option>
-                    <option value="Platinum">Platinum</option>
-                </select>
-            </div>
-            <button onclick="ui.saveCard()">Salvar</button>
+            <button onclick="admin.addUser()">Adicionar</button>
             <button onclick="ui.closeModal()">Cancelar</button>
         </div>
     </div>
@@ -389,23 +339,23 @@
             <h2>Editar Cartão</h2>
             <div class="form-group">
                 <label for="editCardNumber">Número do Cartão</label>
-                <input type="text" id="editCardNumber" placeholder="XXXX XXXX XXXX XXXX" oninput="formatCardNumber(this)">
+                <input type="text" id="editCardNumber" placeholder="Digite o número do cartão" maxlength="19" oninput="formatCardNumber(this)">
             </div>
             <div class="form-group">
                 <label for="editCardCvv">CVV</label>
-                <input type="text" id="editCardCvv" placeholder="XXX" oninput="restrictCvv(this)">
+                <input type="text" id="editCardCvv" placeholder="Digite o CVV" maxlength="3" oninput="restrictCvv(this)">
             </div>
             <div class="form-group">
-                <label for="editCardExpiry">Validade</label>
-                <input type="text" id="editCardExpiry" placeholder="MM/AA" oninput="formatExpiry(this)">
+                <label for="editCardExpiry">Validade (MM/AA)</label>
+                <input type="text" id="editCardExpiry" placeholder="MM/AA" maxlength="5" oninput="formatExpiry(this)">
             </div>
             <div class="form-group">
-                <label for="editCardName">Nome</label>
-                <input type="text" id="editCardName" placeholder="Nome no cartão">
+                <label for="editCardName">Nome no Cartão</label>
+                <input type="text" id="editCardName" placeholder="Digite o nome">
             </div>
             <div class="form-group">
                 <label for="editCardCpf">CPF</label>
-                <input type="text" id="editCardCpf" placeholder="XXX.XXX.XXX-XX" oninput="formatCpf(this)">
+                <input type="text" id="editCardCpf" placeholder="Digite o CPF" maxlength="14" oninput="formatCPF(this)">
             </div>
             <div class="form-group">
                 <label for="editCardBrand">Bandeira</label>
@@ -432,23 +382,101 @@
                 </select>
             </div>
             <button onclick="admin.editCard({
-                numero: document.getElementById('editCardNumber').value.trim(),
-                cvv: document.getElementById('editCardCvv').value.trim(),
-                validade: document.getElementById('editCardExpiry').value.trim(),
-                nome: document.getElementById('editCardName').value.trim(),
-                cpf: document.getElementById('editCardCpf').value.trim(),
+                numero: document.getElementById('editCardNumber').value,
+                cvv: document.getElementById('editCardCvv').value,
+                validade: document.getElementById('editCardExpiry').value,
+                nome: document.getElementById('editCardName').value,
+                cpf: document.getElementById('editCardCpf').value,
                 bandeira: document.getElementById('editCardBrand').value,
                 banco: document.getElementById('editCardBank').value,
                 nivel: document.getElementById('editCardLevel').value,
-                bin: document.getElementById('editCardNumber').value.trim().replace(/\s/g, '').substring(0, 6),
-                pais: 'brasil',
-                acquired: false
+                bin: document.getElementById('editCardNumber').value.replace(/\s/g, '').substring(0, 6),
+                pais: 'Brazil'
             })">Salvar</button>
+            <button onclick="ui.closeModal()">Cancelar</button>
+        </div>
+    </div>
+    <div id="addCardModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Adicionar Cartão</h2>
+            <div class="form-group">
+                <label for="cardNumber">Número do Cartão</label>
+                <input type="text" id="cardNumber" placeholder="Digite o número do cartão" maxlength="19" oninput="formatCardNumber(this)">
+            </div>
+            <div class="form-group">
+                <label for="cardCvv">CVV</label>
+                <input type="text" id="cardCvv" placeholder="Digite o CVV" maxlength="3" oninput="restrictCvv(this)">
+            </div>
+            <div class="form-group">
+                <label for="cardExpiry">Validade (MM/AA)</label>
+                <input type="text" id="cardExpiry" placeholder="MM/AA" maxlength="5" oninput="formatExpiry(this)">
+            </div>
+            <div class="form-group">
+                <label for="cardName">Nome no Cartão</label>
+                <input type="text" id="cardName" placeholder="Digite o nome">
+            </div>
+            <div class="form-group">
+                <label for="cardCpf">CPF</label>
+                <input type="text" id="cardCpf" placeholder="Digite o CPF" maxlength="14" oninput="formatCPF(this)">
+            </div>
+            <div class="form-group">
+                <label for="cardBrand">Bandeira</label>
+                <select id="cardBrand">
+                    <option value="Visa">Visa</option>
+                    <option value="Mastercard">Mastercard</option>
+                    <option value="Amex">Amex</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="cardBank">Banco</label>
+                <select id="cardBank">
+                    <option value="Nubank">Nubank</option>
+                    <option value="Itaú">Itaú</option>
+                    <option value="Bradesco">Bradesco</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="cardLevel">Nível</label>
+                <select id="cardLevel">
+                    <option value="Classic">Classic</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Platinum">Platinum</option>
+                </select>
+            </div>
+            <button onclick="ui.saveCard()">Adicionar</button>
             <button onclick="ui.closeModal()">Cancelar</button>
         </div>
     </div>
     <div id="notifications" class="fixed top-2 right-4 z-50" role="alert"></div>
     <script>
+        function showAddUserModal() {
+            const modal = document.getElementById('addUserModal');
+            if (modal) {
+                document.getElementById('newUsername').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('newBalance').value = '';
+                document.getElementById('newIsAdmin').value = 'false';
+                modal.classList.remove('hidden');
+                modal.classList.add('show');
+            }
+        }
+
+        function showAddCardModal() {
+            const modal = document.getElementById('addCardModal');
+            if (modal) {
+                document.getElementById('cardNumber').value = '';
+                document.getElementById('cardCvv').value = '';
+                document.getElementById('cardExpiry').value = '';
+                document.getElementById('cardName').value = '';
+                document.getElementById('cardCpf').value = '';
+                document.getElementById('cardBrand').value = 'Visa';
+                document.getElementById('cardBank').value = 'Nubank';
+                document.getElementById('cardLevel').value = 'Classic';
+                modal.classList.remove('hidden');
+                modal.classList.add('show');
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const googleFonts = document.getElementById('google-fonts');
             if (!googleFonts || !document.fonts.check('12px Poppins')) {
@@ -470,16 +498,17 @@
                 showNotification('Erro: script.js não encontrado.', 'error');
             }
 
-            const requiredElements = ['userList', 'adminCardList', 'userName', 'userBalanceHeader', 'notifications'];
+            const requiredElements = ['userList', 'adminCardList', 'userName', 'userBalanceHeader', 'editBalanceModal', 'editUserModal', 'addUserModal', 'editCardModal', 'addCardModal', 'notifications'];
             const missingElements = requiredElements.filter(id => !document.getElementById(id));
             if (missingElements.length > 0) {
                 showNotification(`Erro: Elementos do DOM não encontrados: ${missingElements.join(', ')}.`, 'error');
             }
 
-            if (typeof admin !== 'undefined' && typeof admin.loadUsers === 'function' && typeof admin.loadAdminCards === 'function' && missingElements.length === 0) {
-                setTimeout(() => {
-                    showNotification('Dashboard carregado com sucesso!', 'success');
-                }, 500);
+            if (typeof admin !== 'undefined' && missingElements.length === 0 && typeof createClient !== 'undefined') {
+                admin.loadUsers();
+                admin.loadAdminCards();
+                document.getElementById('userName').textContent = state.currentUser?.username || '';
+                document.getElementById('userBalanceHeader').textContent = state.currentUser?.balance?.toFixed(2) || '0.00';
             }
         });
     </script>
