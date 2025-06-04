@@ -200,11 +200,9 @@
     </div>
     <div id="notifications" class="fixed top-2 right-4 z-50" role="alert"></div>
     <script>
-        // Configurações
         const MIN_PASSWORD_LENGTH = 4;
         const NOTIFICATION_TIMEOUT = 5000;
 
-        // Função para exibir notificações (fallback)
         function showFallbackNotification(message, type = 'error') {
             const notificationsDiv = document.getElementById('notifications');
             if (!notificationsDiv) return;
@@ -215,14 +213,12 @@
             setTimeout(() => notification.remove(), NOTIFICATION_TIMEOUT);
         }
 
-        // Função para alternar formulários
         function toggleForms() {
             const loginContainer = document.getElementById('loginContainer');
             const registerContainer = document.getElementById('registerContainer');
             if (loginContainer && registerContainer) {
                 loginContainer.classList.toggle('hidden');
                 registerContainer.classList.toggle('hidden');
-                // Limpar campos e erros ao alternar
                 ['username', 'password', 'newUsername', 'newPassword', 'confirmPassword'].forEach(id => {
                     const input = document.getElementById(id);
                     if (input) input.value = '';
@@ -239,7 +235,6 @@
             }
         }
 
-        // Função para validar e processar login
         function handleLogin() {
             const usernameInput = document.getElementById('username');
             const passwordInput = document.getElementById('password');
@@ -252,7 +247,6 @@
                 return;
             }
 
-            // Resetar erros
             usernameError.textContent = '';
             passwordError.textContent = '';
             usernameError.classList.remove('show');
@@ -261,7 +255,6 @@
             const username = usernameInput.value.trim();
             const password = passwordInput.value.trim();
 
-            // Validações no cliente
             if (!username) {
                 usernameError.textContent = 'Preencha o usuário.';
                 usernameError.classList.add('show');
@@ -281,7 +274,6 @@
                 return;
             }
 
-            // Chamar auth.login do script.js
             if (typeof auth !== 'undefined' && typeof auth.login === 'function') {
                 loginButton.disabled = true;
                 loginButton.textContent = 'Carregando...';
@@ -294,7 +286,6 @@
             }
         }
 
-        // Função para validar e processar registro
         function handleRegister() {
             const usernameInput = document.getElementById('newUsername');
             const passwordInput = document.getElementById('newPassword');
@@ -309,7 +300,6 @@
                 return;
             }
 
-            // Resetar erros
             usernameError.textContent = '';
             passwordError.textContent = '';
             confirmPasswordError.textContent = '';
@@ -321,7 +311,6 @@
             const password = passwordInput.value.trim();
             const confirmPassword = confirmPasswordInput.value.trim();
 
-            // Validações no cliente
             if (!username) {
                 usernameError.textContent = 'Preencha o usuário.';
                 usernameError.classList.add('show');
@@ -347,7 +336,6 @@
                 return;
             }
 
-            // Chamar auth.register do script.js
             if (typeof auth !== 'undefined' && typeof auth.register === 'function') {
                 registerButton.disabled = true;
                 registerButton.textContent = 'Carregando...';
@@ -360,40 +348,33 @@
             }
         }
 
-        // Verificar carregamento de dependências
         document.addEventListener('DOMContentLoaded', () => {
-            // Verificar Google Fonts
             const googleFonts = document.getElementById('google-fonts');
             if (!googleFonts || !document.fonts.check('12px Poppins')) {
                 showFallbackNotification('Erro: Fontes não carregadas corretamente.');
             }
 
-            // Verificar Font Awesome
             const fontAwesome = document.getElementById('font-awesome');
             if (!fontAwesome || !document.querySelector('.fa-user')) {
                 showFallbackNotification('Erro: Ícones do Font Awesome não carregados.');
             }
 
-            // Verificar Supabase
             const supabaseScript = document.getElementById('supabase-js');
             if (!supabaseScript || typeof createClient === 'undefined') {
                 showFallbackNotification('Erro: Cliente Supabase não carregado. Verifique sua conexão.');
             }
 
-            // Verificar script.js
             const scriptJs = document.getElementById('script-js');
             if (!scriptJs) {
                 showFallbackNotification('Erro: script.js não encontrado.');
             }
 
-            // Verificar elementos do DOM
             const requiredElements = ['username', 'password', 'loginButton', 'newUsername', 'newPassword', 'confirmPassword', 'registerButton', 'notifications', 'loginContainer', 'registerContainer'];
             const missingElements = requiredElements.filter(id => !document.getElementById(id));
             if (missingElements.length > 0) {
                 showFallbackNotification(`Erro: Elementos do DOM não encontrados: ${missingElements.join(', ')}.`);
             }
 
-            // Notificar carregamento bem-sucedido
             if (typeof auth !== 'undefined' && missingElements.length === 0 && typeof createClient !== 'undefined') {
                 setTimeout(() => {
                     showFallbackNotification('Página carregada com sucesso!', 'success');
