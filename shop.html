@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#1A2A44">
-    <title>Loja de Cartões - LOGAN CC's</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Montserrat:wght=700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="script.js" defer></script>
+    <title>LOGAN CC's - Loja</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Montserrat:wght@700&display=swap" rel="stylesheet" id="google-fonts">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" id="font-awesome">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" id="supabase-js"></script>
+    <script src="script.js" defer id="script-js"></script>
     <style>
         * {
             margin: 0;
@@ -20,253 +20,201 @@
             background: linear-gradient(145deg, #0F172A 0%, #1E293B 100%);
             color: #E2E8F0;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
             overflow-x: hidden;
         }
-        .header {
+        .navbar {
             background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(10px);
             padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            border-bottom: 1px solid rgba(56, 189, 248, 0.2);
         }
-        .header .logo img {
-            height: 45px;
-            transition: transform 0.3s ease;
+        .navbar .logo img {
+            height: 40px;
         }
-        .header .logo img:hover {
-            transform: scale(1.1);
-        }
-        .header .balance {
+        .navbar .user-info {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 1rem;
+        }
+        .navbar .user-info span {
             font-weight: 600;
-            color: #38BDF8;
-            background: rgba(56, 189, 248, 0.1);
-            padding: 0.5rem 1rem;
+        }
+        .navbar button {
+            background: linear-gradient(90deg, #38BDF8, #2563EB);
+            color: #FFFFFF;
             border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
-        .header .balance i {
-            color: #FBBF24;
+        .navbar button:hover {
+            background: linear-gradient(90deg, #2563EB, #1D4ED8);
+            transform: scale(1.03);
         }
-        main {
-            flex-grow: 1;
-            margin-top: 1rem;
-            padding: 2rem 1rem;
-            padding-bottom: 6rem;
-            background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.1), transparent 50%);
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
         }
-        h2 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #38BDF8;
-            text-align: center;
+        .filters {
+            background: rgba(15, 23, 42, 0.95);
+            padding: 1.5rem;
+            border-radius: 1rem;
             margin-bottom: 2rem;
-            text-shadow: 0 2px 6px rgba(56, 189, 248, 0.3);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .filters .form-group {
+            flex: 1;
+            min-width: 150px;
+        }
+        .filters label {
+            display: block;
+            font-size: 0.9rem;
+            color: #A0BFE0;
+            margin-bottom: 0.3rem;
+        }
+        .filters input, .filters select {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            background: #2D3748;
+            color: #E2E8F0;
+            border: 1px solid #4B5563;
+            transition: all 0.3s ease;
+        }
+        .filters input:focus, .filters select:focus {
+            border-color: #38BDF8;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+            outline: none;
+        }
+        .filters button {
+            background: linear-gradient(90deg, #38BDF8, #2563EB);
+            color: #FFFFFF;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1.2rem;
+        }
+        .filters button:hover {
+            background: linear-gradient(90deg, #2563EB, #1D4ED8);
+            transform: scale(1.03);
+        }
+        #cardList {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
         }
         .card-item {
-            background: rgba(30, 41, 59, 0.9);
+            background: rgba(15, 23, 42, 0.95);
             border-radius: 1rem;
             padding: 1.5rem;
-            margin-bottom: 1rem;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-            transition: all 0.3s ease;
+            border: 1px solid rgba(56, 189, 248, 0.2);
             display: flex;
             flex-direction: column;
             gap: 1rem;
-            border-left: 5px solid #38BDF8;
-            position: relative;
-            overflow: hidden;
         }
-        .card-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 30px rgba(56, 189, 248, 0.3);
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(30, 41, 59, 0.9));
+        .card-brand {
+            font-size: 2rem;
+            color: #38BDF8;
         }
-        .card-item .card-info {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .card-item .card-info p {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .card-item .card-info i {
-            color: #FBBF24;
-        }
-        .card-item .card-brand {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            font-size: 1.5rem;
-            opacity: 0.7;
+        .card-info p {
+            font-size: 0.9rem;
+            color: #A0BFE0;
         }
         .card-button {
             background: linear-gradient(90deg, #38BDF8, #2563EB);
             color: #FFFFFF;
             border-radius: 0.5rem;
             padding: 0.75rem;
-            font-weight: 600;
             border: none;
             cursor: pointer;
             transition: all 0.3s ease;
-            text-align: center;
         }
         .card-button:hover {
             background: linear-gradient(90deg, #2563EB, #1D4ED8);
-            transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
+            transform: scale(1.03);
         }
-        .wallet {
+        #accountInfo {
             background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 0.75rem 0;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
-            z-index: 100;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-top: 2rem;
         }
-        .wallet-button {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: #A0BFE0;
-            font-size: 1.25rem;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            font-weight: 500;
-            padding: 0.5rem;
-            cursor: pointer;
-        }
-        .wallet-button i {
-            margin-bottom: 0.3rem;
-        }
-        .wallet-button span {
-            font-size: 0.7rem;
-            color: #A0BFE0;
-        }
-        .wallet-button.active {
+        #accountInfo h2 {
+            font-family: 'Montserrat', sans-serif;
             color: #38BDF8;
-            transform: scale(1.1);
+            margin-bottom: 1.5rem;
         }
-        .wallet-button:hover {
-            color: #2563EB;
+        #accountInfo p {
+            font-size: 1rem;
+            color: #A0BFE0;
+            margin-bottom: 1rem;
         }
         .modal {
-            background: rgba(0, 0, 0, 0.8);
             position: fixed;
-            inset: 0;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
             display: flex;
             justify-content: center;
             align-items: center;
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out;
             z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
         }
         .modal.show {
             opacity: 1;
+            visibility: visible;
         }
         .modal-content {
-            background: linear-gradient(135deg, #1E293B, #0F172A);
-            padding: 2rem;
+            background: rgba(15, 23, 42, 0.95);
             border-radius: 1rem;
-            width: 90%;
+            padding: 2rem;
             max-width: 500px;
-            transform: translateY(-20px);
-            transition: transform 0.3s ease-in-out;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            width: 90%;
             border: 1px solid rgba(56, 189, 248, 0.2);
         }
-        .modal.show .modal-content {
-            transform: translateY(0);
+        .modal-content h2 {
+            font-family: 'Montserrat', sans-serif;
+            color: #38BDF8;
+            margin-bottom: 1.5rem;
+        }
+        .modal-content p {
+            color: #A0BFE0;
+            margin-bottom: 1rem;
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            background: #2D3748;
+            color: #E2E8F0;
+            border: 1px solid #4B5563;
+            margin-bottom: 1rem;
         }
         .modal-content button {
             background: linear-gradient(90deg, #38BDF8, #2563EB);
             color: #FFFFFF;
             border-radius: 0.5rem;
             padding: 0.75rem;
-            width: 100%;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            margin-top: 0.5rem;
+            border: none;
+            cursor: pointer;
+            margin-right: 0.5rem;
         }
         .modal-content button:hover {
             background: linear-gradient(90deg, #2563EB, #1D4ED8);
             transform: scale(1.03);
-            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
-        }
-        .modal-content button.secondary {
-            background: #4B5563;
-        }
-        .modal-content button.secondary:hover {
-            background: #6B7280;
-        }
-        .modal-content input, .modal-content select {
-            background: #2D3748;
-            color: #E2E8F0;
-            border: 1px solid #4B5563;
-            border-radius: 0.5rem;
-            padding: 0.75rem;
-            width: 100%;
-            margin-bottom: 1rem;
-            transition: all 0.3s ease;
-        }
-        .modal-content input:focus, .modal-content select:focus {
-            border-color: #38BDF8;
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
-            outline: none;
-            background: #334155;
-        }
-        .filter-section {
-            margin-bottom: 2rem;
-            padding: 1.5rem;
-            background: rgba(30, 41, 59, 0.9);
-            border-radius: 1rem;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            display: grid;
-            gap: 1rem;
-            grid-template-columns: 1fr;
-        }
-        .filter-section input, .filter-section select, .filter-section button {
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            background: #2D3748;
-            color: #E2E8F0;
-            border: 1px solid #4B5563;
-            transition: all 0.3s ease;
-        }
-        .filter-section input:focus, .filter-section select:focus {
-            background: #334155;
-            border-color: #38BDF8;
-            outline: none;
-        }
-        .filter-section button {
-            background: linear-gradient(90deg, #38BDF8, #2563EB);
-            cursor: pointer;
-        }
-        .filter-section button:hover {
-            background: linear-gradient(90deg, #2563EB, #1D4ED8);
-        }
-        .filter-section button.clear {
-            background: #F87171;
-        }
-        .filter-section button.clear:hover {
-            background: #EF4444;
         }
         .notification {
             position: fixed;
@@ -290,178 +238,138 @@
             from { opacity: 0; transform: translateX(20px); }
             to { opacity: 1; transform: translateX(0); }
         }
-        .loading-spinner {
-            display: none;
-            text-align: center;
-            padding: 2rem;
-        }
-        .loading-spinner.active {
-            display: block;
-        }
-        .loading-spinner::after {
-            content: '';
-            display: inline-block;
-            width: 24px;
-            height: 24px;
-            border: 3px solid #38BDF8;
-            border-top: 3px solid transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        @media (max-width: 640px) {
+            .navbar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .filters {
+                flex-direction: column;
+            }
         }
         .hidden {
-            display: none !important;
-        }
-        @media (min-width: 640px) {
-            .filter-section {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        @media (min-width: 1024px) {
-            .filter-section {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
-        @media (max-width: 640px) {
-            .card-item {
-                padding: 1rem;
-            }
-            .wallet {
-                flex-wrap: wrap;
-                gap: 0.5rem;
-                justify-content: center;
-            }
-            .wallet-button {
-                flex: 1;
-                font-size: 1rem;
-            }
+            display: none;
         }
     </style>
 </head>
 <body>
-    <header class="header">
-        <a href="shop.html" class="logo"><img src="logo.png" alt="Logo da LOGAN CC's" aria-label="Logo da LOGAN CC's"></a>
-        <div class="balance" aria-live="polite">
-            <i class="fas fa-coins" aria-hidden="true"></i>
-            <span>Saldo: R$ <span id="userBalanceHeader">0.00</span></span>
+    <nav class="navbar">
+        <div class="logo">
+            <img src="logo.png" alt="Logo da LOGAN CC's" aria-label="Logo da LOGAN CC's">
         </div>
-    </header>
-    <main class="container mx-auto px-4 py-6">
-        <h2>Cartões Disponíveis - LOGAN CC's</h2>
-        <div class="filter-section">
-            <input id="binFilter" type="text" placeholder="Filtrar por BIN" aria-label="Filtrar por BIN" oninput="debounceFilterCards()">
-            <select id="brandFilter" aria-label="Filtrar por bandeira" onchange="ui.filterCards()">
-                <option value="all">Todas as Bandeiras</option>
-                <option value="visa">Visa</option>
-                <option value="mastercard">Mastercard</option>
-                <option value="amex">American Express</option>
-                <option value="discover">Discover</option>
-                <option value="elo">Elo</option>
-                <option value="hipercard">Hipercard</option>
-            </select>
-            <select id="bankFilter" aria-label="Filtrar por banco" onchange="ui.filterCards()">
-                <option value="all">Todos os Bancos</option>
-                <option value="nubank">Nubank</option>
-                <option value="itau">Itaú</option>
-                <option value="bradesco">Bradesco</option>
-                <option value="bancodobrasil">Banco do Brasil</option>
-                <option value="santander">Santander</option>
-                <option value="caixa">Caixa Econômica</option>
-                <option value="inter">Banco Inter</option>
-                <option value="c6">C6 Bank</option>
-                <option value="neon">Neon</option>
-                <option value="original">Original</option>
-                <option value="btg">BTG Pactual</option>
-            </select>
-            <select id="levelFilter" aria-label="Filtrar por nível" onchange="ui.filterCards()">
-                <option value="all">Todos os Níveis</option>
-                <option value="standard">Standard</option>
-                <option value="gold">Gold</option>
-                <option value="platinum">Platinum</option>
-                <option value="black">Black</option>
-                <option value="infinite">Infinite</option>
-            </select>
-            <button onclick="ui.filterCards()" class="apply">Aplicar Filtros</button>
-            <button onclick="ui.clearFilters()" class="clear">Limpar Filtros</button>
+        <div class="user-info">
+            <span id="userName"></span>
+            <span>R$<span id="userBalanceHeader">0.00</span></span>
+            <button onclick="ui.showAccountInfo()">Minha Conta</button>
+            <button id="adminButton" class="hidden" onclick="window.location.href='dashboard.html'">Admin</button>
+            <button onclick="auth.logout()">Sair</button>
         </div>
-        <div id="cardList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" role="region" aria-live="polite"></div>
-        <div id="accountInfo" class="card-details hidden" role="region" aria-live="polite">
+    </nav>
+    <div class="container">
+        <div class="filters">
+            <div class="form-group">
+                <label for="binFilter">BIN</label>
+                <input type="text" id="binFilter" placeholder="Digite o BIN" oninput="ui.filterCards()">
+            </div>
+            <div class="form-group">
+                <label for="brandFilter">Bandeira</label>
+                <select id="brandFilter" onchange="ui.filterCards()">
+                    <option value="all">Todas</option>
+                    <option value="Visa">Visa</option>
+                    <option value="Mastercard">Mastercard</option>
+                    <option value="Amex">Amex</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="bankFilter">Banco</label>
+                <select id="bankFilter" onchange="ui.filterCards()">
+                    <option value="all">Todos</option>
+                    <option value="Nubank">Nubank</option>
+                    <option value="Itaú">Itaú</option>
+                    <option value="Bradesco">Bradesco</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="levelFilter">Nível</label>
+                <select id="levelFilter" onchange="ui.filterCards()">
+                    <option value="all">Todos</option>
+                    <option value="Classic">Classic</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Platinum">Platinum</option>
+                </select>
+            </div>
+            <button onclick="ui.clearFilters()">Limpar Filtros</button>
+        </div>
+        <div id="cardList"></div>
+        <div id="accountInfo" class="hidden">
             <h2>Minha Conta</h2>
-            <p class="mb-2"><strong>Usuário:</strong> <span id="userName"></span></p>
-            <p class="mb-4"><strong>Saldo:</strong> R$ <span id="userBalanceAccount">0.00</span></p>
-            <div id="userCards" class="mt-4"></div>
-            <button onclick="ui.showAddBalanceForm()" class="card-button w-full">Adicionar Saldo</button>
-        </div>
-        <div id="loadingSpinner" class="loading-spinner" aria-label="Carregando cartões"></div>
-    </main>
-    <footer class="wallet" role="navigation">
-        <button id="shopButton" class="wallet-button active" onclick="showShopSection()"><i class="fas fa-store" aria-hidden="true"></i><span>Loja</span></button>
-        <button id="accountButton" class="wallet-button" onclick="showAccountSection()"><i class="fas fa-user" aria-hidden="true"></i><span>Conta</span></button>
-        <button id="walletButton" class="wallet-button" onclick="ui.showWallet()"><i class="fas fa-wallet" aria-hidden="true"></i><span>Carteira</span></button>
-        <button id="logoutButton" class="wallet-button" onclick="auth.logout()"><i class="fas fa-sign-out-alt" aria-hidden="true"></i><span>Sair</span></button>
-        <a id="adminButton" href="dashboard.html" class="wallet-button hidden"><i class="fas fa-crown" aria-hidden="true"></i><span>Admin</span></a>
-    </footer>
-    <div id="walletModal" class="modal hidden" role="dialog">
-        <div class="modal-content">
-            <h2>Minha Carteira</h2>
-            <div id="userCardsWallet"></div>
-            <button onclick="ui.closeModal()" class="secondary">Fechar</button>
+            <p><strong>Usuário:</strong> <span id="userName"></span></p>
+            <p><strong>Saldo:</strong> R$<span id="userBalanceAccount">0.00</span></p>
+            <button onclick="ui.showAddBalanceForm()">Adicionar Saldo</button>
+            <button onclick="ui.showWallet()">Ver Carteira</button>
+            <h3>Cartões Adquiridos</h3>
+            <div id="userCards"></div>
         </div>
     </div>
-    <div id="cardDetailsModal" class="modal hidden" role="dialog">
-        <div class="modal-content">
-            <h2>Detalhes do Cartão</h2>
-            <div id="cardDetailsContent"></div>
-            <button onclick="ui.closeCardDetailsModal()" class="secondary">Fechar</button>
-        </div>
-    </div>
-    <div id="confirmPurchaseModal" class="modal hidden" data-card-number="" role="dialog">
+    <div id="confirmPurchaseModal" class="modal hidden">
         <div class="modal-content">
             <h2>Confirmar Compra</h2>
             <div id="confirmCardDetails"></div>
-            <p class="mb-2"><strong>Total:</strong> R$ <span id="confirmTotalAmount"></span></p>
-            <p class="mb-4"><strong>Seu Saldo:</strong> R$ <span id="confirmUserBalance"></span></p>
-            <button onclick="ui.confirmPurchase()">Confirmar Compra</button>
-            <button onclick="ui.closeConfirmPurchaseModal()" class="secondary">Cancelar</button>
+            <p><strong>Total:</strong> R$<span id="confirmTotalAmount">0.00</span></p>
+            <p><strong>Saldo Atual:</strong> R$<span id="confirmUserBalance">0.00</span></p>
+            <button onclick="ui.confirmPurchase()">Confirmar</button>
+            <button onclick="ui.closeConfirmPurchaseModal()">Cancelar</button>
         </div>
     </div>
-    <div id="rechargeModal" class="modal hidden" role="dialog">
+    <div id="rechargeModal" class="modal hidden">
         <div class="modal-content">
             <h2>Adicionar Saldo</h2>
-            <input id="rechargeAmount" type="number" placeholder="Valor (R$)" step="0.01" aria-label="Valor para adicionar saldo">
+            <input type="number" id="rechargeAmount" placeholder="Digite o valor" step="0.01">
             <button onclick="ui.addBalance()">Adicionar</button>
-            <button onclick="ui.closeModal()" class="secondary">Fechar</button>
+            <button onclick="ui.closeModal()">Cancelar</button>
         </div>
     </div>
-    <div id="notifications" class="fixed top-4 right-4 z-30" role="alert"></div>
+    <div id="walletModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Carteira</h2>
+            <div id="userCardsWallet"></div>
+            <button onclick="ui.closeModal()">Fechar</button>
+        </div>
+    </div>
+    <div id="notifications" class="fixed top-2 right-4 z-50" role="alert"></div>
     <script>
-        let debounceTimer;
-        function debounceFilterCards() {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => ui.filterCards(), 300);
-        }
-        function showShopSection() {
-            document.getElementById('accountInfo').classList.add('hidden');
-            document.getElementById('cardList').classList.remove('hidden');
-            setActiveButton('shopButton');
-        }
-        function showAccountSection() {
-            document.getElementById('cardList').classList.add('hidden');
-            document.getElementById('accountInfo').classList.remove('hidden');
-            ui.showAccountInfo();
-            setActiveButton('accountButton');
-        }
-        function setActiveButton(buttonId) {
-            const buttons = document.querySelectorAll('.wallet-button');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            document.getElementById(buttonId).classList.add('active');
-        }
         document.addEventListener('DOMContentLoaded', () => {
-            const loadingSpinner = document.getElementById('loadingSpinner');
-            if (loadingSpinner) loadingSpinner.classList.add('active');
-            showShopSection();
+            const googleFonts = document.getElementById('google-fonts');
+            if (!googleFonts || !document.fonts.check('12px Poppins')) {
+                showNotification('Erro: Fontes não carregadas corretamente.', 'error');
+            }
+
+            const fontAwesome = document.getElementById('font-awesome');
+            if (!fontAwesome || !document.querySelector('.fa-user')) {
+                showNotification('Erro: Ícones do Font Awesome não carregados.', 'error');
+            }
+
+            const supabaseScript = document.getElementById('supabase-js');
+            if (!supabaseScript || typeof createClient === 'undefined') {
+                showNotification('Erro: Cliente Supabase não carregado. Verifique sua conexão.', 'error');
+            }
+
+            const scriptJs = document.getElementById('script-js');
+            if (!scriptJs) {
+                showNotification('Erro: script.js não encontrado.', 'error');
+            }
+
+            const requiredElements = ['cardList', 'accountInfo', 'userName', 'userBalanceHeader', 'userBalanceAccount', 'notifications'];
+            const missingElements = requiredElements.filter(id => !document.getElementById(id));
+            if (missingElements.length > 0) {
+                showNotification(`Erro: Elementos do DOM não encontrados: ${missingElements.join(', ')}.`, 'error');
+            }
+
+            if (typeof shop !== 'undefined' && typeof shop.loadCards === 'function' && missingElements.length === 0) {
+                setTimeout(() => {
+                    showNotification('Loja carregada com sucesso!', 'success');
+                }, 500);
+            }
         });
     </script>
 </body>
