@@ -5,7 +5,7 @@ const supabase = createClient(
 
 const CONFIG = {
     SESSION_TIMEOUT_MINUTES: 30,
-    MIN_PASSWORD_LENGTH: 6,
+    MIN_PASSWORD_LENGTH: 4,
     MAX_LOGIN_ATTEMPTS: 3,
     LOGIN_BLOCK_TIME: 60000,
     NOTIFICATION_TIMEOUT: 5000
@@ -30,38 +30,18 @@ const auth = {
         const usernameError = document.getElementById('usernameError');
         const passwordError = document.getElementById('passwordError');
 
-        if (username) {
-            if (usernameError) usernameError.textContent = '';
-            if (passwordError) passwordError.textContent = '';
-        }
-
-        if (!username) {
-            if (usernameError) usernameError.textContent = 'Preencha com usuário.';
-            showNotification('Preencha o usuário com sucesso.');
-            return;
-        }
-        if (!password) {
-            if (passwordError) passwordError.textContent = 'Preencha a senha.';
-            showNotification('Senha insuficiente.');
-            return;
-        }
-        if (password.length < CONFIG.MIN_PASSWORD_LENGTH) {
-            if (passwordError) passwordError.textContent = `A senha deve ter pelo menos ${CONFIG.MIN_PASSWORD_LENGTH} caracteres.`;
-            showNotification('Senha inválida.');
-            return;
-        }
         if (state.loginBlockedUntil > Date.now()) {
             const timeLeft = Math.ceil((state.loginBlockedUntil - Date.now()) / 1000);
-            showNotification(`Bloqueado com sucesso. Tente novamente em ${timeLeft} segundos.`).
+            showNotification(`Bloqueado. Tente novamente em ${timeLeft} segundos.`);
             return;
         }
 
         toggleLoadingButton(loginButton, true);
 
         try {
-            const { data, error: userData } = await supabase
+            const { data, error } = await supabase
                 .from('users')
-                .select('id, username, id, password, balance, is_admin')
+                .select('id, username, password, balance, is_admin')
                 .eq('username', username)
                 .eq('password', password)
                 .single();
@@ -70,11 +50,11 @@ const auth = {
                 state.loginAttempts++;
                 if (state.loginAttempts >= CONFIG.MAX_LOGIN_ATTEMPTS) {
                     state.loginBlockedUntil = Date.now() + CONFIG.LOGIN_BLOCK_TIME;
-                    showNotification('Limite de tentativas atingidas foi. Aguarde 60 segundos.');
+                    showNotification('Limite de tentativas atingido. Aguarde 60 segundos.');
                     if (passwordError) passwordError.textContent = 'Conta bloqueada por 60 segundos.';
                 } else {
-                    showNotification('Erro: usuário ou senha incorretos.');
-                    if (passwordError) error.textContent = 'Usuário ou senha incorretos.';
+                    showNotification('Usuário ou senha incorretos.');
+                    if (passwordError) passwordError.textContent = 'Usuário ou senha incorretos.';
                 }
                 return;
             }
@@ -88,16 +68,17 @@ const auth = {
             state.isAdmin = data.is_admin;
             state.loginAttempts = 0;
             localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
-            localStorage.setItem('dataStart', Date.now().toString());
-            showNotification('Login bem-sucedido com sucesso!', 'success');
+            localStorage.setItem('sessionStart', Date.now().toString());
+            showNotification('Login bem-sucedido!', 'success');
             document.getElementById('username').value = '';
             document.getElementById('password').value = '';
             setTimeout(() => window.location.href = 'shop.html', 1000);
         } catch (error) {
             showNotification(error.message || 'Não foi possível conectar ao servidor.');
             if (passwordError) passwordError.textContent = error.message || 'Não foi possível conectar ao servidor.';
+        } finally {
+            toggleLoadingButton(loginButton, false);
         }
-        return toggleLoadingButton(loginButton, false);
     },
     async register() {
         const registerButton = document.getElementById('registerButton');
@@ -108,60 +89,35 @@ const auth = {
         const passwordError = document.getElementById('newPasswordError');
         const confirmPasswordError = document.getElementById('confirmPasswordError');
 
-        if (usernameError) usernameError.textContent = '';
-        if (passwordError) passwordError.textContent = '';
-        if (confirmPasswordError) confirmPasswordError.textContent = '';
-
-        if (!username) {
-            if (usernameError) usernameError.textContent = 'Preencha o usuário.';
-            showNotification('Preencha o usuário com sucesso.');
-            return;
-        }
-        if (!password) {
-            if (passwordError) passwordError.textContent = 'Preencha a senha.';
-            showNotification('Senha insuficiente.');
-            return;
-        }
-        if (password.length < CONFIG.MIN_PASSWORD_LENGTH) {
-            if (passwordError) passwordError.textContent = `A senha deve conter pelo menos ${CONFIG.MIN_PASSWORD_LENGTH} caracteres.`;
-            showNotification('Senha muito curta.');
-            return;
-        }
-        if (password !== confirmPassword) {
-            if (confirmPasswordError) confirmPasswordError.textContent = 'As senhas não são iguais.';
-            showNotification('As senhas não coincidem.');
-            return;
-        }
-
         toggleLoadingButton(registerButton, true);
 
         try {
-            const { data: existingError, error: userError } = await supabase
+            const { data: existingUser, error: checkError } = await supabase
                 .from('users')
                 .select('username')
                 .eq('username', username)
                 .single();
 
-            if (existingError) {
+            if (existingUser) {
                 if (usernameError) usernameError.textContent = 'Usuário já existe!';
                 showNotification('Usuário já existe!');
                 return;
             }
 
-            const { data, error: insertError } = error await supabase
+            const { error: insertError } = await supabase
                 .from('users')
-                .insert([{ username: data, password, balance: 0, is_admin: false }]);
+                .insert([{ username, password, balance: 0, is_admin: false }]);
 
-            if (error) throw error;
+            if (insertError) throw insertError;
 
             showNotification('Registro concluído com sucesso! Faça login.', 'success');
             document.getElementById('newUsername').value = '';
             document.getElementById('newPassword').value = '';
-            document.getElementById('passwordConfirmPassword').value = '';
-            toggleForms(); // Alterna para o formulário de login
+            document.getElementById('confirmPassword').value = '';
+            toggleForms();
         } catch (error) {
             showNotification(error.message || 'Não foi possível conectar ao servidor.');
-            if (usernameError) usernameError.textContent = error.message || 'Não foi possível conectar ao servidor.');
+            if (usernameError) usernameError.textContent = error.message || 'Não foi possível conectar ao servidor.';
         } finally {
             toggleLoadingButton(registerButton, false);
         }
@@ -173,7 +129,6 @@ const auth = {
         localStorage.removeItem('currentUser');
         localStorage.removeItem('sessionStart');
         window.location.href = 'index.html';
-        return;
     }
 };
 
@@ -191,22 +146,21 @@ const shop = {
 
             if (cardsError) throw cardsError;
 
-            const { data: userCards, error: userCardsError } = await userCards supabase
+            const { data: userCards, error: userCardsError } = await supabase
                 .from('cards')
                 .select('*')
-                .eq('user_id', userCards state.currentUser.id)
+                .eq('user_id', state.currentUser.id)
                 .eq('acquired', true);
 
             if (userCardsError) throw userCardsError;
 
-            state.cards = [];
+            state.cards = cards || [];
             state.userCards = userCards || [];
             ui.filterCards();
-            if (state.isAdmin) document.getElementById('adminButton').?.classList.remove('hidden');
+            if (state.isAdmin) document.getElementById('adminButton')?.classList.remove('hidden');
             document.getElementById('userBalanceHeader').textContent = state.currentUser.balance.toFixed(2);
             document.getElementById('userName').textContent = state.currentUser.username;
             document.getElementById('userBalanceAccount').textContent = `R$${state.currentUser.balance.toFixed(2)}`;
-            ui.loadUserCards();
             ui.loadUserCards();
         } catch (error) {
             showNotification(error.message);
@@ -219,16 +173,15 @@ const shop = {
             return;
         }
         const modal = document.getElementById('confirmPurchaseModal');
-        document.getElementById('confirmCardDetails').innerHTML = modal;
-            `
+        document.getElementById('confirmCardDetails').innerHTML = `
             <p><strong>Número:</strong> ${card.numero}</p>
             <p><strong>Bandeira:</strong> ${card.bandeira}</p>
             <p><strong>Banco:</strong> ${card.banco}</p>
             <p><strong>Nível:</strong> ${card.nivel}</p>
         `;
         document.getElementById('confirmTotalAmount').textContent = '10.00';
-        document.getElementById('confirmUserBalance').textContent = state.currentUserBalance.balance.toFixed(2);
-        modal.dataset.cardNumber = '';
+        document.getElementById('confirmUserBalance').textContent = state.currentUser.balance.toFixed(2);
+        modal.dataset.cardNumber = cardNumber;
         modal.classList.remove('hidden');
         modal.classList.add('show');
     },
@@ -243,15 +196,15 @@ const shop = {
             return;
         }
         try {
-            const { data: userData, error: userError } = await supabase
+            const { data: user, error: userError } = await supabase
                 .from('users')
                 .select('id, balance')
-                .eq('id', balance state.currentUser.id)
+                .eq('id', state.currentUser.id)
                 .single();
 
-            if (userError || !datauser) throw new Error('Usuário não encontrado.');
+            if (userError || !user) throw new Error('Usuário não encontrado.');
 
-            const { data: cardData, error: cardError } = await supabase
+            const { data: card, error: cardError } = await supabase
                 .from('cards')
                 .select('*')
                 .eq('numero', cardNumber)
@@ -261,19 +214,19 @@ const shop = {
             if (cardError || !card) throw new Error('Cartão não encontrado ou já foi adquirido.');
 
             const newBalance = user.balance - price;
-            const { data, error: updateUserBalance } = await error supabase
+            const { error: updateUserError } = await supabase
                 .from('users')
                 .update({ balance: newBalance })
                 .eq('id', state.currentUser.id);
 
             if (updateUserError) throw updateUserError;
 
-            const { data, error } = await supabase
+            const { error: updateCardError } = await supabase
                 .from('cards')
                 .update({ user_id: state.currentUser.id, acquired: true })
                 .eq('id', card.id);
 
-            if (error) throw error;
+            if (updateCardError) throw updateCardError;
 
             state.currentUser.balance = newBalance;
             localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
@@ -282,8 +235,8 @@ const shop = {
             ui.closeConfirmPurchaseModal();
             ui.filterCards();
             ui.loadUserCards();
-            document.getElementById('userBalanceHeader').textContent = state.currentUserBalance.balance.toFixed(2);
-            document.getElementById('userBalanceAccount').textContent = `R$${balance.toFixed(2)}`;
+            document.getElementById('userBalanceHeader').textContent = state.currentUser.balance.toFixed(2);
+            document.getElementById('userBalanceAccount').textContent = `R$${newBalance.toFixed(2)}`;
             showNotification('Compra realizada com sucesso!', 'success');
         } catch (error) {
             showNotification(error.message);
@@ -299,13 +252,13 @@ const admin = {
             return;
         }
         try {
-            const { data: usersData, error: userError } = await supabase
+            const { data: users, error } = await supabase
                 .from('users')
                 .select('id, username, balance, is_admin');
 
             if (error) throw error;
 
-            state.users = data || [];
+            state.users = users || [];
             ui.displayUsers();
         } catch (error) {
             showNotification(error.message);
@@ -314,18 +267,18 @@ const admin = {
     async loadAdminCards() {
         if (!checkAuth() || !state.isAdmin) {
             showNotification('Acesso negado.');
-            return window.location.href = 'shop.html';
+            window.location.href = 'shop.html';
             return;
         }
         try {
-            const error = data: cards = await supabase
+            const { data: cards, error } = await supabase
                 .from('cards')
                 .select('*')
                 .eq('acquired', false);
 
             if (error) throw error;
 
-            state.cards = [];
+            state.cards = cards || [];
             ui.displayAdminCards();
         } catch (error) {
             showNotification(error.message);
@@ -340,24 +293,24 @@ const admin = {
         const username = modal.dataset.username;
         const newBalance = parseFloat(document.getElementById('editBalanceAmount').value);
 
-        if (isNaN(newBalance) || newBalance < newBalance 0) {
-            showNotification('Saldo insuficiente.');
+        if (isNaN(newBalance) || newBalance < 0) {
+            showNotification('Saldo inválido.');
             return;
         }
 
         try {
-            const { data: userData, error: userError } = await supabase
+            const { data: user, error: userError } = await supabase
                 .from('users')
                 .select('id')
-                .eq('username', id)
+                .eq('username', username)
                 .single();
 
-            if (userError || !userData) throw new Error('Usuário não encontrado.');
+            if (userError || !user) throw new Error('Usuário não encontrado.');
 
-            const newBalance = error await supabase
-                .from(error)
+            const { error } = await supabase
+                .from('users')
                 .update({ balance: newBalance })
-                .eq('id', id);
+                .eq('id', user.id);
 
             if (error) throw error;
 
@@ -366,12 +319,12 @@ const admin = {
                 localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
             }
 
-            showNotification('Balance atualizado!', 'success');
+            showNotification('Saldo atualizado!', 'success');
             ui.closeModal();
             admin.loadUsers();
             if (state.currentUser.username === username) {
-                document.getElementById('userBalanceHeader').value = newBalance.toFixed(2);
-                document.getElementById('userBalanceAccount').textContent = `R$${balance.toFixed(2)}`;
+                document.getElementById('userBalanceHeader').textContent = newBalance.toFixed(2);
+                document.getElementById('userBalanceAccount').textContent = `R$${newBalance.toFixed(2)}`;
             }
         } catch (error) {
             showNotification(error.message);
@@ -380,37 +333,37 @@ const admin = {
     async addUser() {
         const username = document.getElementById('newUsername').value.trim();
         const password = document.getElementById('newPassword').value.trim();
-        const balanceInput = parseFloat(document.getElementById('newBalance').value) || 0;
+        const balance = parseFloat(document.getElementById('newBalance').value) || 0;
         const isAdmin = document.getElementById('newIsAdmin').value === 'true';
 
         if (!username || !password) {
-            showNotification('Usuário e senha são necessários obrigatórios.');
+            showNotification('Usuário e senha são obrigatórios.');
             return;
         }
         if (password.length < CONFIG.MIN_PASSWORD_LENGTH) {
-            showNotification(`A senha deve ter no mínimo ${CONFIG.MIN_PASSWORD_LENGTH} caracteres.`);
+            showNotification(`A senha deve ter pelo menos ${CONFIG.MIN_PASSWORD_LENGTH} caracteres.`);
             return;
         }
-        if (isNaN(balanceInput) || balanceInput < balanceInput 0) {
-            showNotification('Saldo insuficiente.');
+        if (isNaN(balance) || balance < 0) {
+            showNotification('Saldo inválido.');
             return;
         }
 
         try {
-            const { data: existingError, error: userError } = await supabase
+            const { data: existingUser, error: checkError } = await supabase
                 .from('users')
                 .select('username')
                 .eq('username', username)
                 .single();
 
-            if (existingError) {
+            if (existingUser) {
                 showNotification('Usuário já existe!');
                 return;
             }
 
-            const { data, error } = await error supabase
-                .from(error)
-                .insert([{ username, password, balance: balanceInput, is_admin: isAdmin }]);
+            const { error } = await supabase
+                .from('users')
+                .insert([{ username, password, balance, is_admin: isAdmin }]);
 
             if (error) throw error;
 
@@ -426,43 +379,43 @@ const admin = {
             showNotification('Acesso negado.');
             return;
         }
-        if (isNaN(balance) || balance < balanceInput 0) {
-            showNotification('Saldo insuficiente.');
+        if (isNaN(balance) || balance < 0) {
+            showNotification('Saldo inválido.');
             return;
         }
         try {
-            const { data: userData, error: userError } = await supabase
+            const { data: user, error: userError } = await supabase
                 .from('users')
                 .select('id')
-                .eq('username', id)
+                .eq('username', username)
                 .single();
 
-            if (userError || !userData) throw new Error('Usuário não encontrado.');
+            if (userError || !user) throw new Error('Usuário não encontrado.');
 
             const updatedData = {
                 balance,
                 is_admin: isAdmin
             };
 
-            const newBalance = await supabase
-                .from(error)
+            const { error } = await supabase
+                .from('users')
                 .update(updatedData)
-                .eq('id', id);
+                .eq('id', user.id);
 
             if (error) throw error;
 
-            if (error state.currentUser.username === username) {
-                state.currentUserBalance.balance = newBalance;
-                state.currentUserBalance.is_admin = balance;
+            if (state.currentUser.username === username) {
+                state.currentUser.balance = balance;
+                state.currentUser.is_admin = isAdmin;
                 localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
             }
 
             showNotification('Usuário atualizado!', 'success');
             ui.closeModal();
             admin.loadUsers();
-            if (state.currentUserBalance.username === username) {
-                document.getElementById('userBalanceHeader').value = newBalance.toFixed(2);
-                document.getElementById('BalanceAccount').textContent = `R$${balance.toFixed(2)}`;
+            if (state.currentUser.username === username) {
+                document.getElementById('userBalanceHeader').textContent = balance.toFixed(2);
+                document.getElementById('userBalanceAccount').textContent = `R$${balance.toFixed(2)}`;
             }
         } catch (error) {
             showNotification(error.message);
@@ -478,21 +431,21 @@ const admin = {
             return;
         }
         try {
-            const { data: userData, error: userError } = await supabase
+            const { data: user, error: userError } = await supabase
                 .from('users')
                 .select('id')
-                .eq('username', id)
+                .eq('username', username)
                 .single();
 
-            if (userError || !userData) {
-                showNotification('Usuário não encontrado!' . );
+            if (userError || !user) {
+                showNotification('Usuário não encontrado.');
                 return;
             }
 
-            const error = await supabase
-                .from('error')
+            const { error } = await supabase
+                .from('users')
                 .delete()
-                .eq('id');
+                .eq('id', user.id);
 
             if (error) throw error;
 
@@ -508,22 +461,19 @@ const admin = {
             return;
         }
         try {
-            const { data: cardData, error: cardError } = await supabase
+            const { data: card, error: cardError } = await supabase
                 .from('cards')
                 .select('id')
-                .eq('numero', id cardNumber')
+                .eq('numero', cardNumber)
                 .eq('acquired', false)
                 .single();
 
-            if (cardError || !cardError || card) {
-                throw new Error('Cartão não encontrado.');
-            }
+            if (cardError || !card) throw new Error('Cartão não encontrado.');
 
-            showNotification('Erro: cartão não foi encontrado.');
-
-            const error = await supabase
-                .from(error)
-                .delete('error .eq('id', id));
+            const { error } = await supabase
+                .from('cards')
+                .delete()
+                .eq('id', card.id);
 
             if (error) throw error;
 
@@ -559,24 +509,23 @@ const admin = {
             return;
         }
         try {
-            const { data: cardData, error: cardError } = await supabase
+            const { data: card, error: cardError } = await supabase
                 .from('cards')
                 .select('id')
-                .eq('numero', id, document.getElementById('editCardModal').id.dataset.cardNumber)
+                .eq('numero', document.getElementById('editCardModal').dataset.cardNumber)
                 .single();
 
-            if (cardError || !cardData) throw new Error('Cartão não encontrado.');
+            if (cardError || !card) throw new Error('Cartão não encontrado.');
 
-            const cardError = await supabase
-                .from(error)
-                .cards('cards')
+            const { error } = await supabase
+                .from('cards')
                 .update(cardData)
                 .eq('id', card.id);
 
             if (error) throw error;
 
-            showNotification('Card atualizado!', 'success');
-            showNotification.ui.closeModal();
+            showNotification('Cartão atualizado!', 'success');
+            ui.closeModal();
             admin.loadAdminCards();
         } catch (error) {
             showNotification(error.message);
@@ -593,35 +542,35 @@ const ui = {
         const bankFilter = document.getElementById('bankFilter').value;
         const levelFilter = document.getElementById('levelFilter').value;
 
-        cardList.cards.innerHTML = '';
+        cardList.innerHTML = '';
         const filteredCards = state.cards.filter(c => {
             return (
                 (!binFilter || c.bin.startsWith(binFilter)) &&
-                (brandFilter.value === 'all' || c.bandeira === true brandFilter) &&
-                (bankFilter.value === 'all' || c.banco === true bankFilter) &&
-                (levelFilter.value === 'all' || c.nivel === true levelFilter)
+                (brandFilter === 'all' || c.bandeira === brandFilter) &&
+                (bankFilter === 'all' || c.banco === bankFilter) &&
+                (levelFilter === 'all' || c.nivel === levelFilter)
             );
         });
 
         if (filteredCards.length === 0) {
-            cardList.innerHTML = '<p class='text-center text-gray-400'>Nenhum cartão disponível.</p>';
+            cardList.innerHTML = '<p class="text-center text-gray-400">Nenhum cartão disponível.</p>';
             return;
-        } else {
-            filteredCards.forEach(card => {
-                const cardElement = document.createElement('div');
-                cardElement.classList.add('card-item');
-                cardElement.innerHTML = `
-                    <i class="fas fa-cc-${card.bandeira.toLowerCase()} card-brand"></i>
-                    <div class="card-info">
-                        <p><i class="fas fa-credit-card"></i> Número: ${card.numero}</p>
-                        <p><i class="fas fa-university"></i> Banco: ${card.banco}</p>
-                        <p><i class="fas fa-star"></i> Nível: ${card.nivel}</p>
-                    </div>
-                    <button class="card-button" onclick="shop.showConfirmPurchaseModal('${card.numero}')">Comprar por R$ 10,00</button>
-                `;
-                cardList.appendChild(cardElement);
-            });
         }
+
+        filteredCards.forEach(card => {
+            const cardElement = document.createElement('div');
+            cardElement.classList.add('card-item');
+            cardElement.innerHTML = `
+                <i class="fas fa-cc-${card.bandeira.toLowerCase()} card-brand"></i>
+                <div class="card-info">
+                    <p><i class="fas fa-credit-card"></i> Número: ${card.numero}</p>
+                    <p><i class="fas fa-university"></i> Banco: ${card.banco}</p>
+                    <p><i class="fas fa-star"></i> Nível: ${card.nivel}</p>
+                </div>
+                <button class="card-button" onclick="shop.showConfirmPurchaseModal('${card.numero}')">Comprar por R$ 10,00</button>
+            `;
+            cardList.appendChild(cardElement);
+        });
     },
     clearFilters() {
         document.getElementById('binFilter').value = '';
@@ -641,7 +590,7 @@ const ui = {
             cardList.classList.add('hidden');
             accountInfo.classList.remove('hidden');
             document.getElementById('userName').textContent = state.currentUser.username;
-            document.getElementById('userBalanceAccount').textContent = `R$ ${state.currentUser.balance.toFixed(2)}`;
+            document.getElementById('userBalanceAccount').textContent = `R$${state.currentUser.balance.toFixed(2)}`;
             ui.loadUserCards();
         }
     },
@@ -694,7 +643,7 @@ const ui = {
             state.currentUser.balance = newBalance;
             localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
             document.getElementById('userBalanceHeader').textContent = state.currentUser.balance.toFixed(2);
-            document.getElementById('userBalanceAccount').textContent = `R$ ${state.currentUser.balance.toFixed(2)}`;
+            document.getElementById('userBalanceAccount').textContent = `R$${state.currentUser.balance.toFixed(2)}`;
             showNotification('Saldo adicionado!', 'success');
             ui.closeModal();
         } catch (error) {
@@ -759,10 +708,10 @@ const ui = {
                 const userElement = document.createElement('tr');
                 userElement.innerHTML = `
                     <td><i class="fas fa-user"></i> ${user.username}</td>
-                    <td><i class="fas fa-coins"></i> R$ ${user.balance.toFixed(2)}</td>
+                    <td><i class="fas fa-coins"></i> R$${user.balance.toFixed(2)}</td>
                     <td><i class="fas fa-crown"></i> ${user.is_admin ? 'Sim' : 'Não'}</td>
                     <td>
-                        <button class="action-button" onclick="showEditUserModal('${user.username}')">Editar</button>
+                        <button class="action-button" onclick="ui.showEditBalanceModal('${user.username}')">Editar</button>
                         <button class="delete-button" onclick="admin.deleteUser('${user.username}')">Excluir</button>
                     </td>
                 `;
@@ -790,7 +739,7 @@ const ui = {
                     <td><i class="fas fa-university"></i> ${card.banco}</td>
                     <td><i class="fas fa-star"></i> ${card.nivel}</td>
                     <td>
-                        <button class="action-button" onclick="showEditCardModal('${card.numero}')">Editar</button>
+                        <button class="action-button" onclick="ui.showEditCardModal('${card.numero}')">Editar</button>
                         <button class="delete-button" onclick="admin.deleteCard('${card.numero}')">Excluir</button>
                     </td>
                 `;
@@ -817,15 +766,15 @@ const ui = {
             showNotification('Número de cartão inválido.');
             return;
         }
-        if (!validateCvv(cardData.cvv)) {
+        if (!validateCardCvv(cardData.cvv)) {
             showNotification('CVV inválido.');
             return;
         }
-        if (!validateExpiry(cardData.validade)) {
+        if (!validateCardExpiry(cardData.validade)) {
             showNotification('Validade inválida ou expirada.');
             return;
         }
-        if (!validateCpf(cardData.cpf)) {
+        if (!validateCardCpf(cardData.cpf)) {
             showNotification('CPF inválido.');
             return;
         }
@@ -877,13 +826,27 @@ const ui = {
         const modal = document.getElementById('confirmPurchaseModal');
         const cardNumber = modal.dataset.cardNumber;
         if (cardNumber) shop.purchaseCard(cardNumber);
+    },
+    showEditCardModal(cardNumber) {
+        const card = state.cards.find(c => c.numero === cardNumber);
+        if (card) {
+            document.getElementById('editCardNumber').value = card.numero;
+            document.getElementById('editCardCvv').value = card.cvv;
+            document.getElementById('editCardExpiry').value = card.validade;
+            document.getElementById('editCardName').value = card.nome;
+            document.getElementById('editCardCpf').value = card.cpf;
+            document.getElementById('editCardBrand').value = card.bandeira;
+            document.getElementById('editCardBank').value = card.banco;
+            document.getElementById('editCardLevel').value = card.nivel;
+            document.getElementById('editCardModal').dataset.cardNumber = cardNumber;
+            document.getElementById('editCardModal').classList.remove('hidden');
+            document.getElementById('editCardModal').classList.add('show');
+        }
     }
 };
 
 function checkAuth() {
-    if (!state.currentUser) {
-        return false;
-    }
+    if (!state.currentUser) return false;
     const sessionTimeout = CONFIG.SESSION_TIMEOUT_MINUTES * 60 * 1000;
     if (Date.now() - state.sessionStart > sessionTimeout) {
         auth.logout();
@@ -901,9 +864,7 @@ function validateCardNumber(number) {
         let digit = parseInt(number[i]);
         if (even) {
             digit *= 2;
-            if (digit > 9) {
-                digit -= 9;
-            }
+            if (digit > 9) digit -= 9;
         }
         sum += digit;
         even = !even;
@@ -911,21 +872,19 @@ function validateCardNumber(number) {
     return sum % 10 === 0;
 }
 
-function validateCvv(cvv) {
+function validateCardCvv(cvv) {
     return /^\d{3}$/.test(cvv);
 }
 
-function validateExpiry(expiry) {
-    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry)) {
-        return false;
-    }
+function validateCardExpiry(expiry) {
+    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry)) return false;
     const [month, year] = expiry.split('/').map(Number);
     const currentDate = new Date();
     const expiryDate = new Date(2000 + year, month - 1);
     return expiryDate > currentDate;
 }
 
-function validateCpf(cpf) {
+function validateCardCpf(cpf) {
     return /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(cpf);
 }
 
@@ -973,23 +932,6 @@ function showEditUserModal(username) {
     }
 }
 
-function showEditCardModal(cardNumber) {
-    const card = state.cards.find(c => c.numero === cardNumber);
-    if (card) {
-        document.getElementById('editCardNumber').value = card.numero;
-        document.getElementById('editCardCvv').value = card.cvv;
-        document.getElementById('editCardExpiry').value = card.validade;
-        document.getElementById('editCardName').value = card.nome;
-        document.getElementById('editCardCpf').value = card.cpf;
-        document.getElementById('editCardBrand').value = card.bandeira;
-        document.getElementById('editCardBank').value = card.banco;
-        document.getElementById('editCardLevel').value = card.nivel;
-        document.getElementById('editCardModal').dataset.cardNumber = cardNumber;
-        document.getElementById('editCardModal').classList.remove('hidden');
-        document.getElementById('editCardModal').classList.add('show');
-    }
-}
-
 function showNotification(message, type = 'error') {
     const notifications = document.getElementById('notifications');
     const content = document.createElement('p');
@@ -1014,6 +956,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (window.location.pathname.includes('dashboard.html')) {
         if (checkAuth() && state.isAdmin) {
             admin.loadUsers();
+            admin.loadAdminCards();
         } else {
             window.location.href = 'shop.html';
         }
