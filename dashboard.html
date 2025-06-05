@@ -1,262 +1,122 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#1A2A44">
-    <title>LOGAN CC's - Dashboard Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Montserrat:wght@700&display=swap" rel="stylesheet" id="google-fonts">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" id="font-awesome">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" id="supabase-js"></script>
-    <script src="script.js" defer id="script-js"></script>
+    <title>LOGAN CC's - Painel Administrativo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="Script.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        .hidden { display: none; }
+        .modal { display: none; }
+        .modal.show { display: flex; }
+        .notification {
+            animation: fadeInOut 5s ease-in-out;
         }
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(145deg, #0F172A 0%, #1E293B 100%);
-            color: #E2E8F0;
-            min-height: 100vh;
-            overflow-x: hidden;
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-10px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
         }
-        .navbar {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(56, 189, 248, 0.2);
-        }
-        .navbar .logo img {
-            height: 40px;
-        }
-        .navbar .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .navbar span {
-            font-weight: 600;
-        }
-        .navbar button {
-            background: linear-gradient(90deg, #38BDF8, #2563EB);
-            color: #FFFFFF;
-            border-radius: 0.5rem;
-            padding: 0.5rem 1rem;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .navbar button:hover {
-            background: linear-gradient(90deg, #2563EB, #1D4ED8);
-            transform: scale(1.03);
-        }
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-        h2 {
-            font-family: 'Montserrat', sans-serif;
-            color: #38BDF8;
-            margin-bottom: 1.5rem;
-        }
-        .table-container {
-            background: rgba(15, 23, 42, 0.95);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            border: 1px solid rgba(56, 189, 248, 0.2);
+        #notifications {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            max-width: 300px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            color: #A0BFE0;
+            margin-bottom: 20px;
         }
         th, td {
-            padding: 0.75rem;
+            padding: 12px;
             text-align: left;
-            border-bottom: 1px solid #4B5563;
+            border-bottom: 1px solid #2d3748;
         }
         th {
-            font-weight: 600;
-            color: #38BDF8;
-        }
-        td i {
-            margin-right: 0.5rem;
+            background-color: #1f2937;
         }
         .action-button {
-            background: linear-gradient(90deg, #38BDF8, #2563EB);
-            color: #FFFFFF;
-            border-radius: 0.5rem;
-            padding: 0.5rem 1rem;
-            border: none;
-            cursor: pointer;
-            margin-right: 0.5rem;
-            transition: all 0.3s ease;
+            background-color: #0ea5e9;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            margin-right: 5px;
         }
         .action-button:hover {
-            background: linear-gradient(90deg, #2563EB, #1D4ED8);
-            transform: scale(1.03);
+            background-color: #0284c7;
         }
         .delete-button {
-            background: linear-gradient(90deg, #F87171, #DC2626);
-            color: #FFFFFF;
-            border-radius: 0.5rem;
-            padding: 0.5rem 1rem;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            background-color: #dc2626;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
         }
         .delete-button:hover {
-            background: linear-gradient(90deg, #DC2626, #B91C1C);
-            transform: scale(1.03);
+            background-color: #b91c1c;
         }
-        .modal {
+        #globalLoader {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
+            z-index: 2000;
         }
-        .modal.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        .modal-content {
-            background: rgba(15, 23, 42, 0.95);
-            border-radius: 1rem;
-            padding: 2rem;
-            max-width: 600px;
-            width: 90%;
-            border: 1px solid rgba(56, 189, 248, 0.2);
-        }
-        .modal-content h2 {
-            font-family: 'Montserrat', sans-serif;
-            color: #38BDF8;
-            margin-bottom: 1.5rem;
-        }
-        .modal-content .form-group {
-            margin-bottom: 1rem;
-        }
-        .modal-content label {
-            display: block;
-            font-size: 0.9rem;
-            color: #A0BFE0;
-            margin-bottom: 0.3rem;
-        }
-        .modal-content input, .modal-content select {
-            width: 100%;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            background: #2D3748;
-            color: #E2E8F0;
-            border: 1px solid #4B5563;
-            transition: all 0.3s ease;
-        }
-        .modal-content input:focus, .modal-content select:focus {
-            border-color: #38BDF8;
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
-            outline: none;
-        }
-        .modal-content button {
-            background: linear-gradient(90deg, #38BDF8, #2563EB);
-            color: #FFFFFF;
-            border-radius: 0.5rem;
-            padding: 0.75rem;
-            border: none;
-            cursor: pointer;
-            margin-right: 0.5rem;
-        }
-        .modal-content button:hover {
-            background: linear-gradient(90deg, #2563EB, #1D4ED8);
-            transform: scale(1.03);
-        }
-        .notification {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            z-index: 1000;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            color: #FFFFFF;
-            font-size: 0.9rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            animation: slideIn 0.3s ease;
-        }
-        .notification.error {
-            background: #F87171;
-        }
-        .notification.success {
-            background: #34D399;
-        }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        @media (max-width: 640px) {
-            .navbar {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            .container {
-                padding: 0 0.5rem;
-            }
-            table {
-                font-size: 0.8rem;
-            }
-            th, td {
-                padding: 0.5rem;
-            }
-        }
-        .hidden {
-            display: none;
+        #globalLoader.show {
+            display: flex;
         }
     </style>
 </head>
-<body>
-    <nav class="navbar">
-        <div class="logo">
-            <img src="logo.png" alt="Logo da LOGAN CC's" aria-label="Logo da LOGAN CC's" onerror="this.src='https://via.placeholder.com/40?text=Logo'">
-        </div>
-        <div class="user-info">
-            <span id="userName"></span>
-            <span>R$<span id="userBalanceHeader">0.00</span></span>
-            <button id="shopButton">Loja</button>
-            <button id="logoutButton">Sair</button>
-        </div>
-    </nav>
-    <div class="container">
-        <div class="table-container">
-            <h2>Gerenciar Usuários</h2>
-            <button id="addUserButton" class="action-button hidden">Adicionar Usuário</button>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div id="notifications"></div>
+    <div id="globalLoader" class="hidden">
+        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #38BDF8;"></i>
+    </div>
+    <header class="bg-gray-800 p-4 flex justify-between items-center">
+        <h2 class="text-2xl font-bold text-sky-400">Painel Administrativo</h2>
+        <button id="shopButton" class="bg-sky-500 hover:bg-sky-600 p-2 rounded">
+            <i class="fas fa-shop"></i> Voltar à Loja
+        </button>
+    </header>
+
+    <main class="container mx-auto p-4">
+        <!-- Gestão de Usuários -->
+        <section>
+            <h3 class="text-xl font-semibold mb-2">Usuários</h3>
+            <button id="addUserButton" class="bg-green-600 hover:bg-green-500 p-2 rounded mb-4">
+                <i class="fas fa-user-plus"></i> Adicionar Usuário
+            </button>
             <table id="userList">
                 <thead>
                     <tr>
                         <th>Usuário</th>
                         <th>Saldo</th>
-                        <th>Admin</th>
+                        <th>Administrador</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
-                <tbody></tbody>
+                <tbody>
+                    <tr>
+                        <td colspan="4"><p class="text-center text-gray-400">Carregando usuários...</p></td>
+                    </tr>
+                </tbody>
             </table>
-        </div>
-        <div class="table-container">
-            <h2>Gerenciar Cartões</h2>
-            <button id="addCardButton" class="action-button hidden">Adicionar Cartão</button>
+
+            <!-- Gestão de Cartões -->
+            <h3 class="text-xl font-semibold mb-2 mt-8">Cartões</h3>
+            <button id="addCardButton" class="bg-green-600 hover:bg-green-500 p-2 rounded mb-4">
+                <i class="fas fa-credit-card"></i> Adicionar Cartão
+            </button>
             <table id="adminCardList">
                 <thead>
                     <tr>
@@ -267,204 +127,205 @@
                         <th>Ações</th>
                     </tr>
                 </thead>
-                <tbody></tbody>
+                <tbody>
+                    <tr>
+                        <td colspan="5"><p class="text-center text-gray-400">Carregando cartões...</p></td>
+                    </tr>
+                </tbody>
             </table>
+        </section>
+    </main>
+
+    <!-- Modal de Editar Saldo -->
+    <div id="editBalanceModal" class="modal fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center hidden">
+        <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full">
+            <h2 class="text-xl font-bold mb-4">Editar Saldo</h2>
+            <input
+                id="editBalanceAmount"
+                type="number"
+                placeholder="Novo saldo (R$)"
+                class="w-full p-2 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400 mb-4"
+            >
+            <div id="editBalanceError" class="text-red-400 mb-4"></div>
+            <div class="mt-4 flex justify-between">
+                <button id="saveBalanceButton" class="bg-green-600 hover:bg-green-500 p-2 rounded">Confirmar</button>
+                <button id="cancelBalanceButton" class="bg-red-600 hover:bg-red-700 p-2 rounded">Cancelar</button>
+            </div>
         </div>
     </div>
-    <div id="editBalanceModal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Editar Saldo</h2>
-            <div class="form-group">
-                <label for="editBalanceAmount">Novo Saldo (R$)</label>
-                <input type="number" id="editBalanceAmount" placeholder="Digite o novo saldo">
+
+    <!-- Modal de Editar Usuário -->
+    <div id="editUserModal" class="modal fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center hidden">
+        <div class="bg-gray-800 p-6 rounded-lg max-w-lg w-full">
+            <h2 class="text-xl font-bold mb-4">Editar Usuário</h2>
+            <div class="mb-4">
+                <label for="editUsername" class="block text-sm mb-2">Usuário</label>
+                <input type="text" id="editUsername" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400" readonly>
             </div>
-            <button id="saveBalanceButton">Salvar</button>
-            <button id="cancelBalanceButton">Cancelar</button>
-        </div>
-    </div>
-    <div id="editUserModal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Editar Usuário</h2>
-            <div class="form-group">
-                <label for="editUsername">Usuário</label>
-                <input type="text" id="editUsername" disabled>
+            <div class="mb-4">
+                <label for="editBalance" class="block text-sm mb-2">Saldo</label>
+                <input type="number" id="editBalance" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
             </div>
-            <div class="form-group">
-                <label for="editBalance">Saldo (R$)</label>
-                <input type="number" id="editBalance">
+            <div class="mb-4">
+                <label for="editPassword" class="block text-sm mb-2">Nova Senha (opcional)</label>
+                <input type="password" id="editPassword" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
             </div>
-            <div class="form-group">
-                <label for="editPassword">Nova Senha (opcional)</label>
-                <input type="password" id="editPassword" placeholder="Deixe em branco para não alterar">
-            </div>
-            <div class="form-group">
-                <label for="editIsAdmin">Admin</label>
-                <select id="editIsAdmin">
+            <div class="mb-4">
+                <label for="editIsAdmin" class="block text-sm mb-2">Administrador</label>
+                <select id="editIsAdmin" class="w-full p-3 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400">
                     <option value="true">Sim</option>
                     <option value="false">Não</option>
                 </select>
             </div>
-            <button id="saveUserButton">Salvar</button>
-            <button id="cancelUserButton">Cancelar</button>
+            <div id="editUserError" class="mb-4 text-red-400"></div>
+            <div class="mt-4 flex justify-between">
+                <button id="saveUserButton" class="bg-green-600 hover:bg-green-500 p-2 rounded">Salvar</button>
+                <button id="cancelUserButton" class="bg-red-600 hover:bg-red-700 p-2 rounded">Cancelar</button>
+            </div>
         </div>
     </div>
-    <div id="addUserModal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Adicionar Usuário</h2>
-            <div class="form-group">
-                <label for="newUsername">Usuário</label>
-                <input type="text" id="newUsername" placeholder="Digite o usuário">
+
+    <!-- Modal de Adicionar Usuário -->
+    <div id="addUserModal" class="modal fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center hidden">
+        <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full">
+            <h2 class="text-xl font-bold mb-4">Adicionar Usuário</h2>
+            <div class="mb-4">
+                <label for="newUsername" class="block text-sm mb-2">Usuário</label>
+                <input type="text" id="newUsername" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
             </div>
-            <div class="form-group">
-                <label for="newPassword">Senha</label>
-                <input type="password" id="newPassword" placeholder="Digite a senha">
+            <div class="mb-4">
+                <label for="newPassword" class="block text-sm mb-2">Senha</label>
+                <input type="password" id="newPassword" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
             </div>
-            <div class="form-group">
-                <label for="newBalance">Saldo Inicial (R$)</label>
-                <input type="number" id="newBalance" placeholder="Digite o saldo inicial">
+            <div class="mb-4">
+                <label for="newBalance" class="block text-sm mb-2">Saldo Inicial</label>
+                <input type="number" id="newBalance" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
             </div>
-            <div class="form-group">
-                <label for="newIsAdmin">Admin</label>
-                <select id="newIsAdmin">
+            <div class="mb-4">
+                <label for="newIsAdmin" class="block text-sm mb-2">Administrador</label>
+                <select id="newIsAdmin" class="w-full p-3 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400">
                     <option value="false">Não</option>
                     <option value="true">Sim</option>
                 </select>
             </div>
-            <button id="addUserConfirmButton">Adicionar</button>
-            <button id="cancelAddUserButton">Cancelar</button>
+            <div id="addUserError" class="mb-4 text-red-400"></div>
+            <div class="mt-4 flex justify-between">
+                <button id="addUserConfirmButton" class="bg-green-600 hover:bg-green-500 p-2 rounded">Adicionar</button>
+                <button id="cancelAddUserButton" class="bg-red-600 hover:bg-red-700 p-2 rounded">Cancelar</button>
+            </div>
         </div>
     </div>
-    <div id="editCardModal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Editar Cartão</h2>
-            <div class="form-group">
-                <label for="editCardNumber">Número do Cartão</label>
-                <input type="text" id="editCardNumber" placeholder="Digite o número do cartão" maxlength="19">
+
+    <!-- Modal de Editar Cartão -->
+    <div id="editCardModal" class="modal fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center hidden">
+        <div class="bg-gray-800 p-6 rounded-lg max-w-lg w-full">
+            <h2 class="text-xl font-bold mb-4">Editar Cartão</h2>
+            <div class="mb-4">
+                <label for="editCardNumber" class="block text-sm mb-2">Número do Cartão</label>
+                <input type="text" id="editCardNumber" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
             </div>
-            <div class="form-group">
-                <label for="editCardCvv">CVV</label>
-                <input type="text" id="editCardCvv" placeholder="Digite o CVV" maxlength="3">
+            <div class="mb-4">
+                <label for="editCardCvv" class="block text-sm mb-2">CVV</label>
+                <input type="text" id="editCardCvv" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
             </div>
-            <div class="form-group">
-                <label for="editCardExpiry">Validade (MM/AA)</label>
-                <input type="text" id="editCardExpiry" placeholder="MM/AA" maxlength="5">
+            <div class="mb-4">
+                <label for="editCardExpiry" class="block text-sm mb-2">Validade (MM/AA)</label>
+                <input type="text" id="editCardExpiry" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
             </div>
-            <div class="form-group">
-                <label for="editCardName">Nome no Cartão</label>
-                <input type="text" id="editCardName" placeholder="Digite o nome">
+            <div class="mb-4">
+                <label for="editCardName" class="block text-sm mb-2">Nome</label>
+                <input type="text" id="editCardName" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
             </div>
-            <div class="form-group">
-                <label for="editCardCpf">CPF</label>
-                <input type="text" id="editCardCpf" placeholder="Digite o CPF" maxlength="14">
+            <div class="mb-4">
+                <label for="editCardCpf" class="block text-sm mb-2">CPF</label>
+                <input type="text" id="editCardCpf" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
             </div>
-            <div class="form-group">
-                <label for="editCardBrand">Bandeira</label>
-                <select id="editCardBrand">
+            <div class="mb-4">
+                <label for="editCardBrand" class="block text-sm mb-2">Bandeira</label>
+                <select id="editCardBrand" class="w-full p-3 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400">
                     <option value="Visa">Visa</option>
                     <option value="Mastercard">Mastercard</option>
                     <option value="Amex">Amex</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="editCardBank">Banco</label>
-                <select id="editCardBank">
+            <div class="mb-4">
+                <label for="editCardBank" class="block text-sm mb-2">Banco</label>
+                <select id="editCardBank" class="w-full p-3 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400">
                     <option value="Nubank">Nubank</option>
                     <option value="Itaú">Itaú</option>
                     <option value="Bradesco">Bradesco</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="editCardLevel">Nível</label>
-                <select id="editCardLevel">
-                    <option value="Classic">Classic</option>
+            <div class="mb-4">
+                <label for="editCardLevel" class="block text-sm mb-2">Nível</label>
+                <select id="editCardLevel" class="w-full p-3 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400">
+                    <option value="Classic">Clássico</option>
                     <option value="Gold">Gold</option>
                     <option value="Platinum">Platinum</option>
                 </select>
             </div>
-            <button id="saveCardButton">Salvar</button>
-            <button id="cancelCardButton">Cancelar</button>
+            <div id="editCardError" class="mb-4 text-red-400"></div>
+            <div class="mt-4 flex justify-between">
+                <button id="saveCardButton" class="bg-green-600 hover:bg-green-500 p-2 rounded">Salvar</button>
+                <button id="cancelCardButton" class="bg-red-600 hover:bg-red-700 p-2 rounded">Cancelar</button>
+            </div>
         </div>
     </div>
-    <div id="addCardModal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Adicionar Cartão</h2>
-            <div class="form-group">
-                <label for="cardNumber">Número do Cartão</label>
-                <input type="text" id="cardNumber" placeholder="Digite o número do cartão" maxlength="19">
+
+    <!-- Modal de Adicionar Cartão -->
+    <div id="addCardModal" class="modal fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center hidden">
+        <div class="bg-gray-800 p-6 rounded-lg max-w-lg w-full">
+            <h2 class="text-xl font-bold mb-4">Adicionar Cartão</h2>
+            <div class="mb-4">
+                <label for="cardNumber" class="block text-sm mb-2">Número do Cartão</label>
+                <input type="text" id="cardNumber" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
             </div>
-            <div class="form-group">
-                <label for="cardCvv">CVV</label>
-                <input type="text" id="cardCvv" placeholder="Digite o CVV" maxlength="3">
+            <div class="mb-4">
+                <label for="cardCvv" class="block text-sm mb-2">CVV</label>
+                <input type="text" id="cardCvv" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
             </div>
-            <div class="form-group">
-                <label for="cardExpiry">Validade (MM/AA)</label>
-                <input type="text" id="cardExpiry" placeholder="MM/AA" maxlength="5">
+            <div class="mb-4">
+                <label for="cardExpiry" class="block text-sm mb-2">Validade (MM/AA)</label>
+                <input type="text" id="cardExpiry" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
             </div>
-            <div class="form-group">
-                <label for="cardName">Nome no Cartão</label>
-                <input type="text" id="cardName" placeholder="Digite o nome">
+            <div class="mb-4">
+                <label for="cardName" class="block text-sm mb-2">Nome</label>
+                <input type="text" id="cardName" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
             </div>
-            <div class="form-group">
-                <label for="cardCpf">CPF</label>
-                <input type="text" id="cardCpf" placeholder="Digite o CPF" maxlength="14">
+            <div class="mb-4">
+                <label for="cardCpf" class="block text-sm mb-2">CPF</label>
+                <input type="text" id="cardCpf" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
             </div>
-            <div class="form-group">
-                <label for="cardBrand">Bandeira</label>
-                <select id="cardBrand">
+            <div class="mb-4">
+                <label for="cardBrand" class="block text-sm mb-2">Bandeira</label>
+                <select id="cardBrand" class="w-full p-3 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400">
                     <option value="Visa">Visa</option>
                     <option value="Mastercard">Mastercard</option>
                     <option value="Amex">Amex</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="cardBank">Banco</label>
-                <select id="cardBank">
+            <div class="mb-4">
+                <label for="cardBank" class="block text-sm mb-2">Banco</label>
+                <select id="cardBank" class="w-full p-3 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400">
                     <option value="Nubank">Nubank</option>
                     <option value="Itaú">Itaú</option>
                     <option value="Bradesco">Bradesco</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="cardLevel">Nível</label>
-                <select id="cardLevel">
-                    <option value="Classic">Classic</option>
+            <div class="mb-4">
+                <label for="cardLevel" class="block text-sm mb-2">Nível</label>
+                <select id="cardLevel" class="w-full p-3 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400">
+                    <option value="Classic">Clássico</option>
                     <option value="Gold">Gold</option>
                     <option value="Platinum">Platinum</option>
                 </select>
             </div>
-            <button id="addCardConfirmButton">Adicionar</button>
-            <button id="cancelAddCardButton">Cancelar</button>
+            <div id="addCardError" class="mb-4 text-red-400"></div>
+            <div class="mt-4 flex justify-between">
+                <button id="addCardConfirmButton" class="bg-green-600 hover:bg-green-500 p-2 rounded">Adicionar</button>
+                <button id="cancelAddCardButton" class="bg-red-600 hover:bg-red-700 p-2 rounded">Cancelar</button>
+            </div>
         </div>
     </div>
-    <div id="notifications" class="fixed top-2 right-4 z-50" role="alert"></div>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const googleFonts = document.getElementById('google-fonts');
-            if (!googleFonts || !document.fonts.check('12px Poppins')) {
-                ui.showNotification('Erro: Fontes não carregadas corretamente.', 'error');
-            }
-
-            const fontAwesome = document.getElementById('font-awesome');
-            if (!fontAwesome || !document.querySelector('.fa-user')) {
-                ui.showNotification('Erro: Ícones do Font Awesome não carregados.', 'error');
-            }
-
-            const supabaseScript = document.getElementById('supabase-js');
-            if (!supabaseScript || typeof createClient === 'undefined') {
-                ui.showNotification('Erro: Cliente Supabase não carregado. Verifique sua conexão.', 'error');
-            }
-
-            const scriptJs = document.getElementById('script-js');
-            if (!scriptJs) {
-                ui.showNotification('Erro: script.js não encontrado.', 'error');
-            }
-
-            const requiredElements = ['userList', 'adminCardList', 'userName', 'userBalanceHeader', 'editBalanceModal', 'editUserModal', 'addUserModal', 'editCardModal', 'addCardModal', 'notifications', 'addUserButton', 'addCardButton'];
-            const missingElements = requiredElements.filter(id => !document.getElementById(id));
-            if (missingElements.length > 0) {
-                ui.showNotification(`Erro: Elementos do DOM não encontrados: ${missingElements.join(', ')}.`, 'error');
-            }
-        });
-    </script>
 </body>
 </html>
