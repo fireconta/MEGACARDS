@@ -11,10 +11,12 @@
     <style>
         .notification {
             animation: slideIn 0.5s ease-out, fadeOut 0.5s ease-in 4.5s forwards;
-            z-index: 1000;
+            z-index: 10000;
             min-width: 200px;
+            max-width: 300px;
             padding: 1rem;
             border-radius: 0.5rem;
+            overflow-wrap: break-word;
         }
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
@@ -56,7 +58,7 @@
     <div id="globalLoader">
         <div class="spinner"></div>
     </div>
-    <div id="notifications" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    <div id="notifications" class="fixed top-4 right-4 z-[10000] space-y-2"></div>
     <div class="container max-w-md mx-auto p-6 bg-gray-800 rounded-lg shadow-lg">
         <!-- Formulário de Login -->
         <div id="loginContainer" class="space-y-4">
