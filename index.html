@@ -1,203 +1,130 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#1A2A44">
     <title>LOGAN CC's - Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Montserrat:wght@700&display=swap" rel="stylesheet" id="google-fonts">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" id="font-awesome">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" id="supabase-js"></script>
-    <script src="script.js" defer id="script-js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="Script.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(145deg, #0F172A 0%, #1E293B 100%);
-            color: #E2E8F0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow-x: hidden;
-        }
-        .container {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            border: 1px solid rgba(56, 189, 248, 0.2);
-        }
-        .logo img {
-            height: 60px;
-            margin-bottom: 1.5rem;
-            transition: transform 0.3s ease;
-        }
-        .logo img:hover {
-            transform: scale(1.1);
-        }
-        h2 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #38BDF8;
-            margin-bottom: 1.5rem;
-            text-shadow: 0 2px 6px rgba(56, 189, 248, 0.3);
-        }
-        .form-group {
-            margin-bottom: 1rem;
-            text-align: left;
-        }
-        .form-group label {
-            display: block;
-            font-size: 0.9rem;
-            color: #A0BFE0;
-            margin-bottom: 0.3rem;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            background: #2D3748;
-            color: #E2E8F0;
-            border: 1px solid #4B5563;
-            transition: all 0.3s ease;
-        }
-        .form-group input:focus {
-            border-color: #38BDF8;
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
-            outline: none;
-            background: #334155;
-        }
-        .error {
-            color: #F87171;
-            font-size: 0.8rem;
-            margin-top: 0.3rem;
-            display: none;
-        }
-        .error.show {
-            display: block;
-        }
-        button {
-            background: linear-gradient(90deg, #38BDF8, #2563EB);
-            color: #FFFFFF;
-            border-radius: 0.5rem;
-            padding: 0.75rem;
-            width: 100%;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 0.5rem;
-        }
-        button:hover {
-            background: linear-gradient(90deg, #2563EB, #1D4ED8);
-            transform: scale(1.03);
-            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
-        }
-        .switch-form {
-            margin-top: 1rem;
-            color: #A0BFE0;
-            font-size: 0.9rem;
-        }
-        .switch-form a {
-            color: #38BDF8;
-            text-decoration: none;
-            font-weight: 600;
-            transition: color 0.3s ease;
-        }
-        .switch-form a:hover {
-            color: #2563EB;
-        }
+        .hidden { display: none; }
         .notification {
+            animation: fadeInOut 5s ease-in-out;
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-10px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
+        }
+        #notifications {
             position: fixed;
-            top: 1rem;
-            right: 1rem;
+            top: 10px;
+            right: 10px;
             z-index: 1000;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            color: #FFFFFF;
+            max-width: 300px;
+        }
+        .error-message {
+            color: #EF4444;
             font-size: 0.9rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            animation: slideIn 0.3s ease;
-        }
-        .notification.error {
-            background: #F87171;
-        }
-        .notification.success {
-            background: #34D399;
-        }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        @media (max-width: 640px) {
-            .container {
-                padding: 1.5rem;
-                width: 95%;
-            }
-            h2 {
-                font-size: 1.5rem;
-            }
-        }
-        .hidden {
+            margin-top: 0.5rem;
             display: none;
+        }
+        .error-message.show {
+            display: block;
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="logo">
-            <img src="logo.png" alt="Logo da LOGAN CC's" aria-label="Logo da LOGAN CC's" onerror="this.src='https://via.placeholder.com/60?text=Logo'">
-        </div>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen">
+    <div id="notifications"></div>
+    <div id="globalLoader" class="hidden"></div>
+    <div class="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md">
+        <!-- Formulário de Login -->
         <div id="loginContainer">
-            <h2>Login</h2>
-            <div class="form-group">
-                <label for="username">Usuário</label>
-                <input type="text" id="username" placeholder="Digite seu usuário" aria-label="Usuário">
-                <div id="usernameError" class="error"></div>
+            <h2 class="text-2xl font-bold mb-6 text-center">Entrar</h2>
+            <div>
+                <label for="username" class="block text-sm font-medium mb-2">
+                    <i class="fas fa-user mr-2"></i>Usuário
+                </label>
+                <input
+                    type="text"
+                    id="username"
+                    class="w-full p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
+                    placeholder="Digite seu usuário"
+                >
             </div>
-            <div class="form-group">
-                <label for="password">Senha</label>
-                <input type="password" id="password" placeholder="Digite sua senha" aria-label="Senha">
-                <div id="passwordError" class="error"></div>
+            <div class="mt-4">
+                <label for="password" class="block text-sm font-medium mb-2">
+                    <i class="fas fa-lock mr-2"></i>Senha
+                </label>
+                <input
+                    type="password"
+                    id="password"
+                    class="w-full p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
+                    placeholder="Digite sua senha"
+                >
             </div>
-            <button id="loginButton">Entrar</button>
-            <div class="switch-form">
-                Não tem uma conta? <a href="#" id="toggleRegister">Registre-se</a>
-            </div>
+            <div id="loginError" class="error-message"></div>
+            <button
+                id="loginButton"
+                class="w-full mt-6 bg-sky-500 hover:bg-sky-600 text-white p-3 rounded-lg font-semibold"
+            >
+                Entrar
+            </button>
+            <p class="mt-4 text-center text-sm">
+                Não tem conta? <a href="#" id="toggleRegister" class="text-sky-400 hover:underline">Registre-se</a>
+            </p>
         </div>
+
+        <!-- Formulário de Registro -->
         <div id="registerContainer" class="hidden">
-            <h2>Registro</h2>
-            <div class="form-group">
-                <label for="newUsername">Usuário</label>
-                <input type="text" id="newUsername" placeholder="Escolha um usuário" aria-label="Novo usuário">
-                <div id="newUsernameError" class="error"></div>
+            <h2 class="text-2xl font-bold mb-6 text-center">Registrar</h2>
+            <div>
+                <label for="newUsername" class="block text-sm font-medium mb-2">
+                    <i class="fas fa-user mr-2"></i>Usuário
+                </label>
+                <input
+                    type="text"
+                    id="newUsername"
+                    class="w-full p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
+                    placeholder="Escolha um usuário"
+                >
             </div>
-            <div class="form-group">
-                <label for="newPassword">Senha</label>
-                <input type="password" id="newPassword" placeholder="Digite uma senha" aria-label="Nova senha">
-                <div id="newPasswordError" class="error"></div>
+            <div class="mt-4">
+                <label for="newPassword" class="block text-sm font-medium mb-2">
+                    <i class="fas fa-lock mr-2"></i>Senha
+                </label>
+                <input
+                    type="password"
+                    id="newPassword"
+                    class="w-full p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
+                    placeholder="Digite sua senha"
+                >
             </div>
-            <div class="form-group">
-                <label for="confirmPassword">Confirmar Senha</label>
-                <input type="password" id="confirmPassword" placeholder="Confirme sua senha" aria-label="Confirmação de senha">
-                <div id="confirmPasswordError" class="error"></div>
+            <div class="mt-4">
+                <label for="confirmPassword" class="block text-sm font-medium mb-2">
+                    <i class="fas fa-lock mr-2"></i>Confirmar Senha
+                </label>
+                <input
+                    type="password"
+                    id="confirmPassword"
+                    class="w-full p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
+                    placeholder="Confirme sua senha"
+                >
             </div>
-            <button id="registerButton">Registrar</button>
-            <div class="switch-form">
-                Já tem uma conta? <a href="#" id="toggleLogin">Faça login</a>
-            </div>
+            <div id="registerError" class="error-message"></div>
+            <button
+                id="registerButton"
+                class="w-full mt-6 bg-sky-500 hover:bg-sky-600 text-white p-3 rounded-lg font-semibold"
+            >
+                Registrar
+            </button>
+            <p class="mt-4 text-center text-sm">
+                Já tem conta? <a href="#" id="toggleLogin" class="text-sky-400 hover:underline">Entrar</a>
+            </p>
         </div>
     </div>
-    <div id="notifications" class="fixed top-2 right-4 z-50" role="alert"></div>
 </body>
 </html>
