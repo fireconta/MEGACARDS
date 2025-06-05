@@ -156,7 +156,7 @@
 <body>
     <div class="container">
         <div class="logo">
-            <img src="logo.png" alt="Logo da LOGAN CC's" aria-label="Logo da LOGAN CC's">
+            <img src="logo.png" alt="Logo da LOGAN CC's" aria-label="Logo da LOGAN CC's" onerror="this.src='https://via.placeholder.com/60?text=Logo'">
         </div>
         <div id="loginContainer">
             <h2>Login</h2>
@@ -170,9 +170,9 @@
                 <input type="password" id="password" placeholder="Digite sua senha" aria-label="Senha">
                 <div id="passwordError" class="error"></div>
             </div>
-            <button id="loginButton" onclick="handleLogin()">Entrar</button>
+            <button id="loginButton">Entrar</button>
             <div class="switch-form">
-                Não tem uma conta? <a href="#" onclick="toggleForms()">Registre-se</a>
+                Não tem uma conta? <a href="#" id="toggleRegister">Registre-se</a>
             </div>
         </div>
         <div id="registerContainer" class="hidden">
@@ -192,195 +192,12 @@
                 <input type="password" id="confirmPassword" placeholder="Confirme sua senha" aria-label="Confirmação de senha">
                 <div id="confirmPasswordError" class="error"></div>
             </div>
-            <button id="registerButton" onclick="handleRegister()">Registrar</button>
+            <button id="registerButton">Registrar</button>
             <div class="switch-form">
-                Já tem uma conta? <a href="#" onclick="toggleForms()">Faça login</a>
+                Já tem uma conta? <a href="#" id="toggleLogin">Faça login</a>
             </div>
         </div>
     </div>
     <div id="notifications" class="fixed top-2 right-4 z-50" role="alert"></div>
-    <script>
-        const MIN_PASSWORD_LENGTH = 4;
-        const NOTIFICATION_TIMEOUT = 5000;
-
-        function showFallbackNotification(message, type = 'error') {
-            const notificationsDiv = document.getElementById('notifications');
-            if (!notificationsDiv) return;
-            const notification = document.createElement('p');
-            notification.className = `notification ${type}`;
-            notification.textContent = message;
-            notificationsDiv.appendChild(notification);
-            setTimeout(() => notification.remove(), NOTIFICATION_TIMEOUT);
-        }
-
-        function toggleForms() {
-            const loginContainer = document.getElementById('loginContainer');
-            const registerContainer = document.getElementById('registerContainer');
-            if (loginContainer && registerContainer) {
-                loginContainer.classList.toggle('hidden');
-                registerContainer.classList.toggle('hidden');
-                ['username', 'password', 'newUsername', 'newPassword', 'confirmPassword'].forEach(id => {
-                    const input = document.getElementById(id);
-                    if (input) input.value = '';
-                });
-                ['usernameError', 'passwordError', 'newUsernameError', 'newPasswordError', 'confirmPasswordError'].forEach(id => {
-                    const error = document.getElementById(id);
-                    if (error) {
-                        error.textContent = '';
-                        error.classList.remove('show');
-                    }
-                });
-            } else {
-                showFallbackNotification('Erro: Contêineres de formulário não encontrados.');
-            }
-        }
-
-        function handleLogin() {
-            const usernameInput = document.getElementById('username');
-            const passwordInput = document.getElementById('password');
-            const usernameError = document.getElementById('usernameError');
-            const passwordError = document.getElementById('passwordError');
-            const loginButton = document.getElementById('loginButton');
-
-            if (!usernameInput || !passwordInput || !usernameError || !passwordError || !loginButton) {
-                showFallbackNotification('Erro: Elementos do formulário não encontrados.');
-                return;
-            }
-
-            usernameError.textContent = '';
-            passwordError.textContent = '';
-            usernameError.classList.remove('show');
-            passwordError.classList.remove('show');
-
-            const username = usernameInput.value.trim();
-            const password = passwordInput.value.trim();
-
-            if (!username) {
-                usernameError.textContent = 'Preencha o usuário.';
-                usernameError.classList.add('show');
-                showFallbackNotification('Preencha o usuário.');
-                return;
-            }
-            if (!password) {
-                passwordError.textContent = 'Preencha a senha.';
-                passwordError.classList.add('show');
-                showFallbackNotification('Preencha a senha.');
-                return;
-            }
-            if (password.length < MIN_PASSWORD_LENGTH) {
-                passwordError.textContent = `A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`;
-                passwordError.classList.add('show');
-                showFallbackNotification(`A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`);
-                return;
-            }
-
-            if (typeof auth !== 'undefined' && typeof auth.login === 'function') {
-                loginButton.disabled = true;
-                loginButton.textContent = 'Carregando...';
-                auth.login(username, password).finally(() => {
-                    loginButton.disabled = false;
-                    loginButton.textContent = 'Entrar';
-                });
-            } else {
-                showFallbackNotification('Erro: Função de login não carregada. Tente recarregar a página.');
-            }
-        }
-
-        function handleRegister() {
-            const usernameInput = document.getElementById('newUsername');
-            const passwordInput = document.getElementById('newPassword');
-            const confirmPasswordInput = document.getElementById('confirmPassword');
-            const usernameError = document.getElementById('newUsernameError');
-            const passwordError = document.getElementById('newPasswordError');
-            const confirmPasswordError = document.getElementById('confirmPasswordError');
-            const registerButton = document.getElementById('registerButton');
-
-            if (!usernameInput || !passwordInput || !confirmPasswordInput || !usernameError || !passwordError || !confirmPasswordError || !registerButton) {
-                showFallbackNotification('Erro: Elementos do formulário de registro não encontrados.');
-                return;
-            }
-
-            usernameError.textContent = '';
-            passwordError.textContent = '';
-            confirmPasswordError.textContent = '';
-            usernameError.classList.remove('show');
-            passwordError.classList.remove('show');
-            confirmPasswordError.classList.remove('show');
-
-            const username = usernameInput.value.trim();
-            const password = passwordInput.value.trim();
-            const confirmPassword = confirmPasswordInput.value.trim();
-
-            if (!username) {
-                usernameError.textContent = 'Preencha o usuário.';
-                usernameError.classList.add('show');
-                showFallbackNotification('Preencha o usuário.');
-                return;
-            }
-            if (!password) {
-                passwordError.textContent = 'Preencha a senha.';
-                passwordError.classList.add('show');
-                showFallbackNotification('Preencha a senha.');
-                return;
-            }
-            if (password.length < MIN_PASSWORD_LENGTH) {
-                passwordError.textContent = `A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`;
-                passwordError.classList.add('show');
-                showFallbackNotification(`A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`);
-                return;
-            }
-            if (password !== confirmPassword) {
-                confirmPasswordError.textContent = 'As senhas não coincidem.';
-                confirmPasswordError.classList.add('show');
-                showFallbackNotification('As senhas não coincidem.');
-                return;
-            }
-
-            if (typeof auth !== 'undefined' && typeof auth.register === 'function') {
-                registerButton.disabled = true;
-                registerButton.textContent = 'Carregando...';
-                auth.register(username, password).finally(() => {
-                    registerButton.disabled = false;
-                    registerButton.textContent = 'Registrar';
-                });
-            } else {
-                showFallbackNotification('Erro: Função de registro não carregada. Tente recarregar a página.');
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const googleFonts = document.getElementById('google-fonts');
-            if (!googleFonts || !document.fonts.check('12px Poppins')) {
-                showFallbackNotification('Erro: Fontes não carregadas corretamente.');
-            }
-
-            const fontAwesome = document.getElementById('font-awesome');
-            if (!fontAwesome || !document.querySelector('.fa-user')) {
-                showFallbackNotification('Erro: Ícones do Font Awesome não carregados.');
-            }
-
-            const supabaseScript = document.getElementById('supabase-js');
-            if (!supabaseScript || typeof createClient === 'undefined') {
-                showFallbackNotification('Erro: Cliente Supabase não carregado. Verifique sua conexão.');
-            }
-
-            const scriptJs = document.getElementById('script-js');
-            if (!scriptJs) {
-                showFallbackNotification('Erro: script.js não encontrado.');
-            }
-
-            const requiredElements = ['username', 'password', 'loginButton', 'newUsername', 'newPassword', 'confirmPassword', 'registerButton', 'notifications', 'loginContainer', 'registerContainer'];
-            const missingElements = requiredElements.filter(id => !document.getElementById(id));
-            if (missingElements.length > 0) {
-                showFallbackNotification(`Erro: Elementos do DOM não encontrados: ${missingElements.join(', ')}.`);
-            }
-
-            if (typeof auth !== 'undefined' && missingElements.length === 0 && typeof createClient !== 'undefined') {
-                setTimeout(() => {
-                    showFallbackNotification('Página carregada com sucesso!', 'success');
-                }, 500);
-            }
-        });
-    </script>
 </body>
 </html>
