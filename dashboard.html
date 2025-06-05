@@ -3,327 +3,353 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LOGAN CC's - Painel Administrativo</title>
+    <title>LOGAN CC's - Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="Script.js" defer></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
-        .hidden { display: none; }
-        .modal { display: none; }
-        .modal.show { display: flex; }
         .notification {
-            animation: fadeInOut 5s ease-in-out;
+            animation: slideIn 0.5s ease-out, fadeOut 0.5s ease-in 4.5s forwards;
         }
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translateY(-10px); }
-            10% { opacity: 1; transform: translateY(0); }
-            90% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-10px); }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
-        #notifications {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
-            max-width: 300px;
+        @keyframes fadeOut {
+            to { opacity: 0; }
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #2d3748;
-        }
-        th {
-            background-color: #1f2937;
-        }
-        .action-button {
-            background-color: #0ea5e9;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 4px;
-            margin-right: 5px;
-        }
-        .action-button:hover {
-            background-color: #0284c7;
-        }
-        .delete-button {
-            background-color: #dc2626;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 4px;
-        }
-        .delete-button:hover {
-            background-color: #b91c1c;
-        }
-        #globalLoader {
+        .modal {
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: none;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
             justify-content: center;
             align-items: center;
-            z-index: 2000;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-content {
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #4a5568;
+        }
+        th {
+            background: #2d3748;
+        }
+        .action-button {
+            background: #10B981;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            margin-right: 0.5rem;
+            transition: background 0.2s;
+        }
+        .action-button:hover {
+            background: #059669;
+        }
+        .delete-button {
+            background: #EF4444;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            transition: background 0.2s;
+        }
+        .delete-button:hover {
+            background: #DC2626;
+        }
+        #globalLoader {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
         }
         #globalLoader.show {
             display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #10B981;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
-    <div id="notifications"></div>
-    <div id="globalLoader" class="hidden">
-        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #38BDF8;"></i>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+    <div id="globalLoader">
+        <div class="spinner"></div>
     </div>
+    <div id="notifications" class="fixed top-4 right-4 z-50 space-y-2"></div>
     <header class="bg-gray-800 p-4 flex justify-between items-center">
-        <h2 class="text-2xl font-bold text-sky-400">Painel Administrativo</h2>
-        <button id="shopButton" class="bg-sky-500 hover:bg-sky-600 p-2 rounded">
-            <i class="fas fa-shop"></i> Voltar à Loja
-        </button>
+        <h1 class="text-2xl font-bold text-green-500">LOGAN CC's - Admin</h1>
+        <div class="flex items-center space-x-4">
+            <button id="shopButton" class="text-gray-300 hover:text-green-500"><i class="fas fa-store mr-2"></i>Loja</button>
+            <button id="logoutButton" class="text-gray-300 hover:text-red-500"><i class="fas fa-sign-out-alt"></i>Sair</button>
+        </div>
     </header>
-
-    <main class="container mx-auto p-4">
-        <!-- Gestão de Usuários -->
-        <section>
-            <h3 class="text-xl font-semibold mb-2">Usuários</h3>
-            <button id="addUserButton" class="bg-green-600 hover:bg-green-500 p-2 rounded mb-4">
-                <i class="fas fa-user-plus"></i> Adicionar Usuário
-            </button>
-            <table id="userList">
-                <thead>
-                    <tr>
-                        <th>Usuário</th>
-                        <th>Saldo</th>
-                        <th>Administrador</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td colspan="4"><p class="text-center text-gray-400">Carregando usuários...</p></td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <!-- Gestão de Cartões -->
-            <h3 class="text-xl font-semibold mb-2 mt-8">Cartões</h3>
-            <button id="addCardButton" class="bg-green-600 hover:bg-green-500 p-2 rounded mb-4">
-                <i class="fas fa-credit-card"></i> Adicionar Cartão
-            </button>
-            <table id="adminCardList">
-                <thead>
-                    <tr>
-                        <th>Número</th>
-                        <th>Bandeira</th>
-                        <th>Banco</th>
-                        <th>Nível</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td colspan="5"><p class="text-center text-gray-400">Carregando cartões...</p></td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
+    <main class="container mx-auto p-6">
+        <!-- Gerenciamento de Usuários -->
+        <div class="bg-gray-800 p-4 rounded-lg mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold"><i class="fas fa-users mr-2"></i>Usuários</h2>
+                <button id="addUserButton" class="py-2 px-4 bg-green-500 text-white rounded hover:bg-green-600 hidden"><i class="fas fa-user-plus mr-2"></i>Adicionar Usuário</button>
+            </div>
+            <div id="userList" class="overflow-x-auto">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Saldo</th>
+                            <th>Admin</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        <!-- Gerenciamento de Cartões -->
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold"><i class="fas fa-credit-card mr-2"></i>Cartões</h2>
+                <button id="addCardButton" class="py-2 px-4 bg-green-500 text-white rounded hover:bg-green-600 hidden"><i class="fas fa-plus mr-2"></i>Adicionar Cartão</button>
+            </div>
+            <div id="adminCardList" class="overflow-x-auto">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Número</th>
+                            <th>Bandeira</th>
+                            <th>Banco</th>
+                            <th>Nível</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
     </main>
-
-    <!-- Modal de Editar Saldo -->
-    <div id="editBalanceModal" class="modal fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center hidden">
-        <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full">
-            <h2 class="text-xl font-bold mb-4">Editar Saldo</h2>
-            <input
-                id="editBalanceAmount"
-                type="number"
-                placeholder="Novo saldo (R$)"
-                class="w-full p-2 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400 mb-4"
-            >
-            <div id="editBalanceError" class="text-red-400 mb-4"></div>
-            <div class="mt-4 flex justify-between">
-                <button id="saveBalanceButton" class="bg-green-600 hover:bg-green-500 p-2 rounded">Confirmar</button>
-                <button id="cancelBalanceButton" class="bg-red-600 hover:bg-red-700 p-2 rounded">Cancelar</button>
+    <!-- Modal Editar Saldo -->
+    <div id="editBalanceModal" class="modal">
+        <div class="modal-content bg-gray-800 p-6 rounded-lg max-w-md w-full">
+            <h2 class="text-xl font-semibold mb-4"><i class="fas fa-coins mr-2"></i>Editar Saldo</h2>
+            <div class="mb-4">
+                <label for="editBalanceAmount" class="block text-sm font-medium">Novo Saldo</label>
+                <input type="number" name="editBalanceAmount" id="editBalanceAmount" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded" placeholder="Ex: 100.00" step="0.01">
+            </div>
+            <p id="editBalanceError" class="text-red-500 text-sm hidden"></p>
+            <div class="flex justify-end space-x-2">
+                <button type="button" id="cancelBalanceButton" class="py-2 px-4 bg-gray-600 text-white rounded hover:bg-gray-700"><i class="fas fa-times mr-2"></i>Cancel</button>
+                <button type="button" id="saveBalanceButton" class="py-2 px-4 bg-green-600 text-white rounded hover:bg-green-600"><i class="fas fa-save mr-2"></i>Save</button>
             </div>
         </div>
     </div>
-
-    <!-- Modal de Editar Usuário -->
-    <div id="editUserModal" class="modal fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center hidden">
-        <div class="bg-gray-800 p-6 rounded-lg max-w-lg w-full">
-            <h2 class="text-xl font-bold mb-4">Editar Usuário</h2>
-            <div class="mb-4">
-                <label for="editUsername" class="block text-sm mb-2">Usuário</label>
-                <input type="text" id="editUsername" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400" readonly>
+    <!-- Modal Editar Usuário -->
+    <div id="editUserModal" class="modal">
+        <div class="modal-content bg-gray-800 p-6 rounded-lg max-w-md w-full">
+            <h2 class="text-xl font-semibold mb-4"><i class="fas fa-user-edit mr-2"></i>Edit User</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="editUsername" class="block text-sm font-medium">Usuário</label>
+                    <input type="text" id="editUsername" readonly class="mt-1 w-full p-2 bg-gray-600 rounded">
+                </div>
+                <div>
+                    <label for="editBalance" class="block text-sm font-medium">Saldo</label>
+                    <input type="number" id="editBalance" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded" step="0.01">
+                </div>
+                <div>
+                    <label for="editIsAdmin" class="block text-sm font-medium">Admin</label>
+                    <select id="editIsAdmin" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded">
+                        <option value="true">Sim</option>
+                        <option value="false">Não</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="editPassword" class="block text-sm font-medium">Nova Senha (opcional)</label>
+                    <input type="password" id="editPassword" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded" placeholder="Deixe em branco para não alterar">
+                </div>
             </div>
-            <div class="mb-4">
-                <label for="editBalance" class="block text-sm mb-2">Saldo</label>
-                <input type="number" id="editBalance" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
-            </div>
-            <div class="mb-4">
-                <label for="editPassword" class="block text-sm mb-2">Nova Senha (opcional)</label>
-                <input type="password" id="editPassword" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
-            </div>
-            <div class="mb-4">
-                <label for="editIsAdmin" class="block text-sm mb-2">Administrador</label>
-                <select id="editIsAdmin" class="w-full p-3 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400">
-                    <option value="true">Sim</option>
-                    <option value="false">Não</option>
-                </select>
-            </div>
-            <div id="editUserError" class="mb-4 text-red-400"></div>
-            <div class="mt-4 flex justify-between">
-                <button id="saveUserButton" class="bg-green-600 hover:bg-green-500 p-2 rounded">Salvar</button>
-                <button id="cancelUserButton" class="bg-red-600 hover:bg-red-700 p-2 rounded">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Adicionar Usuário -->
-    <div id="addUserModal" class="modal fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center hidden">
-        <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full">
-            <h2 class="text-xl font-bold mb-4">Adicionar Usuário</h2>
-            <div class="mb-4">
-                <label for="newUsername" class="block text-sm mb-2">Usuário</label>
-                <input type="text" id="newUsername" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
-            </div>
-            <div class="mb-4">
-                <label for="newPassword" class="block text-sm mb-2">Senha</label>
-                <input type="password" id="newPassword" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
-            </div>
-            <div class="mb-4">
-                <label for="newBalance" class="block text-sm mb-2">Saldo Inicial</label>
-                <input type="number" id="newBalance" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
-            </div>
-            <div class="mb-4">
-                <label for="newIsAdmin" class="block text-sm mb-2">Administrador</label>
-                <select id="newIsAdmin" class="w-full p-3 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400">
-                    <option value="false">Não</option>
-                    <option value="true">Sim</option>
-                </select>
-            </div>
-            <div id="addUserError" class="mb-4 text-red-400"></div>
-            <div class="mt-4 flex justify-between">
-                <button id="addUserConfirmButton" class="bg-green-600 hover:bg-green-500 p-2 rounded">Adicionar</button>
-                <button id="cancelAddUserButton" class="bg-red-600 hover:bg-red-700 p-2 rounded">Cancelar</button>
+            <p id="editUserError" class="text-red-500 text-sm"></p>
+            <div class="flex justify-end space-x-2 mt-4">
+                <button type="submit" id="cancelUserButton" class="py-2 px-4 bg-gray-600 text-white rounded hover:bg-gray-700"><i class="fas fa-times mr-2"></i>Cancel</button>
+                <button type="submit" id="saveUserButton" class="py-2 px-4 bg-green-500 text-white rounded hover:bg-green-600"><i class="fas fa-save mr-2"></i>Save</button>
             </div>
         </div>
     </div>
-
-    <!-- Modal de Editar Cartão -->
-    <div id="editCardModal" class="modal fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center hidden">
-        <div class="bg-gray-800 p-6 rounded-lg max-w-lg w-full">
-            <h2 class="text-xl font-bold mb-4">Editar Cartão</h2>
-            <div class="mb-4">
-                <label for="editCardNumber" class="block text-sm mb-2">Número do Cartão</label>
-                <input type="text" id="editCardNumber" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
+    <!-- Modal Adicionar Usuário -->
+    <div id="addUserModal" class="modal">
+        <div class="modal-content bg-gray-800 p-6 rounded-lg max-w-md w-full">
+            <h2 class="text-xl font-semibold mb-4"><i class="fas fa-user-plus mr-2"></i>Adicionar Usuário</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="newUsername" class="block text-sm font-medium">Usuário</label>
+                    <input type="text" id="newUsername" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded" placeholder="Nome do usuário">
+                </div>
+                <div>
+                    <label for="newPassword" class="block text-sm font-medium">Senha</label>
+                    <input type="password" id="newPassword" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded" placeholder="Nova senha">
+                </div>
+                <div>
+                    <label for="newBalance" class="block text-sm font-medium">Saldo Inicial</label>
+                    <input type="number" id="newBalance" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded" placeholder="Ex: 0.00" step="0.01">
+                </div>
+                <div>
+                    <label for="newIsAdmin" class="block text-sm font-medium">Admin</label>
+                    <select id="newIsAdmin" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded">
+                        <option value="true">Sim</option>
+                        <option value="false">Não</option>
+                    </select>
+                </div>
             </div>
-            <div class="mb-4">
-                <label for="editCardCvv" class="block text-sm mb-2">CVV</label>
-                <input type="text" id="editCardCvv" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
-            </div>
-            <div class="mb-4">
-                <label for="editCardExpiry" class="block text-sm mb-2">Validade (MM/AA)</label>
-                <input type="text" id="editCardExpiry" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
-            </div>
-            <div class="mb-4">
-                <label for="editCardName" class="block text-sm mb-2">Nome</label>
-                <input type="text" id="editCardName" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
-            </div>
-            <div class="mb-4">
-                <label for="editCardCpf" class="block text-sm mb-2">CPF</label>
-                <input type="text" id="editCardCpf" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
-            </div>
-            <div class="mb-4">
-                <label for="editCardBrand" class="block text-sm mb-2">Bandeira</label>
-                <select id="editCardBrand" class="w-full p-3 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400">
-                    <option value="Visa">Visa</option>
-                    <option value="Mastercard">Mastercard</option>
-                    <option value="Amex">Amex</option>
-                </select>
-            </div>
-            <div class="mb-4">
-                <label for="editCardBank" class="block text-sm mb-2">Banco</label>
-                <select id="editCardBank" class="w-full p-3 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400">
-                    <option value="Nubank">Nubank</option>
-                    <option value="Itaú">Itaú</option>
-                    <option value="Bradesco">Bradesco</option>
-                </select>
-            </div>
-            <div class="mb-4">
-                <label for="editCardLevel" class="block text-sm mb-2">Nível</label>
-                <select id="editCardLevel" class="w-full p-3 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400">
-                    <option value="Classic">Clássico</option>
-                    <option value="Gold">Gold</option>
-                    <option value="Platinum">Platinum</option>
-                </select>
-            </div>
-            <div id="editCardError" class="mb-4 text-red-400"></div>
-            <div class="mt-4 flex justify-between">
-                <button id="saveCardButton" class="bg-green-600 hover:bg-green-500 p-2 rounded">Salvar</button>
-                <button id="cancelCardButton" class="bg-red-600 hover:bg-red-700 p-2 rounded">Cancelar</button>
+            <p id="addUserError" class="text-red-500 text-sm hidden"></p>
+            <div class="flex justify-end space-x-2 mt-4">
+                <button type="submit" id="cancelAddUserButton" class="py-2 px-4 bg-gray-600 text-white rounded" hover:bg-gray-700"><i class="fas fa-times mr-2"></i>Cancel</button>
+                <button type="submit" id="addUserConfirmButton" class="py-2 px-4 bg-green-500 text-white rounded hover:bg-green-600"><i class="fas fa-save mr-2"></i>Add</button>
             </div>
         </div>
     </div>
-
-    <!-- Modal de Adicionar Cartão -->
-    <div id="addCardModal" class="modal fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center hidden">
-        <div class="bg-gray-800 p-6 rounded-lg max-w-lg w-full">
-            <h2 class="text-xl font-bold mb-4">Adicionar Cartão</h2>
-            <div class="mb-4">
-                <label for="cardNumber" class="block text-sm mb-2">Número do Cartão</label>
-                <input type="text" id="cardNumber" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
+    <!-- Modal Editar Cartão -->
+    <div id="editCardModal" class="modal">
+        <div class="modal-content bg-gray-800 p-6 rounded-lg max-w-md w-full">
+            <h2 class="text-xl font-semibold mb-4"><i class="fas fa-credit-card mr-2"></i>Editar Cartão</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="editCardNumber" class="block text-sm font-medium">Número</label>
+                    <input type="text" id="editCardNumber" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded" placeholder="xxxx xxxx xxxx xxxx">
+                </div>
+                <div>
+                    <label for="editCardCvv" class="block text-sm font-medium">CVV</label>
+                    <input type="text" id="editCardCvv" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded" placeholder="Ex: 123">
+                </div>
+                <div>
+                    <label for="editCardExpiry" class="block text-sm font-medium">Validade</label>
+                    <input type="text" id="editCardExpiry" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded" placeholder="Ex: MM/AA">
+                </div>
+                <div>
+                    <label for="editCardName" class="block text-sm font-medium">Nome</label>
+                    <input type="text" id="editCardName" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded">
+                <div>
+                </div>
+                    <label for="editCardCpf" class="block text-sm font-medium">CPF</label>
+                    <input type="text" id="editCardCpf" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded" placeholder="Ex: 123.456.789-01">
+                </div>
+                <div>
+                    <label for="editCardBrand" class="block text-sm font-medium">Bandeira</label>
+                    <select id="editCardBrand" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded">
+                        <option value="Visa">Visa</option>
+                        <option value="Mastercard">Mastercard</option>
+                        <option value="Amex">Amex</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="editCardBank" class="block text-sm font-medium">Banco</label>
+                    <select id="editCardBank" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded">
+                        <option value="Nubank">Nubank</option>
+                        <option value="Ita">Itaú</option>
+                        <option value="Bradesco">Bradesco</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="editCardLevel" class="block text-sm font-medium">Nível</label>
+                    <select id="editCardLevel" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded">
+                        <option value="Classic">Classic</option>
+                        <option value="Gold">Gold</option>
+                        <option value="Platinum">Platinum</option>
+                        <option value="Black">Black</option>
+                    </select>
+                </div>
             </div>
-            <div class="mb-4">
-                <label for="cardCvv" class="block text-sm mb-2">CVV</label>
-                <input type="text" id="cardCvv" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
+            <p id="editCardError" class="text-red-500 text-sm hidden"></p>
+            <div class="flex justify-end space-x-2-2 mt-4">
+                <button type="py-2 px-4 bg-gray-600 text-white rounded hover:bg-gray-700" id="cancelCardButton"><i class="fas fa-times mr-2"></i>Cancel</button>
+                <button id="saveCardButton" class="py-2 px-4 bg-green-500 text-white rounded hover:bg-green-600"><i class="fas fa-save mr-2"></i>Save</button>
             </div>
-            <div class="mb-4">
-                <label for="cardExpiry" class="block text-sm mb-2">Validade (MM/AA)</label>
-                <input type="text" id="cardExpiry" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
+        </div>
+    </div>
+    <!-- Modal Adicionar Cartão -->
+    <div id="addCardModal" class="modal">
+        <div class="modal-content bg-gray-800 p-6 rounded-lg max-w-md w-full">
+            <h2 class="text-xl font-semibold mb-4"><i class="fas fa-plus mr-2"></i>Adicionar Cartão</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="cardNumber" class="block text-sm font-medium">Número</label>
+                    <input type="text" id="cardNumber" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded" placeholder="Ex: xxxx xxxx xxxx xxxx">
+                </div>
+                <div>
+                    <label for="cardCvv" class="block text-sm font-medium">CVV</label>
+                    <input type="text" id="cardCvv" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded" placeholder="Ex: 123">
+                </div>
+                <div>
+                    <label for="cardExpiry" class="block text-sm font-medium">Validade</label>
+                    <input type="text" id="cardExpiry" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded" placeholder="Ex: MM/AA">
+                </div>
+                <div>
+                    <label for="cardName" class="block text-sm font-medium">Nome</label>
+                    <input type="text" id="cardName" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded">
+                </div>
+                <div>
+                    <label for="cardCpf" class="block text-sm font-medium">CPF</label>
+                    <input type="text" id="cardCpf" class="Ex: 123.456.789-01">
+                </div>
+                <div>
+                    <label for="cardBrand" class="block text-sm font-medium">Bandeira de</label>
+                    <select id="cardBrand" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded">
+                        <option value="Visa">Visa de</option>
+                        <option value="Mastercard">Mastercard</option>
+                        <option value="Amex">Amex de</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="cardBank" class="block text-sm font-medium">Banco</label>
+                    <select id="cardBank" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded">
+                        <option value="Nubank">Nubank de</option>
+                        <option value="Itaú">Itaú de</option>
+                        <option value="Bradesco">Bradesco</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="cardLevel" class="block text-sm font-medium">Nível de</label>
+                    <select id="cardLevel" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded">
+                        <option value="Classic">Classic de</option>
+                        <option value="Gold">Gold de</option>
+                        <option value="Platinum">Platinum de</option>
+                        <option value="Black">Black</option>
+                    </select>
+                </div>
             </div>
-            <div class="mb-4">
-                <label for="cardName" class="block text-sm mb-2">Nome</label>
-                <input type="text" id="cardName" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
-            </div>
-            <div class="mb-4">
-                <label for="cardCpf" class="block text-sm mb-2">CPF</label>
-                <input type="text" id="cardCpf" class="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-sky-400">
-            </div>
-            <div class="mb-4">
-                <label for="cardBrand" class="block text-sm mb-2">Bandeira</label>
-                <select id="cardBrand" class="w-full p-3 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400">
-                    <option value="Visa">Visa</option>
-                    <option value="Mastercard">Mastercard</option>
-                    <option value="Amex">Amex</option>
-                </select>
-            </div>
-            <div class="mb-4">
-                <label for="cardBank" class="block text-sm mb-2">Banco</label>
-                <select id="cardBank" class="w-full p-3 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400">
-                    <option value="Nubank">Nubank</option>
-                    <option value="Itaú">Itaú</option>
-                    <option value="Bradesco">Bradesco</option>
-                </select>
-            </div>
-            <div class="mb-4">
-                <label for="cardLevel" class="block text-sm mb-2">Nível</label>
-                <select id="cardLevel" class="w-full p-3 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400">
-                    <option value="Classic">Clássico</option>
-                    <option value="Gold">Gold</option>
-                    <option value="Platinum">Platinum</option>
-                </select>
-            </div>
-            <div id="addCardError" class="mb-4 text-red-400"></div>
-            <div class="mt-4 flex justify-between">
-                <button id="addCardConfirmButton" class="bg-green-600 hover:bg-green-500 p-2 rounded">Adicionar</button>
-                <button id="cancelAddCardButton" class="bg-red-600 hover:bg-red-700 p-2 rounded">Cancelar</button>
+            <p id="addCardError" class="text-red-500 text-sm hidden"></p>
+            <div class="flex justify-end space-x-2 mt-4">
+                <button type="submit" id="cancelAddCardButton" class="py-2 px-4 bg-gray-600 text-white rounded hover:bg-gray-700"><i class="fas fa-times mr-2"></i>Cancel</button>
+                <button type="submit" id="addCardConfirmButton" class="py-2 px-4 bg-green-500 text-white rounded hover:bg-green-600"><i class="fas fa-save mr-2"></i>Add</button>
             </div>
         </div>
     </div>
