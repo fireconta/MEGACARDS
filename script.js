@@ -16,7 +16,8 @@ const CONFIG = {
     SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5waHFma2ZkampwaXFzc2R5YW5iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5MjIyODgsImV4cCI6MjA2NDQ5ODI4OH0.7wKoxm1oTY0lYavpBjEtQ1dH_x6ghIO2qYsf_K8z9_g',
     RETRY_ATTEMPTS: 2,
     RETRY_DELAY_MS: 1000,
-    DEBOUNCE_DELAY_MS: 300
+    DEBOUNCE_DELAY_MS: 300,
+    CACHE_TTL_MS: 30 * 60 * 1000 // 30 minutos
 };
 
 // --- Estado ---
@@ -29,20 +30,18 @@ const state = {
     loginAttempts: 0,
     loginBlockedUntil: 0,
     sessionStart: parseInt(localStorage.getItem('sessionStart') || '0'),
-    lastActionTime: 0 // Para debounce
+    lastActionTime: 0,
+    cache: {
+        cards: { data: null, timestamp: 0 },
+        users: { data: null, timestamp: 0 }
+    }
 };
 
 // --- Cliente Supabase ---
-const supabase = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+const supabase = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 
 // --- Funções Utilitárias ---
 const utils = {
-    /**
-     * Executa uma consulta ao Supabase com tentativas de retry.
-     * @param {Function} queryFn - Função de consulta ao Supabase.
-     * @param {number} [attempts=CONFIG.RETRY_ATTEMPTS] - Número de tentativas.
-     * @returns {Promise<any>} - Resultado da consulta.
-     */
     async withRetry(queryFn, attempts = CONFIG.RETRY_ATTEMPTS) {
         for (let i = 0; i <= attempts; i++) {
             try {
@@ -56,10 +55,6 @@ const utils = {
         }
     },
 
-    /**
-     * Verifica se o usuário está autenticado e a sessão é válida.
-     * @returns {boolean} - Verdadeiro se autenticado, falso caso contrário.
-     */
     checkAuth() {
         if (!state.currentUser?.id) {
             console.warn('checkAuth: Usuário não logado.');
@@ -74,39 +69,19 @@ const utils = {
         return true;
     },
 
-    /**
-     * Sanitiza entrada para prevenir injeções.
-     * @param {string} input - Entrada a sanitizar.
-     * @returns {string} - Entrada sanitizada.
-     */
     sanitizeInput(input) {
-        return input.replace(/[<>]/g, '');
+        return DOMPurify.sanitize(input.replace(/[<>]/g, ''));
     },
 
-    /**
-     * Valida número de cartão (16 dígitos).
-     * @param {string} number - Número do cartão.
-     * @returns {boolean} - Verdadeiro se válido.
-     */
     validateCardNumber(number) {
         const cleaned = number.replace(/\s/g, '');
         return cleaned.length === 16 && /^\d+$/.test(cleaned);
     },
 
-    /**
-     * Valida CVV (3 dígitos).
-     * @param {string} cvv - Código CVV.
-     * @returns {boolean} - Verdadeiro se válido.
-     */
     validateCardCvv(cvv) {
         return cvv.length === 3 && /^\d+$/.test(cvv);
     },
 
-    /**
-     * Valida data de validade do cartão (MM/AA).
-     * @param {string} expiry - Data de validade.
-     * @returns {boolean} - Verdadeiro se válida e não expirada.
-     */
     validateCardExpiry(expiry) {
         const [month, year] = expiry.split('/');
         if (!month || !year || month.length !== 2 || year.length !== 2) return false;
@@ -118,20 +93,11 @@ const utils = {
         return expiryDate >= currentDate;
     },
 
-    /**
-     * Valida CPF brasileiro (11 dígitos).
-     * @param {string} cpf - Número do CPF.
-     * @returns {boolean} - Verdadeiro se válido.
-     */
     validateCardCpf(cpf) {
         const cleaned = cpf.replace(/[\.-]/g, '');
         return cleaned.length === 11 && /^\d+$/.test(cleaned);
     },
 
-    /**
-     * Impede ações rápidas consecutivas (debounce).
-     * @returns {boolean} Verdadeiro se a ação pode prosseguir.
-     */
     debounce() {
         const now = Date.now();
         if (now - state.lastActionTime < CONFIG.DEBOUNCE_DELAY_MS) {
@@ -140,16 +106,23 @@ const utils = {
         }
         state.lastActionTime = now;
         return true;
+    },
+
+    getCachedData(key) {
+        const cache = state.cache[key];
+        if (cache.data && Date.now() - cache.timestamp < CONFIG.CACHE_TTL_MS) {
+            return cache.data;
+        }
+        return null;
+    },
+
+    setCachedData(key, data) {
+        state.cache[key] = { data, timestamp: Date.now() };
     }
 };
 
 // --- Módulo de Autenticação ---
 const auth = {
-    /**
-     * Realiza login com usuário e senha em texto puro.
-     * @param {string} username - Nome de usuário.
-     * @param {string} password - Senha.
-     */
     async login(username, password) {
         if (!utils.debounce()) {
             ui.showError('login', 'Aguarde antes de tentar novamente.');
@@ -179,7 +152,6 @@ const auth = {
                     .from('users')
                     .select('id, username, password, balance, is_admin')
                     .eq('username', username)
-                    .eq('password', password)
                     .single()
             );
 
@@ -191,6 +163,18 @@ const auth = {
                     ui.showError('login', 'Muitas tentativas. Aguarde 60 segundos.');
                 } else {
                     ui.showError('login', 'Usuário ou senha incorretos.');
+                }
+                return;
+            }
+
+            if (data.password !== password) {
+                state.loginAttempts++;
+                console.warn(`Login falhou: Tentativa ${state.loginAttempts}/${CONFIG.MAX_LOGIN_ATTEMPTS}`);
+                if (state.loginAttempts >= CONFIG.MAX_LOGIN_ATTEMPTS) {
+                    state.loginBlockedUntil = Date.now() + CONFIG.LOGIN_BLOCK_TIME_MS;
+                    ui.showError('login', 'Muitas tentativas. Aguarde 60 segundos.');
+                } else {
+                    ui.showError('login', 'Senha incorreta.');
                 }
                 return;
             }
@@ -208,7 +192,7 @@ const auth = {
             console.log('Login bem-sucedido:', state.currentUser);
             ui.showSuccess(`Bem-vindo, ${username}!`);
             ui.clearForm('login');
-            setTimeout(() => window.location.href = 'shop.html', 1000);
+            setTimeout(() => window.location.href = 'Shop.html', 1000);
         } catch (error) {
             console.error('Erro no login:', error);
             let mensagemErro = 'Erro ao conectar. Tente novamente.';
@@ -225,12 +209,6 @@ const auth = {
         }
     },
 
-    /**
-     * Registra um novo usuário com senha em texto puro.
-     * @param {string} username - Nome de usuário.
-     * @param {string} password - Senha.
-     * @param {string} confirmPassword - Confirmação da senha.
-     */
     async register(username, password, confirmPassword) {
         if (!utils.debounce()) {
             ui.showError('register', 'Aguarde antes de tentar novamente.');
@@ -304,30 +282,36 @@ const auth = {
         }
     },
 
-    /**
-     * Realiza logout do usuário.
-     */
     logout() {
+        console.log('Logout:', state.currentUser?.username);
         state.currentUser = null;
         state.isAdmin = false;
         state.loginAttempts = 0;
         localStorage.removeItem('currentUser');
         localStorage.removeItem('sessionStart');
-        console.log('Logout realizado.');
         ui.showSuccess('Logout realizado com sucesso!');
-        window.location.href = 'index.html';
+        window.location.href = 'Index.html';
     }
 };
 
 // --- Módulo da Loja ---
 const shop = {
-    /**
-     * Carrega cartões disponíveis e adquiridos pelo usuário.
-     */
     async loadCards() {
         if (!utils.checkAuth()) {
             ui.showError('global', 'Faça login para acessar a loja.');
-            setTimeout(() => window.location.href = 'index.html', 1000);
+            setTimeout(() => window.location.href = 'Index.html', 1000);
+            return;
+        }
+
+        const cachedCards = utils.getCachedData('cards');
+        if (cachedCards) {
+            state.cards = cachedCards.available;
+            state.userCards = cachedCards.user;
+            ui.updateUserInfo();
+            ui.filterCards();
+            if (state.isAdmin) ui.showAdminButton();
+            ui.loadUserCards();
+            ui.showSuccess('Cartões carregados do cache.');
             return;
         }
 
@@ -356,6 +340,7 @@ const shop = {
 
             state.cards = cardsResponse.data || [];
             state.userCards = userCardsResponse.data || [];
+            utils.setCachedData('cards', { available: state.cards, user: state.userCards });
             ui.updateUserInfo();
             ui.filterCards();
             if (state.isAdmin) ui.showAdminButton();
@@ -369,10 +354,6 @@ const shop = {
         }
     },
 
-    /**
-     * Exibe modal de confirmação de compra.
-     * @param {string} cardNumber - Número do cartão.
-     */
     showConfirmPurchaseModal(cardNumber) {
         const card = state.cards.find(c => c.numero === cardNumber);
         if (!card) {
@@ -388,14 +369,10 @@ const shop = {
         ui.showNotification('Confirmação de compra aberta.', 'info');
     },
 
-    /**
-     * Realiza a compra de um cartão.
-     * @param {string} cardNumber - Número do cartão.
-     */
     async purchaseCard(cardNumber) {
         if (!utils.checkAuth()) {
             ui.showError('global', 'Faça login para comprar.');
-            setTimeout(() => window.location.href = 'index.html', 1000);
+            setTimeout(() => window.location.href = 'Index.html', 1000);
             return;
         }
 
@@ -459,11 +436,13 @@ const shop = {
             localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
             state.cards = state.cards.filter(c => c.numero !== cardNumber);
             state.userCards.push(cardData);
+            utils.setCachedData('cards', { available: state.cards, user: state.userCards });
             ui.closeModal('confirmPurchaseModal');
             ui.filterCards();
             ui.loadUserCards();
             ui.updateUserInfo();
             ui.showSuccess('Compra realizada com sucesso!');
+            console.log('Compra:', { user: state.currentUser.username, card: cardNumber, price });
         } catch (error) {
             console.error('Erro na compra:', error);
             ui.showError('global', `Erro ao comprar: ${error.message || 'Tente novamente.'}`);
@@ -475,13 +454,19 @@ const shop = {
 
 // --- Módulo Administrativo ---
 const admin = {
-    /**
-     * Carrega todos os usuários para gerenciamento.
-     */
     async loadUsers() {
         if (!utils.checkAuth() || !state.isAdmin) {
             ui.showError('global', 'Acesso negado: Apenas administradores.');
-            setTimeout(() => window.location.href = 'shop.html', 1000);
+            setTimeout(() => window.location.href = 'Shop.html', 1000);
+            return;
+        }
+
+        const cachedUsers = utils.getCachedData('users');
+        if (cachedUsers) {
+            state.users = cachedUsers;
+            ui.displayUsers();
+            ui.showElement('addUserButton');
+            ui.showSuccess('Usuários carregados do cache.');
             return;
         }
 
@@ -498,6 +483,7 @@ const admin = {
             if (error) throw error;
 
             state.users = data || [];
+            utils.setCachedData('users', state.users);
             ui.displayUsers();
             ui.showElement('addUserButton');
             ui.showSuccess('Usuários carregados com sucesso!');
@@ -509,13 +495,19 @@ const admin = {
         }
     },
 
-    /**
-     * Carrega cartões disponíveis para gerenciamento.
-     */
     async loadAdminCards() {
         if (!utils.checkAuth() || !state.isAdmin) {
             ui.showError('global', 'Acesso negado: Apenas administradores.');
-            setTimeout(() => window.location.href = 'shop.html', 1000);
+            setTimeout(() => window.location.href = 'Shop.html', 1000);
+            return;
+        }
+
+        const cachedCards = utils.getCachedData('cards');
+        if (cachedCards) {
+            state.cards = cachedCards.available;
+            ui.displayAdminCards();
+            ui.showElement('addCardButton');
+            ui.showSuccess('Cartões carregados do cache.');
             return;
         }
 
@@ -533,6 +525,7 @@ const admin = {
             if (error) throw error;
 
             state.cards = data || [];
+            utils.setCachedData('cards', { available: state.cards, user: state.userCards });
             ui.displayAdminCards();
             ui.showElement('addCardButton');
             ui.showSuccess('Cartões carregados com sucesso!');
@@ -544,11 +537,6 @@ const admin = {
         }
     },
 
-    /**
-     * Atualiza o saldo de um usuário.
-     * @param {string} username - Nome de usuário.
-     * @param {number} newBalance - Novo saldo.
-     */
     async editUserBalance(username, newBalance) {
         if (!utils.checkAuth() || !state.isAdmin) {
             ui.showError('global', 'Acesso negado.');
@@ -589,9 +577,12 @@ const admin = {
                 ui.updateUserInfo();
             }
 
+            state.users = state.users.map(u => u.username === username ? { ...u, balance: newBalance } : u);
+            utils.setCachedData('users', state.users);
             ui.showSuccess('Saldo atualizado com sucesso!');
             ui.closeModal('editBalanceModal');
-            admin.loadUsers();
+            ui.displayUsers();
+            console.log('Saldo atualizado:', { username, newBalance });
         } catch (error) {
             console.error('Erro ao atualizar saldo:', error);
             ui.showError('editBalance', `Erro ao atualizar saldo: ${error.message || 'Tente novamente.'}`);
@@ -600,13 +591,6 @@ const admin = {
         }
     },
 
-    /**
-     * Adiciona um novo usuário.
-     * @param {string} username - Nome de usuário.
-     * @param {string} password - Senha.
-     * @param {number} balance - Saldo inicial.
-     * @param {boolean} isAdmin - Status de administrador.
-     */
     async addUser(username, password, balance, isAdmin) {
         if (!utils.checkAuth() || !state.isAdmin) {
             ui.showError('global', 'Acesso negado.');
@@ -652,17 +636,22 @@ const admin = {
                 throw checkError;
             }
 
-            const { error: insertError } = await utils.withRetry(() =>
+            const { data, error: insertError } = await utils.withRetry(() =>
                 supabase
                     .from('users')
                     .insert([{ username, password, balance, is_admin: isAdmin }])
+                    .select()
+                    .single()
             );
 
             if (insertError) throw insertError;
 
+            state.users.push(data);
+            utils.setCachedData('users', state.users);
             ui.showSuccess('Usuário adicionado com sucesso!');
             ui.closeModal('addUserModal');
-            admin.loadUsers();
+            ui.displayUsers();
+            console.log('Usuário adicionado:', { username, balance, isAdmin });
         } catch (error) {
             console.error('Erro ao adicionar usuário:', error);
             ui.showError('addUser', `Erro ao adicionar usuário: ${error.message || 'Tente novamente.'}`);
@@ -671,13 +660,6 @@ const admin = {
         }
     },
 
-    /**
-     * Edita um usuário existente.
-     * @param {string} username - Nome de usuário.
-     * @param {number} balance - Novo saldo.
-     * @param {boolean} isAdmin - Status de administrador.
-     * @param {string} [password] - Nova senha (opcional).
-     */
     async editUser(username, balance, isAdmin, password) {
         if (!utils.checkAuth() || !state.isAdmin) {
             ui.showError('global', 'Acesso negado.');
@@ -730,9 +712,12 @@ const admin = {
                 ui.updateUserInfo();
             }
 
+            state.users = state.users.map(u => u.username === username ? { ...u, balance, is_admin: isAdmin } : u);
+            utils.setCachedData('users', state.users);
             ui.showSuccess('Usuário atualizado com sucesso!');
             ui.closeModal('editUserModal');
-            admin.loadUsers();
+            ui.displayUsers();
+            console.log('Usuário atualizado:', { username, balance, isAdmin });
         } catch (error) {
             console.error('Erro ao atualizar usuário:', error);
             ui.showError('editUser', `Erro ao atualizar usuário: ${error.message || 'Tente novamente.'}`);
@@ -741,10 +726,6 @@ const admin = {
         }
     },
 
-    /**
-     * Exclui um usuário.
-     * @param {string} username - Nome de usuário.
-     */
     async deleteUser(username) {
         if (!utils.checkAuth() || !state.isAdmin) {
             ui.showError('global', 'Acesso negado.');
@@ -782,8 +763,11 @@ const admin = {
 
             if (error) throw error;
 
+            state.users = state.users.filter(u => u.username !== username);
+            utils.setCachedData('users', state.users);
             ui.showSuccess('Usuário excluído com sucesso!');
-            admin.loadUsers();
+            ui.displayUsers();
+            console.log('Usuário excluído:', { username });
         } catch (error) {
             console.error('Erro ao excluir usuário:', error);
             ui.showError('global', `Erro ao excluir usuário: ${error.message || 'Tente novamente.'}`);
@@ -792,10 +776,6 @@ const admin = {
         }
     },
 
-    /**
-     * Exclui um cartão.
-     * @param {string} cardNumber - Número do cartão.
-     */
     async deleteCard(cardNumber) {
         if (!utils.checkAuth() || !state.isAdmin) {
             ui.showError('global', 'Acesso negado.');
@@ -826,8 +806,11 @@ const admin = {
 
             if (error) throw error;
 
+            state.cards = state.cards.filter(c => c.numero !== cardNumber);
+            utils.setCachedData('cards', { available: state.cards, user: state.userCards });
             ui.showSuccess('Cartão excluído com sucesso!');
-            admin.loadAdminCards();
+            ui.displayAdminCards();
+            console.log('Cartão excluído:', { cardNumber });
         } catch (error) {
             console.error('Erro ao excluir cartão:', error);
             ui.showError('global', `Erro ao excluir cartão: ${error.message || 'Tente novamente.'}`);
@@ -836,10 +819,6 @@ const admin = {
         }
     },
 
-    /**
-     * Edita um cartão existente.
-     * @param {Object} cardData - Dados do cartão.
-     */
     async editCard(cardData) {
         if (!utils.checkAuth() || !state.isAdmin) {
             ui.showError('global', 'Acesso negado.');
@@ -856,19 +835,19 @@ const admin = {
         cardData.nivel = utils.sanitizeInput(cardData.nivel);
 
         if (!utils.validateCardNumber(cardData.numero)) {
-            ui.showError('editCard', 'Número de cartão inválido.');
+            ui.showError('editCard', 'Número de cartão inválido (16 dígitos).');
             return;
         }
         if (!utils.validateCardCvv(cardData.cvv)) {
-            ui.showError('editCard', 'CVV inválido.');
+            ui.showError('editCard', 'CVV inválido (3 dígitos).');
             return;
         }
         if (!utils.validateCardExpiry(cardData.validade)) {
-            ui.showError('editCard', 'Validade inválida ou expirada.');
+            ui.showError('editCard', 'Validade inválida ou expirada (MM/AA).');
             return;
         }
         if (!utils.validateCardCpf(cardData.cpf)) {
-            ui.showError('editCard', 'CPF inválido.');
+            ui.showError('editCard', 'CPF inválido (11 dígitos).');
             return;
         }
         if (!cardData.bandeira || !cardData.banco || !cardData.nivel) {
@@ -899,9 +878,12 @@ const admin = {
 
             if (error) throw error;
 
+            state.cards = state.cards.map(c => c.numero === cardData.numero ? cardData : c);
+            utils.setCachedData('cards', { available: state.cards, user: state.userCards });
             ui.showSuccess('Cartão atualizado com sucesso!');
             ui.closeModal('editCardModal');
-            admin.loadAdminCards();
+            ui.displayAdminCards();
+            console.log('Cartão atualizado:', cardData);
         } catch (error) {
             console.error('Erro ao atualizar cartão:', error);
             ui.showError('editCard', `Erro ao atualizar cartão: ${error.message || 'Tente novamente.'}`);
@@ -910,10 +892,6 @@ const admin = {
         }
     },
 
-    /**
-     * Adiciona um novo cartão.
-     * @param {Object} cardData - Dados do cartão.
-     */
     async saveCard(cardData) {
         if (!utils.checkAuth() || !state.isAdmin) {
             ui.showError('global', 'Acesso negado.');
@@ -930,19 +908,19 @@ const admin = {
         cardData.nivel = utils.sanitizeInput(cardData.nivel);
 
         if (!utils.validateCardNumber(cardData.numero)) {
-            ui.showError('addCard', 'Número de cartão inválido.');
+            ui.showError('addCard', 'Número de cartão inválido (16 dígitos).');
             return;
         }
         if (!utils.validateCardCvv(cardData.cvv)) {
-            ui.showError('addCard', 'CVV inválido.');
+            ui.showError('addCard', 'CVV inválido (3 dígitos).');
             return;
         }
         if (!utils.validateCardExpiry(cardData.validade)) {
-            ui.showError('addCard', 'Validade inválida ou expirada.');
+            ui.showError('addCard', 'Validade inválida ou expirada (MM/AA).');
             return;
         }
         if (!utils.validateCardCpf(cardData.cpf)) {
-            ui.showError('addCard', 'CPF inválido.');
+            ui.showError('addCard', 'CPF inválido (11 dígitos).');
             return;
         }
         if (!cardData.bandeira || !cardData.banco || !cardData.nivel) {
@@ -971,17 +949,22 @@ const admin = {
                 throw checkError;
             }
 
-            const { error: insertError } = await utils.withRetry(() =>
+            const { data, error: insertError } = await utils.withRetry(() =>
                 supabase
                     .from('cards')
                     .insert([cardData])
+                    .select()
+                    .single()
             );
 
             if (insertError) throw insertError;
 
+            state.cards.push(data);
+            utils.setCachedData('cards', { available: state.cards, user: state.userCards });
             ui.showSuccess('Cartão adicionado com sucesso!');
             ui.closeModal('addCardModal');
-            admin.loadAdminCards();
+            ui.displayAdminCards();
+            console.log('Cartão adicionado:', cardData);
         } catch (error) {
             console.error('Erro ao adicionar cartão:', error);
             ui.showError('addCard', `Erro ao adicionar cartão: ${error.message || 'Tente novamente.'}`);
@@ -993,118 +976,62 @@ const admin = {
 
 // --- Módulo de Interface do Usuário ---
 const ui = {
-    /**
-     * Exibe uma notificação.
-     * @param {string} message - Mensagem a exibir.
-     * @param {string} [type='error'] - Tipo ('error', 'success', 'info').
-     */
     showNotification(message, type = 'error') {
         const notificationsDiv = document.getElementById('notifications');
         if (!notificationsDiv) return;
 
         const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.style.cssText = `
-            padding: 10px 20px;
-            margin: 5px 0;
-            border-radius: 4px;
-            color: white;
-            font-size: 0.9rem;
-            background-color: ${type === 'error' ? '#EF4444' : type === 'success' ? '#10B981' : '#3B82F6'};
-        `;
-        notification.textContent = message;
+        notification.className = `notification p-4 rounded-lg text-white`;
+        notification.style.backgroundColor = type === 'error' ? '#EF4444' : type === 'success' ? '#10B981' : '#3B82F6';
+        notification.textContent = utils.sanitizeInput(message);
         notificationsDiv.appendChild(notification);
         setTimeout(() => notification.remove(), CONFIG.NOTIFICATION_TIMEOUT_MS);
     },
 
-    /**
-     * Exibe mensagem de erro para um contexto.
-     * @param {string} context - Contexto (ex.: 'login', 'register').
-     * @param {string} message - Mensagem de erro.
-     */
     showError(context, message) {
         this.showNotification(message, 'error');
         const errorElement = document.getElementById(`${context}Error`);
         if (errorElement) {
-            errorElement.textContent = message;
+            errorElement.textContent = utils.sanitizeInput(message);
             errorElement.classList.add('show');
-            errorElement.style.color = '#EF4444';
         }
     },
 
-    /**
-     * Exibe mensagem de sucesso.
-     * @param {string} message - Mensagem de sucesso.
-     */
     showSuccess(message) {
         this.showNotification(message, 'success');
     },
 
-    /**
-     * Alterna estado de carregamento de um botão.
-     * @param {string} buttonId - ID do botão.
-     * @param {boolean} isLoading - Estado de carregamento.
-     */
     toggleLoading(buttonId, isLoading) {
         const button = document.getElementById(buttonId);
         if (button) {
             button.disabled = isLoading;
-            button.textContent = isLoading ? 'Carregando...' : button.dataset.originalText || button.textContent;
-            if (!button.dataset.originalText) button.dataset.originalText = button.textContent;
+            button.innerHTML = isLoading
+                ? '<i class="fas fa-spinner fa-spin"></i> Carregando...'
+                : button.dataset.originalText || button.innerHTML;
+            if (!button.dataset.originalText) button.dataset.originalText = button.innerHTML;
         }
     },
 
-    /**
-     * Exibe carregador global.
-     */
     showLoader() {
-        let loader = document.getElementById('globalLoader');
-        if (!loader) {
-            loader = document.createElement('div');
-            loader.id = 'globalLoader';
-            loader.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.5);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 2000;
-            `;
-            loader.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #38BDF8;"></i>';
-            document.body.appendChild(loader);
-        }
-        loader.style.display = 'flex';
+        const loader = document.getElementById('globalLoader');
+        if (loader) loader.classList.add('show');
     },
 
-    /**
-     * Oculta carregador global.
-     */
     hideLoader() {
         const loader = document.getElementById('globalLoader');
-        if (loader) loader.style.display = 'none';
+        if (loader) loader.classList.remove('show');
     },
 
-    /**
-     * Alterna formulários de login e registro.
-     */
     toggleForms() {
         const loginContainer = document.getElementById('loginContainer');
         const registerContainer = document.getElementById('registerContainer');
         if (loginContainer && registerContainer) {
             loginContainer.classList.toggle('hidden');
             registerContainer.classList.toggle('hidden');
-            ui.showNotification('Formulário alterado.', 'info');
+            this.showNotification('Formulário alterado.', 'info');
         }
     },
 
-    /**
-     * Limpa um formulário por contexto.
-     * @param {string} context - Contexto ('login' ou 'register').
-     */
     clearForm(context) {
         const fields = {
             login: ['username', 'password'],
@@ -1121,47 +1048,32 @@ const ui = {
         }
     },
 
-    /**
-     * Atualiza informações do usuário na interface.
-     */
     updateUserInfo() {
         const elements = {
-            userName: state.currentUser?.username || 'N/A',
-            userBalanceHeader: state.currentUser?.balance?.toFixed(2) || '0.00',
+            userBalanceHeader: state.currentUser ? `R$${state.currentUser.balance.toFixed(2)}` : 'R$0.00',
             userNameAccount: state.currentUser?.username || 'N/A',
             userBalanceAccount: state.currentUser ? `R$${state.currentUser.balance.toFixed(2)}` : 'R$0.00'
         };
         Object.entries(elements).forEach(([id, value]) => {
             const element = document.getElementById(id);
-            if (element) element.textContent = value;
+            if (element) element.textContent = utils.sanitizeInput(value);
         });
-        ui.showNotification('Informações do usuário atualizadas.', 'info');
+        this.showNotification('Informações do usuário atualizadas.', 'info');
     },
 
-    /**
-     * Exibe botão de administrador se usuário for admin.
-     */
     showAdminButton() {
         const adminButton = document.getElementById('adminButton');
-        if (adminButton) {
-            adminButton.classList.remove('hidden');
-            ui.showNotification('Painel de administrador disponível.', 'info');
-        }
+        if (adminButton) adminButton.classList.remove('hidden');
     },
 
-    /**
-     * Exibe um elemento por ID.
-     * @param {string} id - ID do elemento.
-     */
     showElement(id) {
         const element = document.getElementById(id);
         if (element) element.classList.remove('hidden');
     },
 
-    /**
-     * Filtra e exibe cartões disponíveis.
-     */
     filterCards() {
+        if (!utils.debounce()) return;
+
         const cardList = document.getElementById('cardList');
         if (!cardList) return;
 
@@ -1177,27 +1089,33 @@ const ui = {
             (levelFilter === 'all' || c.nivel === levelFilter)
         );
 
-        cardList.innerHTML = filteredCards.length === 0
-            ? '<p class="text-center text-gray-400">Nenhum cartão disponível.</p>'
-            : filteredCards.map(card => `
-                <div class="card-item">
+        cardList.innerHTML = '';
+        if (filteredCards.length === 0) {
+            const empty = document.createElement('p');
+            empty.className = 'text-center text-gray-400';
+            empty.textContent = 'Nenhum cartão disponível.';
+            cardList.appendChild(empty);
+        } else {
+            filteredCards.forEach(card => {
+                const cardItem = document.createElement('div');
+                cardItem.className = 'card-item';
+                cardItem.innerHTML = `
                     <i class="fas fa-cc-${card.bandeira.toLowerCase()} card-brand"></i>
                     <div class="card-info">
-                        <p><i class="fas fa-credit-card"></i> Número: ${card.numero}</p>
-                        <p><i class="fas fa-university"></i> Banco: ${card.banco}</p>
-                        <p><i class="fas fa-star"></i> Nível: ${card.nivel}</p>
+                        <p><i class="fas fa-credit-card"></i> Número: ${utils.sanitizeInput(card.numero)}</p>
+                        <p><i class="fas fa-university"></i> Banco: ${utils.sanitizeInput(card.banco)}</p>
+                        <p><i class="fas fa-star"></i> Nível: ${utils.sanitizeInput(card.nivel)}</p>
                     </div>
-                    <button class="card-button" data-card-number="${card.numero}">
+                    <button class="card-button" data-card-number="${utils.sanitizeInput(card.numero)}">
                         Comprar por R$${card.price ? card.price.toFixed(2) : '10.00'}
                     </button>
-                </div>
-            `).join('');
-        ui.showNotification('Filtro de cartões aplicado.', 'info');
+                `;
+                cardList.appendChild(cardItem);
+            });
+        }
+        this.showNotification('Filtro de cartões aplicado.', 'info');
     },
 
-    /**
-     * Limpa filtros de cartões.
-     */
     clearFilters() {
         const filters = ['binFilter', 'brandFilter', 'bankFilter', 'levelFilter'];
         filters.forEach(id => {
@@ -1205,16 +1123,13 @@ const ui = {
             if (element) element.value = id === 'binFilter' ? '' : 'all';
         });
         this.filterCards();
-        ui.showNotification('Filtros limpos.', 'info');
+        this.showNotification('Filtros limpos.', 'info');
     },
 
-    /**
-     * Exibe informações da conta.
-     */
     showAccountInfo() {
         if (!utils.checkAuth()) {
             this.showError('global', 'Faça login para acessar a conta.');
-            setTimeout(() => window.location.href = 'index.html', 1000);
+            setTimeout(() => window.location.href = 'Index.html', 1000);
             return;
         }
         const cardList = document.getElementById('cardList');
@@ -1224,44 +1139,35 @@ const ui = {
             accountInfo.classList.remove('hidden');
             this.updateUserInfo();
             this.loadUserCards();
-            ui.showNotification('Informações da conta exibidas.', 'info');
+            this.showNotification('Informações da conta exibidas.', 'info');
         }
     },
 
-    /**
-     * Exibe modal da carteira.
-     */
     showWallet() {
         if (!utils.checkAuth()) {
             this.showError('global', 'Faça login para acessar a carteira.');
-            setTimeout(() => window.location.href = 'index.html', 1000);
+            setTimeout(() => window.location.href = 'Index.html', 1000);
             return;
         }
         this.showModal('walletModal');
         this.loadUserCardsWallet();
-        ui.showNotification('Carteira exibida.', 'info');
+        this.showNotification('Carteira exibida.', 'info');
     },
 
-    /**
-     * Exibe formulário de adicionar saldo.
-     */
     showAddBalanceForm() {
         if (!utils.checkAuth()) {
             this.showError('global', 'Faça login para adicionar saldo.');
-            setTimeout(() => window.location.href = 'index.html', 1000);
+            setTimeout(() => window.location.href = 'Index.html', 1000);
             return;
         }
         this.showModal('rechargeModal');
-        ui.showNotification('Formulário de recarga aberto.', 'info');
+        this.showNotification('Formulário de recarga aberto.', 'info');
     },
 
-    /**
-     * Adiciona saldo à conta do usuário.
-     */
     async addBalance() {
         if (!utils.checkAuth()) {
             this.showError('global', 'Faça login para adicionar saldo.');
-            setTimeout(() => window.location.href = 'index.html', 1000);
+            setTimeout(() => window.location.href = 'Index.html', 1000);
             return;
         }
 
@@ -1300,6 +1206,7 @@ const ui = {
             this.updateUserInfo();
             this.showSuccess('Saldo adicionado com sucesso!');
             this.closeModal('rechargeModal');
+            console.log('Saldo adicionado:', { user: state.currentUser.username, amount });
         } catch (error) {
             console.error('Erro ao adicionar saldo:', error);
             this.showError('recharge', `Erro ao adicionar saldo: ${error.message || 'Tente novamente.'}`);
@@ -1308,141 +1215,141 @@ const ui = {
         }
     },
 
-    /**
-     * Carrega cartões adquiridos pelo usuário.
-     */
     loadUserCards() {
         const userCards = document.getElementById('userCards');
         if (!userCards) return;
 
         const userCardsList = state.userCards.filter(c => c.user_id === state.currentUser.id);
-        userCards.innerHTML = userCardsList.length === 0
-            ? '<p class="text-center text-gray-400">Nenhum cartão adquirido.</p>'
-            : userCardsList.map(card => `
-                <div class="card-item">
+        userCards.innerHTML = '';
+        if (userCardsList.length === 0) {
+            const empty = document.createElement('p');
+            empty.className = 'text-center text-gray-400';
+            empty.textContent = 'Nenhum cartão adquirido.';
+            userCards.appendChild(empty);
+        } else {
+            userCardsList.forEach(card => {
+                const cardItem = document.createElement('div');
+                cardItem.className = 'card-item';
+                cardItem.innerHTML = `
                     <i class="fas fa-cc-${card.bandeira.toLowerCase()} card-brand"></i>
                     <div class="card-info">
-                        <p><i class="fas fa-credit-card"></i> Número: ${card.numero}</p>
-                        <p><i class="fas fa-university"></i> Banco: ${card.banco}</p>
-                        <p><i class="fas fa-star"></i> Nível: ${card.nivel}</p>
+                        <p><i class="fas fa-credit-card"></i> Número: ${utils.sanitizeInput(card.numero)}</p>
+                        <p><i class="fas fa-university"></i> Banco: ${utils.sanitizeInput(card.banco)}</p>
+                        <p><i class="fas fa-star"></i> Nível: ${utils.sanitizeInput(card.nivel)}</p>
                     </div>
-                </div>
-            `).join('');
-        ui.showNotification('Cartões do usuário carregados.', 'info');
+                `;
+                userCards.appendChild(cardItem);
+            });
+        }
+        this.showNotification('Cartões do usuário carregados.', 'info');
     },
 
-    /**
-     * Carrega cartões na carteira.
-     */
     loadUserCardsWallet() {
         const userCardsWallet = document.getElementById('userCardsWallet');
         if (!userCardsWallet) return;
 
         const userCardsList = state.userCards.filter(c => c.user_id === state.currentUser.id);
-        userCardsWallet.innerHTML = userCardsList.length === 0
-            ? '<p class="text-center text-gray-400">Carteira vazia.</p>'
-            : userCardsList.map(card => `
-                <div class="card-item">
+        userCardsWallet.innerHTML = '';
+        if (userCardsList.length === 0) {
+            const empty = document.createElement('p');
+            empty.className = 'text-center text-gray-400';
+            empty.textContent = 'Carteira vazia.';
+            userCardsWallet.appendChild(empty);
+        } else {
+            userCardsList.forEach(card => {
+                const cardItem = document.createElement('div');
+                cardItem.className = 'card-item';
+                cardItem.innerHTML = `
                     <i class="fas fa-cc-${card.bandeira.toLowerCase()} card-brand"></i>
                     <div class="card-info">
-                        <p><i class="fas fa-credit-card"></i> Número: ${card.numero}</p>
-                        <p><i class="fas fa-university"></i> Banco: ${card.banco}</p>
-                        <p><i class="fas fa-star"></i> Nível: ${card.nivel}</p>
-                        <p><i class="fas fa-calendar"></i> Validade: ${card.validade}</p>
-                        <p><i class="fas fa-lock"></i> CVV: ${card.cvv}</p>
+                        <p><i class="fas fa-credit-card"></i> Número: ${utils.sanitizeInput(card.numero)}</p>
+                        <p><i class="fas fa-university"></i> Banco: ${utils.sanitizeInput(card.banco)}</p>
+                        <p><i class="fas fa-star"></i> Nível: ${utils.sanitizeInput(card.nivel)}</p>
+                        <p><i class="fas fa-calendar"></i> Validade: ${utils.sanitizeInput(card.validade)}</p>
+                        <p><i class="fas fa-lock"></i> CVV: ${utils.sanitizeInput(card.cvv)}</p>
                     </div>
-                </div>
-            `).join('');
-        ui.showNotification('Cartões da carteira carregados.', 'info');
+                `;
+                userCardsWallet.appendChild(cardItem);
+            });
+        }
+        this.showNotification('Cartões da carteira carregados.', 'info');
     },
 
-    /**
-     * Exibe um modal.
-     * @param {string} modalId - ID do modal.
-     * @param {Object} [data] - Dados para o modal.
-     */
     showModal(modalId, data = {}) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
 
         if (modalId === 'confirmPurchaseModal' && data.cardDetails) {
-            document.getElementById('confirmCardDetails').innerHTML = `
-                <p><strong>Número:</strong> ${data.cardDetails.numero}</p>
-                <p><strong>Bandeira:</strong> ${data.cardDetails.bandeira}</p>
-                <p><strong>Banco:</strong> ${data.cardDetails.banco}</p>
-                <p><strong>Nível:</strong> ${data.cardDetails.nivel}</p>
+            const details = document.getElementById('confirmCardDetails');
+            details.innerHTML = `
+                <p><strong>Número:</strong> ${utils.sanitizeInput(data.cardDetails.numero)}</p>
+                <p><strong>Bandeira:</strong> ${utils.sanitizeInput(data.cardDetails.bandeira)}</p>
+                <p><strong>Banco:</strong> ${utils.sanitizeInput(data.cardDetails.banco)}</p>
+                <p><strong>Nível:</strong> ${utils.sanitizeInput(data.cardDetails.nivel)}</p>
             `;
-            document.getElementById('confirmTotalAmount').textContent = data.totalAmount;
-            document.getElementById('confirmUserBalance').textContent = data.userBalance;
+            document.getElementById('confirmTotalAmount').textContent = utils.sanitizeInput(data.totalAmount);
+            document.getElementById('confirmUserBalance').textContent = utils.sanitizeInput(data.userBalance);
             modal.dataset.cardNumber = data.cardNumber;
         }
 
-        modal.classList.remove('hidden');
         modal.classList.add('show');
-        ui.showNotification(`Modal ${modalId} aberto.`, 'info');
+        this.showNotification(`Modal ${modalId} aberto.`, 'info');
     },
 
-    /**
-     * Fecha um modal.
-     * @param {string} modalId - ID do modal.
-     */
     closeModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
             modal.classList.remove('show');
-            modal.classList.add('hidden');
-            ui.showNotification(`Modal ${modalId} fechado.`, 'info');
+            this.showNotification(`Modal ${modalId} fechado.`, 'info');
         }
     },
 
-    /**
-     * Exibe usuários na tabela administrativa.
-     */
     displayUsers() {
         const userList = document.getElementById('userList');
         if (!userList) return;
 
-        userList.querySelector('tbody').innerHTML = state.users.map(user => `
-            <tr>
-                <td><i class="fas fa-user"></i> ${user.username}</td>
+        const tbody = userList.querySelector('tbody');
+        tbody.innerHTML = '';
+        state.users.forEach(user => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><i class="fas fa-user"></i> ${utils.sanitizeInput(user.username)}</td>
                 <td><i class="fas fa-coins"></i> R$${user.balance.toFixed(2)}</td>
                 <td><i class="fas fa-crown"></i> ${user.is_admin ? 'Sim' : 'Não'}</td>
                 <td>
-                    <button class="action-button" data-username="${user.username}" data-action="edit-balance">Editar Saldo</button>
-                    <button class="action-button" data-username="${user.username}" data-action="edit-user">Editar</button>
-                    <button class="delete-button" data-username="${user.username}" data-action="delete-user">Excluir</button>
+                    <button class="action-button" data-username="${utils.sanitizeInput(user.username)}" data-action="edit-balance">Editar Saldo</button>
+                    <button class="action-button" data-username="${utils.sanitizeInput(user.username)}" data-action="edit-user">Editar</button>
+                    <button class="delete-button" data-username="${utils.sanitizeInput(user.username)}" data-action="delete-user">Excluir</button>
                 </td>
-            </tr>
-        `).join('');
-        ui.showNotification('Tabela de usuários atualizada.', 'info');
+            `;
+            tbody.appendChild(row);
+        });
+        this.showNotification('Tabela de usuários atualizada.', 'info');
     },
 
-    /**
-     * Exibe cartões na tabela administrativa.
-     */
     displayAdminCards() {
         const cardList = document.getElementById('adminCardList');
         if (!cardList) return;
 
-        cardList.querySelector('tbody').innerHTML = state.cards.map(card => `
-            <tr>
-                <td><i class="fas fa-credit-card"></i> ${card.numero}</td>
-                <td><i class="fas fa-flag"></i> ${card.bandeira}</td>
-                <td><i class="fas fa-university"></i> ${card.banco}</td>
-                <td><i class="fas fa-star"></i> ${card.nivel}</td>
+        const tbody = cardList.querySelector('tbody');
+        tbody.innerHTML = '';
+        state.cards.forEach(card => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><i class="fas fa-credit-card"></i> ${utils.sanitizeInput(card.numero)}</td>
+                <td><i class="fas fa-flag"></i> ${utils.sanitizeInput(card.bandeira)}</td>
+                <td><i class="fas fa-university"></i> ${utils.sanitizeInput(card.banco)}</td>
+                <td><i class="fas fa-star"></i> ${utils.sanitizeInput(card.nivel)}</td>
                 <td>
-                    <button class="action-button" data-card-number="${card.numero}" data-action="edit-card">Editar</button>
-                    <button class="delete-button" data-card-number="${card.numero}" data-action="delete-card">Excluir</button>
+                    <button class="action-button" data-card-number="${utils.sanitizeInput(card.numero)}" data-action="edit-card">Editar</button>
+                    <button class="delete-button" data-card-number="${utils.sanitizeInput(card.numero)}" data-action="delete-card">Excluir</button>
                 </td>
-            </tr>
-        `).join('');
-        ui.showNotification('Tabela de cartões atualizada.', 'info');
+            `;
+            tbody.appendChild(row);
+        });
+        this.showNotification('Tabela de cartões atualizada.', 'info');
     },
 
-    /**
-     * Exibe modal de edição de saldo.
-     * @param {string} username - Nome de usuário.
-     */
     showEditBalanceModal(username) {
         if (!state.isAdmin) {
             this.showError('global', 'Acesso negado.');
@@ -1456,10 +1363,6 @@ const ui = {
         }
     },
 
-    /**
-     * Exibe modal de edição de usuário.
-     * @param {string} username - Nome de usuário.
-     */
     showEditUserModal(username) {
         if (!state.isAdmin) {
             this.showError('global', 'Acesso negado.');
@@ -1480,9 +1383,6 @@ const ui = {
         }
     },
 
-    /**
-     * Exibe modal de adição de usuário.
-     */
     showAddUserModal() {
         if (!state.isAdmin) {
             this.showError('global', 'Acesso negado.');
@@ -1498,10 +1398,6 @@ const ui = {
         }
     },
 
-    /**
-     * Exibe modal de edição de cartão.
-     * @param {string} cardNumber - Número do cartão.
-     */
     showEditCardModal(cardNumber) {
         if (!state.isAdmin) {
             this.showError('global', 'Acesso negado.');
@@ -1527,9 +1423,6 @@ const ui = {
         }
     },
 
-    /**
-     * Exibe modal de adição de cartão.
-     */
     showAddCardModal() {
         if (!state.isAdmin) {
             this.showError('global', 'Acesso negado.');
@@ -1549,27 +1442,15 @@ const ui = {
         }
     },
 
-    /**
-     * Formata número de cartão.
-     * @param {HTMLInputElement} input - Elemento de entrada.
-     */
     formatCardNumber(input) {
         let value = input.value.replace(/\s/g, '').replace(/\D/g, '').slice(0, 16);
         input.value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
     },
 
-    /**
-     * Restringe CVV a 3 dígitos.
-     * @param {HTMLInputElement} input - Elemento de entrada.
-     */
     restrictCvv(input) {
         input.value = input.value.replace(/\D/g, '').slice(0, 3);
     },
 
-    /**
-     * Formata data de validade (MM/AA).
-     * @param {HTMLInputElement} input - Elemento de entrada.
-     */
     formatExpiry(input) {
         let value = input.value.replace(/\D/g, '').slice(0, 4);
         if (value.length > 2) {
@@ -1578,10 +1459,6 @@ const ui = {
         input.value = value;
     },
 
-    /**
-     * Formata CPF (XXX.XXX.XXX-XX).
-     * @param {HTMLInputElement} input - Elemento de entrada.
-     */
     formatCpf(input) {
         let value = input.value.replace(/\D/g, '').slice(0, 11);
         if (value.length > 9) {
@@ -1628,7 +1505,7 @@ function setupEventListeners() {
     document.getElementById('accountButton')?.addEventListener('click', () => ui.showAccountInfo());
     document.getElementById('walletButton')?.addEventListener('click', () => ui.showWallet());
     document.getElementById('addBalanceButton')?.addEventListener('click', () => ui.showAddBalanceForm());
-    document.getElementById('adminButton')?.addEventListener('click', () => window.location.href = 'dashboard.html');
+    document.getElementById('adminButton')?.addEventListener('click', () => window.location.href = 'Dashboard.html');
     document.getElementById('clearFiltersButton')?.addEventListener('click', () => ui.clearFilters());
     document.getElementById('confirmPurchaseButton')?.addEventListener('click', () => {
         shop.purchaseCard(document.getElementById('confirmPurchaseModal').dataset.cardNumber);
@@ -1649,7 +1526,7 @@ function setupEventListeners() {
     document.getElementById('levelFilter')?.addEventListener('change', () => ui.filterCards());
 
     // Dashboard.html
-    document.getElementById('shopButton')?.addEventListener('click', () => window.location.href = 'shop.html');
+    document.getElementById('shopButton')?.addEventListener('click', () => window.location.href = 'Shop.html');
     document.getElementById('addUserButton')?.addEventListener('click', () => ui.showAddUserModal());
     document.getElementById('addCardButton')?.addEventListener('click', () => ui.showAddCardModal());
     document.getElementById('saveBalanceButton')?.addEventListener('click', () => {
@@ -1713,7 +1590,25 @@ function setupEventListeners() {
     });
     document.getElementById('cancelAddCardButton')?.addEventListener('click', () => ui.closeModal('addCardModal'));
 
-    // Formatações
+    document.getElementById('userList')?.addEventListener('click', e => {
+        const button = e.target.closest('button');
+        if (!button) return;
+        const username = button.dataset.username;
+        const action = button.dataset.action;
+        if (action === 'edit-balance') ui.showEditBalanceModal(username);
+        else if (action === 'edit-user') ui.showEditUserModal(username);
+        else if (action === 'delete-user') admin.deleteUser(username);
+    });
+
+    document.getElementById('adminCardList')?.addEventListener('click', e => {
+        const button = e.target.closest('button');
+        if (!button) return;
+        const cardNumber = button.dataset.cardNumber;
+        const action = button.dataset.action;
+        if (action === 'edit-card') ui.showEditCardModal(cardNumber);
+        else if (action === 'delete-card') admin.deleteCard(cardNumber);
+    });
+
     ['cardNumber', 'editCardNumber'].forEach(id => {
         document.getElementById(id)?.addEventListener('input', e => ui.formatCardNumber(e.target));
     });
@@ -1730,13 +1625,19 @@ function setupEventListeners() {
 
 // --- Inicialização ---
 document.addEventListener('DOMContentLoaded', () => {
-    setupEventListeners();
-    if (window.location.pathname.includes('shop.html')) {
-        shop.loadCards();
-    } else if (window.location.pathname.includes('dashboard.html')) {
-        admin.loadUsers();
-        admin.loadAdminCards();
-    }
+    // Carrega DOMPurify via CDN
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js';
+    script.onload = () => {
+        setupEventListeners();
+        if (window.location.pathname.includes('Shop.html')) {
+            shop.loadCards();
+        } else if (window.location.pathname.includes('Dashboard.html')) {
+            admin.loadUsers();
+            admin.loadAdminCards();
+        }
+    };
+    document.head.appendChild(script);
 });
 
 // --- Nota de Segurança ---
