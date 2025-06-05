@@ -285,26 +285,26 @@
 <body>
     <nav class="navbar">
         <div class="logo">
-            <img src="logo.png" alt="Logo da LOGAN CC's" aria-label="Logo da LOGAN CC's">
+            <img src="logo.png" alt="Logo da LOGAN CC's" aria-label="Logo da LOGAN CC's" onerror="this.src='https://via.placeholder.com/40?text=Logo'">
         </div>
         <div class="user-info">
             <span id="userName"></span>
             <span>R$<span id="userBalanceHeader">0.00</span></span>
-            <button onclick="ui.showAccountInfo()">Conta</button>
-            <button onclick="ui.showWallet()">Carteira</button>
-            <button id="adminButton" class="hidden" onclick="window.location.href='dashboard.html'">Admin</button>
-            <button onclick="auth.logout()">Sair</button>
+            <button id="accountButton">Conta</button>
+            <button id="walletButton">Carteira</button>
+            <button id="adminButton" class="hidden">Admin</button>
+            <button id="logoutButton">Sair</button>
         </div>
     </nav>
     <div class="container">
         <div class="filters">
             <div class="form-group">
                 <label for="binFilter">BIN</label>
-                <input type="text" id="binFilter" placeholder="Digite o BIN (6 dígitos)" maxlength="6" oninput="ui.filterCards()">
+                <input type="text" id="binFilter" placeholder="Digite o BIN (6 dígitos)" maxlength="6">
             </div>
             <div class="form-group">
                 <label for="brandFilter">Bandeira</label>
-                <select id="brandFilter" onchange="ui.filterCards()">
+                <select id="brandFilter">
                     <option value="all">Todas</option>
                     <option value="Visa">Visa</option>
                     <option value="Mastercard">Mastercard</option>
@@ -313,7 +313,7 @@
             </div>
             <div class="form-group">
                 <label for="bankFilter">Banco</label>
-                <select id="bankFilter" onchange="ui.filterCards()">
+                <select id="bankFilter">
                     <option value="all">Todos</option>
                     <option value="Nubank">Nubank</option>
                     <option value="Itaú">Itaú</option>
@@ -322,21 +322,21 @@
             </div>
             <div class="form-group">
                 <label for="levelFilter">Nível</label>
-                <select id="levelFilter" onchange="ui.filterCards()">
+                <select id="levelFilter">
                     <option value="all">Todos</option>
                     <option value="Classic">Classic</option>
                     <option value="Gold">Gold</option>
                     <option value="Platinum">Platinum</option>
                 </select>
             </div>
-            <button onclick="ui.clearFilters()">Limpar Filtros</button>
+            <button id="clearFiltersButton">Limpar Filtros</button>
         </div>
         <div id="cardList"></div>
         <div id="accountInfo" class="hidden">
             <h2>Informações da Conta</h2>
-            <p><strong>Usuário:</strong> <span id="userName"></span></p>
+            <p><strong>Usuário:</strong> <span id="userNameAccount"></span></p>
             <p><strong>Saldo:</strong> <span id="userBalanceAccount">R$0.00</span></p>
-            <button onclick="ui.showAddBalanceForm()">Adicionar Crédito</button>
+            <button id="addBalanceButton">Adicionar Crédito</button>
             <h2>Cartões Adquiridos</h2>
             <div id="userCards"></div>
         </div>
@@ -347,15 +347,15 @@
             <div id="confirmCardDetails"></div>
             <p><strong>Total:</strong> R$ <span id="confirmTotalAmount"></span></p>
             <p><strong>Saldo Atual:</strong> R$ <span id="confirmUserBalance"></span></p>
-            <button onclick="shop.purchaseCard(document.getElementById('confirmPurchaseModal').dataset.cardNumber)">Confirmar</button>
-            <button onclick="ui.closeConfirmPurchaseModal()">Cancelar</button>
+            <button id="confirmPurchaseButton">Confirmar</button>
+            <button id="cancelPurchaseButton">Cancelar</button>
         </div>
     </div>
     <div id="walletModal" class="modal hidden">
         <div class="modal-content">
             <h2>Carteira</h2>
             <div id="userCardsWallet"></div>
-            <button onclick="ui.closeModal()">Fechar</button>
+            <button id="closeWalletButton">Fechar</button>
         </div>
     </div>
     <div id="rechargeModal" class="modal hidden">
@@ -365,8 +365,8 @@
                 <label for="rechargeAmount">Valor</label>
                 <input type="number" id="rechargeAmount" placeholder="Digite o valor (R$)">
             </div>
-            <button onclick="ui.addBalance()">Adicionar</button>
-            <button onclick="ui.closeModal()">Cancelar</button>
+            <button id="addBalanceConfirmButton">Adicionar</button>
+            <button id="cancelRechargeButton">Cancelar</button>
         </div>
     </div>
     <div id="notifications" class="fixed top-2 right-4 z-50" role="alert"></div>
@@ -374,28 +374,28 @@
         document.addEventListener('DOMContentLoaded', () => {
             const googleFonts = document.getElementById('google-fonts');
             if (!googleFonts || !document.fonts.check('12px Poppins')) {
-                showNotification('Erro: Fontes não carregadas corretamente.', 'error');
+                ui.showNotification('Erro: Fontes não carregadas corretamente.', 'error');
             }
 
             const fontAwesome = document.getElementById('font-awesome');
             if (!fontAwesome || !document.querySelector('.fa-credit-card')) {
-                showNotification('Erro: Ícones do Font Awesome não carregados.', 'error');
+                ui.showNotification('Erro: Ícones do Font Awesome não carregados.', 'error');
             }
 
             const supabaseScript = document.getElementById('supabase-js');
             if (!supabaseScript || typeof createClient === 'undefined') {
-                showNotification('Erro: Cliente Supabase não carregado. Verifique sua conexão.', 'error');
+                ui.showNotification('Erro: Cliente Supabase não carregado. Verifique sua conexão.', 'error');
             }
 
             const scriptJs = document.getElementById('script-js');
             if (!scriptJs) {
-                showNotification('Erro: script.js não encontrado.', 'error');
+                ui.showNotification('Erro: script.js não encontrado.', 'error');
             }
 
-            const requiredElements = ['cardList', 'userCards', 'userName', 'userBalanceHeader', 'userBalanceAccount', 'adminButton', 'confirmPurchaseModal', 'walletModal', 'rechargeModal', 'notifications'];
+            const requiredElements = ['cardList', 'userCards', 'userName', 'userBalanceHeader', 'userBalanceAccount', 'adminButton', 'confirmPurchaseModal', 'walletModal', 'rechargeModal', 'notifications', 'binFilter', 'brandFilter', 'bankFilter', 'levelFilter'];
             const missingElements = requiredElements.filter(id => !document.getElementById(id));
             if (missingElements.length > 0) {
-                showNotification(`Erro: Elementos do DOM não encontrados: ${missingElements.join(', ')}.`, 'error');
+                ui.showNotification(`Erro: Elementos do DOM não encontrados: ${missingElements.join(', ')}.`, 'error');
             }
         });
     </script>
