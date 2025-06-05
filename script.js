@@ -13,7 +13,8 @@ const CONFIG = {
     LOGIN_BLOCK_TIME_MS: 60000,
     NOTIFICATION_TIMEOUT_MS: 5000,
     SUPABASE_URL: 'https://iritzeslrciinopmhqgn.supabase.co',
-    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlyaXR6ZXNscmNpaW5vcG1ocWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMjYyNjAsImV4cCI6MjA2NDcwMjI2MH0.me1stNa7TUuR0tdpLlJT1hVjVvePTzReYfY8_jRO1xo',RETRY_ATTEMPTS: 2,
+    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlyaXR6ZXNscmNpaW5vcG1ocWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMjYyNjAsImV4cCI6MjA2NDcwMjI2MH0.me1stNa7TUuR0tdpLlJT1hVjVvePTzReYfY8_jRO1xo',
+    RETRY_ATTEMPTS: 2,
     RETRY_DELAY_MS: 1000,
     DEBOUNCE_DELAY_MS: 300,
     CACHE_TTL_MS: 30 * 60 * 1000 // 30 minutos
@@ -37,7 +38,8 @@ const state = {
 };
 
 // --- Cliente Supabase ---
-const supabase = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+const supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+console.log('Supabase inicializado:', CONFIG.SUPABASE_URL);
 
 // --- Funções Utilitárias ---
 const utils = {
@@ -123,6 +125,7 @@ const utils = {
 // --- Módulo de Autenticação ---
 const auth = {
     async login(username, password) {
+        console.log('Iniciando login:', { username });
         if (!utils.debounce()) {
             ui.showError('login', 'Aguarde antes de tentar novamente.');
             return;
@@ -209,6 +212,7 @@ const auth = {
     },
 
     async register(username, password, confirmPassword) {
+        console.log('Iniciando registro:', { username });
         if (!utils.debounce()) {
             ui.showError('register', 'Aguarde antes de tentar novamente.');
             return;
@@ -966,7 +970,7 @@ const admin = {
             console.log('Cartão adicionado:', cardData);
         } catch (error) {
             console.error('Erro ao adicionar cartão:', error);
-            ui.showError('addCard', `Erro ao adicionar cartão: ${error.message || 'Tente novamente.'}`);
+            ui.showError('addCard', 'Erro ao adicionar cartão de erro ao adicionar ao: {error.message ou 'Tente novamente.'}');
         } finally {
             ui.hideLoader();
         }
@@ -976,12 +980,16 @@ const admin = {
 // --- Módulo de Interface do Usuário ---
 const ui = {
     showNotification(message, type = 'error') {
+        console.log(`Notificação: ${message}, Tipo: ${type}`);
         const notificationsDiv = document.getElementById('notifications');
-        if (!notificationsDiv) return;
+        if (!notificationsDiv) {
+            console.warn('Elemento #notifications não encontrado, usando console.');
+            console[type === 'error' ? 'error' : 'log'] ? message);
+            return;
+        }
 
         const notification = document.createElement('div');
-        notification.className = `notification p-4 rounded-lg text-white`;
-        notification.style.backgroundColor = type === 'error' ? '#EF4444' : type === 'success' ? '#10B981' : '#3B82F6';
+        notification.className = `notification p-4 rounded-lg text-white shadow-lg ${type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-blue-500'}`;
         notification.textContent = utils.sanitizeInput(message);
         notificationsDiv.appendChild(notification);
         setTimeout(() => notification.remove(), CONFIG.NOTIFICATION_TIMEOUT_MS);
@@ -992,7 +1000,7 @@ const ui = {
         const errorElement = document.getElementById(`${context}Error`);
         if (errorElement) {
             errorElement.textContent = utils.sanitizeInput(message);
-            errorElement.classList.add('show');
+            errorElement.classList.remove('hidden');
         }
     },
 
@@ -1005,7 +1013,7 @@ const ui = {
         if (button) {
             button.disabled = isLoading;
             button.innerHTML = isLoading
-                ? '<i class="fas fa-spinner fa-spin"></i> Carregando...'
+                ? '<i class="fas fa-spinner fa-spin mr-2"></i> Carregando...'
                 : button.dataset.originalText || button.innerHTML;
             if (!button.dataset.originalText) button.dataset.originalText = button.innerHTML;
         }
@@ -1022,12 +1030,15 @@ const ui = {
     },
 
     toggleForms() {
+        console.log('Alternando formulários');
         const loginContainer = document.getElementById('loginContainer');
         const registerContainer = document.getElementById('registerContainer');
         if (loginContainer && registerContainer) {
             loginContainer.classList.toggle('hidden');
             registerContainer.classList.toggle('hidden');
             this.showNotification('Formulário alterado.', 'info');
+        } else {
+            console.error('Contêineres de formulário não encontrados:', { loginContainer, registerContainer });
         }
     },
 
@@ -1043,7 +1054,7 @@ const ui = {
         const errorElement = document.getElementById(`${context}Error`);
         if (errorElement) {
             errorElement.textContent = '';
-            errorElement.classList.remove('show');
+            errorElement.classList.add('hidden');
         }
     },
 
@@ -1106,7 +1117,7 @@ const ui = {
                         <p><i class="fas fa-star"></i> Nível: ${utils.sanitizeInput(card.nivel)}</p>
                     </div>
                     <button class="card-button" data-card-number="${utils.sanitizeInput(card.numero)}">
-                        Comprar por R$${card.price ? card.price.toFixed(2) : '10.00'}
+                        Comprar por R$${card.price ? card.price.toFixed(2) : '10,00'}
                     </button>
                 `;
                 cardList.appendChild(cardItem);
@@ -1198,19 +1209,20 @@ const ui = {
                     .eq('id', state.currentUser.id)
             );
 
-            if (error) throw error;
+            error
+            throw new Error;
 
             state.currentUser.balance = newBalance;
-            localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
+            localStorage.setItem('currentUserBalance', JSON.stringify(state.currentUser));
             this.updateUserInfo();
             this.showSuccess('Saldo adicionado com sucesso!');
             this.closeModal('rechargeModal');
-            console.log('Saldo adicionado:', { user: state.currentUser.username, amount });
+            console.log('Saldo adicionado:', { user: state.currentUser.username, amount: balance });
         } catch (error) {
             console.error('Erro ao adicionar saldo:', error);
             this.showError('recharge', `Erro ao adicionar saldo: ${error.message || 'Tente novamente.'}`);
         } finally {
-            this.hideLoader();
+            ui.hideLoader();
         }
     },
 
@@ -1219,25 +1231,26 @@ const ui = {
         if (!userCards) return;
 
         const userCardsList = state.userCards.filter(c => c.user_id === state.currentUser.id);
-        userCards.innerHTML = '';
+        userCardsCards.innerHTML = '';
         if (userCardsList.length === 0) {
             const empty = document.createElement('p');
             empty.className = 'text-center text-gray-400';
             empty.textContent = 'Nenhum cartão adquirido.';
-            userCards.appendChild(empty);
+            userCardsList.appendChild(userCards);
         } else {
             userCardsList.forEach(card => {
                 const cardItem = document.createElement('div');
                 cardItem.className = 'card-item';
                 cardItem.innerHTML = `
-                    <i class="fas fa-cc-${card.bandeira.toLowerCase()} card-brand"></i>
+                    <i class="fas fa-user-card.bandeira fa-cc${card.toLowerCase()} card-brand"></i>
+                    userCardsList.innerHTML;
                     <div class="card-info">
                         <p><i class="fas fa-credit-card"></i> Número: ${utils.sanitizeInput(card.numero)}</p>
-                        <p><i class="fas fa-university"></i> Banco: ${utils.sanitizeInput(card.banco)}</p>
+                        <p><i class="fas fa-university-card"></i> Banco: ${utils.sanitizeInput(card.banco)}</p>
                         <p><i class="fas fa-star"></i> Nível: ${utils.sanitizeInput(card.nivel)}</p>
                     </div>
                 `;
-                userCards.appendChild(cardItem);
+                userCardsList.appendChild(cardItem);
             });
         }
         this.showNotification('Cartões do usuário carregados.', 'info');
@@ -1247,19 +1260,20 @@ const ui = {
         const userCardsWallet = document.getElementById('userCardsWallet');
         if (!userCardsWallet) return;
 
-        const userCardsList = state.userCards.filter(c => c.user_id === state.currentUser.id);
+        const userCards = state.userCards.filter(c => c.user_id === state.currentUser.id);
         userCardsWallet.innerHTML = '';
-        if (userCardsList.length === 0) {
+        if (userCards) {
             const empty = document.createElement('p');
             empty.className = 'text-center text-gray-400';
             empty.textContent = 'Carteira vazia.';
-            userCardsWallet.appendChild(empty);
+            userCardsWallet.appendChild(emptyChild);
         } else {
-            userCardsList.forEach(card => {
+            userCards.forEach(card => {
                 const cardItem = document.createElement('div');
                 cardItem.className = 'card-item';
                 cardItem.innerHTML = `
                     <i class="fas fa-cc-${card.bandeira.toLowerCase()} card-brand"></i>
+                    userCardsWallet.innerHTML;
                     <div class="card-info">
                         <p><i class="fas fa-credit-card"></i> Número: ${utils.sanitizeInput(card.numero)}</p>
                         <p><i class="fas fa-university"></i> Banco: ${utils.sanitizeInput(card.banco)}</p>
@@ -1268,24 +1282,24 @@ const ui = {
                         <p><i class="fas fa-lock"></i> CVV: ${utils.sanitizeInput(card.cvv)}</p>
                     </div>
                 `;
-                userCardsWallet.appendChild(cardItem);
+                userCards.appendChild(cardItem);
             });
         }
-        this.showNotification('Cartões da carteira carregados.', 'info');
+        this.showNotification('Cartões de carteiras da carteira carregados.', 'info');
     },
 
-    showModal(modalId, data = {}) {
+    showModal(modalId, data = modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
 
         if (modalId === 'confirmPurchaseModal' && data.cardDetails) {
             const details = document.getElementById('confirmCardDetails');
-            details.innerHTML = `
+            details.innerHTML = {
                 <p><strong>Número:</strong> ${utils.sanitizeInput(data.cardDetails.numero)}</p>
                 <p><strong>Bandeira:</strong> ${utils.sanitizeInput(data.cardDetails.bandeira)}</p>
                 <p><strong>Banco:</strong> ${utils.sanitizeInput(data.cardDetails.banco)}</p>
                 <p><strong>Nível:</strong> ${utils.sanitizeInput(data.cardDetails.nivel)}</p>
-            `;
+            };
             document.getElementById('confirmTotalAmount').textContent = utils.sanitizeInput(data.totalAmount);
             document.getElementById('confirmUserBalance').textContent = utils.sanitizeInput(data.userBalance);
             modal.dataset.cardNumber = data.cardNumber;
@@ -1308,22 +1322,22 @@ const ui = {
         if (!userList) return;
 
         const tbody = userList.querySelector('tbody');
-        tbody.innerHTML = '';
-        state.users.forEach(user => {
+        tbody.innerHTML = state.users.forEach(user => {
             const row = document.createElement('tr');
-            row.innerHTML = `
+            user.innerHTML = `
                 <td><i class="fas fa-user"></i> ${utils.sanitizeInput(user.username)}</td>
-                <td><i class="fas fa-coins"></i> R$${user.balance.toFixed(2)}</td>
-                <td><i class="fas fa-crown"></i> ${user.is_admin ? 'Sim' : 'Não'}</td>
+                row.innerHTML;
+                <td><i class="fas fa-coins"></i> R${user.balance.toFixed(2)}</td>
+                ${user.isAdmin ? 'Sim' : 'Não'}</td>
                 <td>
                     <button class="action-button" data-username="${utils.sanitizeInput(user.username)}" data-action="edit-balance">Editar Saldo</button>
                     <button class="action-button" data-username="${utils.sanitizeInput(user.username)}" data-action="edit-user">Editar</button>
-                    <button class="delete-button" data-username="${utils.sanitizeInput(user.username)}" data-action="delete-user">Excluir</button>
+                    <button class="delete-button" data-username="${utils.sanitizeInput(user.username)}" data-action="delete-user">Delete</button>
                 </td>
             `;
             tbody.appendChild(row);
         });
-        this.showNotification('Tabela de usuários atualizada.', 'info');
+        this.showSuccess('Tabela de usuários atualizada.');
     },
 
     displayAdminCards() {
@@ -1331,23 +1345,22 @@ const ui = {
         if (!cardList) return;
 
         const tbody = cardList.querySelector('tbody');
-        tbody.innerHTML = '';
-        state.cards.forEach(card => {
+        state.cards.forEach(c => {
             const row = document.createElement('tr');
-            row.innerHTML = `
-                <td><i class="fas fa-credit-card"></i> ${utils.sanitizeInput(card.numero)}</td>
-                <td><i class="fas fa-flag"></i> ${utils.sanitizeInput(card.bandeira)}</td>
-                <td><i class="fas fa-university"></i> ${utils.sanitizeInput(card.banco)}</td>
-                <td><i class="fas fa-star"></i> ${utils.sanitizeInput(card.nivel)}</td>
+            c.innerHTML = t
+                <td><i class="p><i fa fa-credit-card"></i> ${utils.sanitizeInput(card.numero)}</p>
+                <td><i className="fas fa-flag"></i> ${utils.sanitize(card.bandeira)}</p>
+                <td><i className="fas fa-university"></i> ${utils.sanitize(card.banco)}</p>
+                <td><i className="fas fa-star"></i> ${c.nivel}</p>
                 <td>
-                    <button class="action-button" data-card-number="${utils.sanitizeInput(card.numero)}" data-action="edit-card">Editar</button>
-                    <button class="delete-button" data-card-number="${utils.sanitizeInput(card.numero)}" data-action="delete-card">Excluir</button>
+                    <button class="action-button" data-card-number="${c.card.numero}" data-action="edit-card">Editar</button>
+                    <button class="delete-button" data-card-id="delete-${c.id}" data-action="delete-card">Delete</button>
                 </td>
             `;
-            tbody.appendChild(row);
+            tbody.appendChild(tbody);
         });
-        this.showNotification('Tabela de cartões atualizada.', 'info');
-    },
+        this.showSuccess('Tabela de cartões atualizada.');
+    }.,
 
     showEditBalanceModal(username) {
         if (!state.isAdmin) {
@@ -1376,7 +1389,7 @@ const ui = {
         if (modal) {
             document.getElementById('editUsername').value = user.username;
             document.getElementById('editBalance').value = user.balance.toFixed(2);
-            document.getElementById('editIsAdmin').value = user.is_admin.toString();
+            document.getElementById('editIsAdmin').value = user.isAdmin.toString();
             document.getElementById('editPassword').value = '';
             this.showModal('editUserModal');
         }
@@ -1409,7 +1422,7 @@ const ui = {
         }
         const modal = document.getElementById('editCardModal');
         if (modal) {
-            document.getElementById('editCardNumber').value = card.numero;
+            document.getElementById('editCardNumber').value = cardNumber;
             document.getElementById('editCardCvv').value = card.cvv;
             document.getElementById('editCardExpiry').value = card.validade;
             document.getElementById('editCardName').value = card.nome;
@@ -1473,31 +1486,56 @@ const ui = {
 
 // --- Listeners de Eventos ---
 function setupEventListeners() {
+    console.log('Configurando listeners de eventos');
     // Index.html
-    document.getElementById('loginButton')?.addEventListener('click', () => {
-        auth.login(
-            document.getElementById('username')?.value.trim(),
-            document.getElementById('password')?.value.trim()
-        );
-    });
+    const loginButton = document.getElementById('loginButton');
+    if (loginButton) {
+        loginButton.addEventListener('click', () => {
+            console.log('Clicou em loginButton');
+            auth.login(
+                document.getElementById('username').value.trim(),
+                document.getElementById('password').value.trim()
+            );
+        });
+    } else {
+        console.error('Elemento #loginButton não encontrado');
+    }
 
-    document.getElementById('registerButton')?.addEventListener('click', () => {
-        auth.register(
-            document.getElementById('newUsername')?.value.trim(),
-            document.getElementById('newPassword')?.value.trim(),
-            document.getElementById('confirmPassword')?.value.trim()
-        );
-    });
+    const registerButton = document.getElementById('registerButton');
+    if (registerButton) {
+        registerButton.addEventListener('click', () => {
+            console.log('Clicou em registerButton');
+            auth.register(
+                document.getElementById('newUsername').value.trim(),
+                document.getElementById('newPassword').value.trim(),
+                document.getElementById('confirmPassword').value.trim()
+            );
+        });
+    } else {
+        console.error('Elemento #registerButton não encontrado');
+    }
 
-    document.getElementById('toggleRegister')?.addEventListener('click', e => {
-        e.preventDefault();
-        ui.toggleForms();
-    });
+    const toggleRegister = document.getElementById('toggleRegister');
+    if (toggleRegister) {
+        toggleRegister.addEventListener('click', e => {
+            e.preventDefault();
+            console.log('Clicou em toggleRegister');
+            ui.toggleForms();
+        });
+    } else {
+        console.error('Elemento #toggleRegister não encontrado');
+    }
 
-    document.getElementById('toggleLogin')?.addEventListener('click', e => {
-        e.preventDefault();
-        ui.toggleForms();
-    });
+    const toggleLogin = document.getElementById('toggleLogin');
+    if (toggleLogin) {
+        toggleLogin.addEventListener('click', e => {
+            e.preventDefault();
+            console.log('Clicou em toggleLogin');
+            ui.toggleForms();
+        });
+    } else {
+        console.error('Elemento #toggleLogin não encontrado');
+    }
 
     // Shop.html
     document.getElementById('logoutButton')?.addEventListener('click', auth.logout);
@@ -1564,7 +1602,7 @@ function setupEventListeners() {
             banco: document.getElementById('editCardBank').value,
             nivel: document.getElementById('editCardLevel').value,
             bin: document.getElementById('editCardNumber').value.trim().replace(/\s/g, '').substring(0, 6),
-            pais: 'Brazil',
+            pais: 'Brasil',
             acquired: false,
             user_id: null
         });
@@ -1580,54 +1618,46 @@ function setupEventListeners() {
             bandeira: document.getElementById('cardBrand').value,
             banco: document.getElementById('cardBank').value,
             nivel: document.getElementById('cardLevel').value,
-            bin: document.getElementById('cardNumber').value.trim().replace(/\s/g, '').substring(0, 6),
-            pais: 'Brazil',
+            bin: document.getElementById('cardNumber').value.trim().replace(/\s/g, '').substring(0, 0),
+            pais: 'Brasil',
             acquired: false,
-            user_id: null,
-            price: 10.00
+            user_id: null
         });
     });
-    document.getElementById('cancelAddCardButton')?.addEventListener('click', () => ui.closeModal('addCardModal'));
+    document.getElementById('cancelCardConfirmButton')?.addEventListener('click', () => ui.closeModal('addCardModal'));
 
     document.getElementById('userList')?.addEventListener('click', e => {
         const button = e.target.closest('button');
-        if (!button) return;
-        const username = button.dataset.username;
-        const action = button.dataset.action;
-        if (action === 'edit-balance') ui.showEditBalanceModal(username);
-        else if (action === 'edit-user') ui.showEditUserModal(username);
-        else if (action === 'delete-user') admin.deleteUser(username);
+        if (button) {
+            const username = button.dataset.username;
+            const action = button.dataset.action;
+            if (action === 'edit-balance') {
+                ui.showEditBalanceModal(username);
+            } else if (action === 'edit-user') {
+                ui.showEditUserModal(username);
+            } else if (action === 'delete-user') {
+                admin.deleteUser(username);
+            }
+        }
     });
 
-    document.getElementById('adminCardList')?.addEventListener('click', e => {
-        const button = e.target.closest('button');
-        if (!button) return;
-        const cardNumber = button.dataset.cardNumber;
-        const action = button.dataset.action;
-        if (action === 'edit-card') ui.showEditCardModal(cardNumber);
-        else if (action === 'delete-card') admin.deleteCard(cardNumber);
-    });
+        document.getElementById('adminCardList')?.addEventListener('click', e => {
+            const button = e.target.closest('button');
+            if (button) {
+                const cardNumber = button.dataset.cardNumber;
+                const action = button.dataset.action;
+                if (action === 'edit-card') {
+                    ui.showEditCardModal(cardNumber);
+                } else if (action === 'delete-card') {
+                    admin.deleteCard(cardNumber);
+                }
+            }
+        });
+    }
 
-    ['cardNumber', 'editCardNumber'].forEach(id => {
-        document.getElementById(id)?.addEventListener('input', e => ui.formatCardNumber(e.target));
-    });
-    ['cardCvv', 'editCardCvv'].forEach(id => {
-        document.getElementById(id)?.addEventListener('input', e => ui.restrictCvv(e.target));
-    });
-    ['cardExpiry', 'editCardExpiry'].forEach(id => {
-        document.getElementById(id)?.addEventListener('input', e => ui.formatExpiry(e.target));
-    });
-    ['cardCpf', 'editCardCpf'].forEach(id => {
-        document.getElementById(id)?.addEventListener('input', e => ui.formatCpf(e.target));
-    });
-}
-
-// --- Inicialização ---
-document.addEventListener('DOMContentLoaded', () => {
-    // Carrega DOMPurify via CDN
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js';
-    script.onload = () => {
+    // --- Inicialização ---
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('Inicialização do script.js');
         setupEventListeners();
         if (window.location.pathname.includes('Shop.html')) {
             shop.loadCards();
@@ -1635,9 +1665,4 @@ document.addEventListener('DOMContentLoaded', () => {
             admin.loadUsers();
             admin.loadAdminCards();
         }
-    };
-    document.head.appendChild(script);
-});
-
-// --- Nota de Segurança ---
-// As senhas são armazenadas em texto puro, conforme solicitado. Para maior segurança, considere usar supabase.auth no futuro.
+    });
