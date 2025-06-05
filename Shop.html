@@ -7,10 +7,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="utils.js" defer></script>
     <script src="Script.js" defer></script>
     <style>
         .notification {
             animation: slideIn 0.5s ease-out, fadeOut 0.5s ease-in 4.5s forwards;
+            z-index: 10000;
+            min-width: 200px;
+            max-width: 300px;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-wrap: break-word;
         }
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
@@ -119,8 +126,8 @@
                     <input type="text" id="binFilter" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded" placeholder="Ex: 453212">
                 </div>
                 <div>
-                    <label for="brandFilter" class="block text-sm font-medium">Bandeira</label>
-                    <select id="brandFilter" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded">
+                    <label for="bandeiraFilter" class="block text-sm font-medium">Bandeira</label>
+                    <select id="bandeiraFilter" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded">
                         <option value="all">Todas</option>
                         <option value="Visa">Visa</option>
                         <option value="Mastercard">Mastercard</option>
@@ -128,8 +135,8 @@
                     </select>
                 </div>
                 <div>
-                    <label for="bankFilter" class="block text-sm font-medium">Banco</label>
-                    <select id="bankFilter" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded">
+                    <label for="bancoFilter" class="block text-sm font-medium">Banco</label>
+                    <select id="bancoFilter" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded">
                         <option value="all">Todos</option>
                         <option value="Nubank">Nubank</option>
                         <option value="Itaú">Itaú</option>
@@ -137,8 +144,8 @@
                     </select>
                 </div>
                 <div>
-                    <label for="levelFilter" class="block text-sm font-medium">Nível</label>
-                    <select id="levelFilter" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded">
+                    <label for="nivelFilter" class="block text-sm font-medium">Nível</label>
+                    <select id="nivelFilter" class="mt-1 w-full p-2 bg-gray-700 border border-gray-600 rounded">
                         <option value="all">Todos</option>
                         <option value="Classic">Classic</option>
                         <option value="Gold">Gold</option>
