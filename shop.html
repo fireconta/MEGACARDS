@@ -371,15 +371,7 @@
     </div>
     <div id="notifications" class="fixed top-2 right-4 z-50" role="alert"></div>
     <script>
-        // Verifica autenticação ao carregar a página
         document.addEventListener('DOMContentLoaded', () => {
-            if (!checkAuth()) {
-                ui.showNotification('Faça login para acessar a loja.', 'error');
-                setTimeout(() => window.location.href = 'index.html', 1000);
-            } else {
-                shop.loadCards();
-            }
-
             const googleFonts = document.getElementById('google-fonts');
             if (!googleFonts || !document.fonts.check('12px Poppins')) {
                 ui.showNotification('Erro: Fontes não carregadas corretamente.', 'error');
@@ -398,6 +390,12 @@
             const scriptJs = document.getElementById('script-js');
             if (!scriptJs) {
                 ui.showNotification('Erro: script.js não encontrado.', 'error');
+            }
+
+            const requiredElements = ['cardList', 'userCards', 'userName', 'userBalanceHeader', 'userBalanceAccount', 'adminButton', 'confirmPurchaseModal', 'walletModal', 'rechargeModal', 'notifications', 'binFilter', 'brandFilter', 'bankFilter', 'levelFilter'];
+            const missingElements = requiredElements.filter(id => !document.getElementById(id));
+            if (missingElements.length > 0) {
+                ui.showNotification(`Erro: Elementos do DOM não encontrados: ${missingElements.join(', ')}.`, 'error');
             }
         });
     </script>
