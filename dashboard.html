@@ -229,19 +229,19 @@
 <body>
     <nav class="navbar">
         <div class="logo">
-            <img src="logo.png" alt="Logo da LOGAN CC's" aria-label="Logo da LOGAN CC's">
+            <img src="logo.png" alt="Logo da LOGAN CC's" aria-label="Logo da LOGAN CC's" onerror="this.src='https://via.placeholder.com/40?text=Logo'">
         </div>
         <div class="user-info">
             <span id="userName"></span>
             <span>R$<span id="userBalanceHeader">0.00</span></span>
-            <button onclick="window.location.href='shop.html'">Loja</button>
-            <button onclick="auth.logout()">Sair</button>
+            <button id="shopButton">Loja</button>
+            <button id="logoutButton">Sair</button>
         </div>
     </nav>
     <div class="container">
         <div class="table-container">
             <h2>Gerenciar Usuários</h2>
-            <button class="action-button" onclick="ui.showAddUserModal()">Adicionar Usuário</button>
+            <button id="addUserButton" class="action-button hidden">Adicionar Usuário</button>
             <table id="userList">
                 <thead>
                     <tr>
@@ -256,7 +256,7 @@
         </div>
         <div class="table-container">
             <h2>Gerenciar Cartões</h2>
-            <button class="action-button" onclick="ui.showAddCardModal()">Adicionar Cartão</button>
+            <button id="addCardButton" class="action-button hidden">Adicionar Cartão</button>
             <table id="adminCardList">
                 <thead>
                     <tr>
@@ -278,8 +278,8 @@
                 <label for="editBalanceAmount">Novo Saldo (R$)</label>
                 <input type="number" id="editBalanceAmount" placeholder="Digite o novo saldo">
             </div>
-            <button onclick="admin.editUserBalance()">Salvar</button>
-            <button onclick="ui.closeModal()">Cancelar</button>
+            <button id="saveBalanceButton">Salvar</button>
+            <button id="cancelBalanceButton">Cancelar</button>
         </div>
     </div>
     <div id="editUserModal" class="modal hidden">
@@ -304,8 +304,8 @@
                     <option value="false">Não</option>
                 </select>
             </div>
-            <button onclick="admin.editUser(document.getElementById('editUsername').value, parseFloat(document.getElementById('editBalance').value), document.getElementById('editIsAdmin').value === 'true')">Salvar</button>
-            <button onclick="ui.closeModal()">Cancelar</button>
+            <button id="saveUserButton">Salvar</button>
+            <button id="cancelUserButton">Cancelar</button>
         </div>
     </div>
     <div id="addUserModal" class="modal hidden">
@@ -330,8 +330,8 @@
                     <option value="true">Sim</option>
                 </select>
             </div>
-            <button onclick="admin.addUser()">Adicionar</button>
-            <button onclick="ui.closeModal()">Cancelar</button>
+            <button id="addUserConfirmButton">Adicionar</button>
+            <button id="cancelAddUserButton">Cancelar</button>
         </div>
     </div>
     <div id="editCardModal" class="modal hidden">
@@ -339,15 +339,15 @@
             <h2>Editar Cartão</h2>
             <div class="form-group">
                 <label for="editCardNumber">Número do Cartão</label>
-                <input type="text" id="editCardNumber" placeholder="Digite o número do cartão" maxlength="19" oninput="formatCardNumber(this)">
+                <input type="text" id="editCardNumber" placeholder="Digite o número do cartão" maxlength="19">
             </div>
             <div class="form-group">
                 <label for="editCardCvv">CVV</label>
-                <input type="text" id="editCardCvv" placeholder="Digite o CVV" maxlength="3" oninput="restrictCvv(this)">
+                <input type="text" id="editCardCvv" placeholder="Digite o CVV" maxlength="3">
             </div>
             <div class="form-group">
                 <label for="editCardExpiry">Validade (MM/AA)</label>
-                <input type="text" id="editCardExpiry" placeholder="MM/AA" maxlength="5" oninput="formatExpiry(this)">
+                <input type="text" id="editCardExpiry" placeholder="MM/AA" maxlength="5">
             </div>
             <div class="form-group">
                 <label for="editCardName">Nome no Cartão</label>
@@ -355,7 +355,7 @@
             </div>
             <div class="form-group">
                 <label for="editCardCpf">CPF</label>
-                <input type="text" id="editCardCpf" placeholder="Digite o CPF" maxlength="14" oninput="formatCPF(this)">
+                <input type="text" id="editCardCpf" placeholder="Digite o CPF" maxlength="14">
             </div>
             <div class="form-group">
                 <label for="editCardBrand">Bandeira</label>
@@ -381,19 +381,8 @@
                     <option value="Platinum">Platinum</option>
                 </select>
             </div>
-            <button onclick="admin.editCard({
-                numero: document.getElementById('editCardNumber').value,
-                cvv: document.getElementById('editCardCvv').value,
-                validade: document.getElementById('editCardExpiry').value,
-                nome: document.getElementById('editCardName').value,
-                cpf: document.getElementById('editCardCpf').value,
-                bandeira: document.getElementById('editCardBrand').value,
-                banco: document.getElementById('editCardBank').value,
-                nivel: document.getElementById('editCardLevel').value,
-                bin: document.getElementById('editCardNumber').value.replace(/\s/g, '').substring(0, 6),
-                pais: 'Brazil'
-            })">Salvar</button>
-            <button onclick="ui.closeModal()">Cancelar</button>
+            <button id="saveCardButton">Salvar</button>
+            <button id="cancelCardButton">Cancelar</button>
         </div>
     </div>
     <div id="addCardModal" class="modal hidden">
@@ -401,15 +390,15 @@
             <h2>Adicionar Cartão</h2>
             <div class="form-group">
                 <label for="cardNumber">Número do Cartão</label>
-                <input type="text" id="cardNumber" placeholder="Digite o número do cartão" maxlength="19" oninput="formatCardNumber(this)">
+                <input type="text" id="cardNumber" placeholder="Digite o número do cartão" maxlength="19">
             </div>
             <div class="form-group">
                 <label for="cardCvv">CVV</label>
-                <input type="text" id="cardCvv" placeholder="Digite o CVV" maxlength="3" oninput="restrictCvv(this)">
+                <input type="text" id="cardCvv" placeholder="Digite o CVV" maxlength="3">
             </div>
             <div class="form-group">
                 <label for="cardExpiry">Validade (MM/AA)</label>
-                <input type="text" id="cardExpiry" placeholder="MM/AA" maxlength="5" oninput="formatExpiry(this)">
+                <input type="text" id="cardExpiry" placeholder="MM/AA" maxlength="5">
             </div>
             <div class="form-group">
                 <label for="cardName">Nome no Cartão</label>
@@ -417,7 +406,7 @@
             </div>
             <div class="form-group">
                 <label for="cardCpf">CPF</label>
-                <input type="text" id="cardCpf" placeholder="Digite o CPF" maxlength="14" oninput="formatCPF(this)">
+                <input type="text" id="cardCpf" placeholder="Digite o CPF" maxlength="14">
             </div>
             <div class="form-group">
                 <label for="cardBrand">Bandeira</label>
@@ -443,72 +432,37 @@
                     <option value="Platinum">Platinum</option>
                 </select>
             </div>
-            <button onclick="ui.saveCard()">Adicionar</button>
-            <button onclick="ui.closeModal()">Cancelar</button>
+            <button id="addCardConfirmButton">Adicionar</button>
+            <button id="cancelAddCardButton">Cancelar</button>
         </div>
     </div>
     <div id="notifications" class="fixed top-2 right-4 z-50" role="alert"></div>
     <script>
-        function showAddUserModal() {
-            const modal = document.getElementById('addUserModal');
-            if (modal) {
-                document.getElementById('newUsername').value = '';
-                document.getElementById('newPassword').value = '';
-                document.getElementById('newBalance').value = '';
-                document.getElementById('newIsAdmin').value = 'false';
-                modal.classList.remove('hidden');
-                modal.classList.add('show');
-            }
-        }
-
-        function showAddCardModal() {
-            const modal = document.getElementById('addCardModal');
-            if (modal) {
-                document.getElementById('cardNumber').value = '';
-                document.getElementById('cardCvv').value = '';
-                document.getElementById('cardExpiry').value = '';
-                document.getElementById('cardName').value = '';
-                document.getElementById('cardCpf').value = '';
-                document.getElementById('cardBrand').value = 'Visa';
-                document.getElementById('cardBank').value = 'Nubank';
-                document.getElementById('cardLevel').value = 'Classic';
-                modal.classList.remove('hidden');
-                modal.classList.add('show');
-            }
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
             const googleFonts = document.getElementById('google-fonts');
             if (!googleFonts || !document.fonts.check('12px Poppins')) {
-                showNotification('Erro: Fontes não carregadas corretamente.', 'error');
+                ui.showNotification('Erro: Fontes não carregadas corretamente.', 'error');
             }
 
             const fontAwesome = document.getElementById('font-awesome');
             if (!fontAwesome || !document.querySelector('.fa-user')) {
-                showNotification('Erro: Ícones do Font Awesome não carregados.', 'error');
+                ui.showNotification('Erro: Ícones do Font Awesome não carregados.', 'error');
             }
 
             const supabaseScript = document.getElementById('supabase-js');
             if (!supabaseScript || typeof createClient === 'undefined') {
-                showNotification('Erro: Cliente Supabase não carregado. Verifique sua conexão.', 'error');
+                ui.showNotification('Erro: Cliente Supabase não carregado. Verifique sua conexão.', 'error');
             }
 
             const scriptJs = document.getElementById('script-js');
             if (!scriptJs) {
-                showNotification('Erro: script.js não encontrado.', 'error');
+                ui.showNotification('Erro: script.js não encontrado.', 'error');
             }
 
-            const requiredElements = ['userList', 'adminCardList', 'userName', 'userBalanceHeader', 'editBalanceModal', 'editUserModal', 'addUserModal', 'editCardModal', 'addCardModal', 'notifications'];
+            const requiredElements = ['userList', 'adminCardList', 'userName', 'userBalanceHeader', 'editBalanceModal', 'editUserModal', 'addUserModal', 'editCardModal', 'addCardModal', 'notifications', 'addUserButton', 'addCardButton'];
             const missingElements = requiredElements.filter(id => !document.getElementById(id));
             if (missingElements.length > 0) {
-                showNotification(`Erro: Elementos do DOM não encontrados: ${missingElements.join(', ')}.`, 'error');
-            }
-
-            if (typeof admin !== 'undefined' && missingElements.length === 0 && typeof createClient !== 'undefined') {
-                admin.loadUsers();
-                admin.loadAdminCards();
-                document.getElementById('userName').textContent = state.currentUser?.username || '';
-                document.getElementById('userBalanceHeader').textContent = state.currentUser?.balance?.toFixed(2) || '0.00';
+                ui.showNotification(`Erro: Elementos do DOM não encontrados: ${missingElements.join(', ')}.`, 'error');
             }
         });
     </script>
