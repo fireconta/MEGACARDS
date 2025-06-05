@@ -7,10 +7,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="Script.js" defer></script>
+    <script src="Script.js" defer onerror="console.error('Erro ao carregar Script.js')"></script>
     <style>
         .notification {
             animation: slideIn 0.5s ease-out, fadeOut 0.5s ease-in 4.5s forwards;
+            z-index: 1000;
+            min-width: 200px;
+            padding: 1rem;
+            border-radius: 0.5rem;
         }
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
