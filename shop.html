@@ -1,403 +1,193 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#1A2A44">
     <title>LOGAN CC's - Loja</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Montserrat:wght@700&display=swap" rel="stylesheet" id="google-fonts">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" id="font-awesome">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" id="supabase-js"></script>
-    <script src="script.js" defer id="script-js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="Script.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        .hidden { display: none; }
+        .modal { display: none; }
+        .modal.show { display: flex; }
+        .notification {
+            animation: fadeInOut 5s ease-in-out;
         }
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(145deg, #0F172A 0%, #1E293B 100%);
-            color: #E2E8F0;
-            min-height: 100vh;
-            overflow-x: hidden;
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-10px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
         }
-        .navbar {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 1rem 2rem;
+        #notifications {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            max-width: 300px;
+        }
+        .card-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(56, 189, 248, 0.2);
-        }
-        .navbar .logo img {
-            height: 40px;
-        }
-        .navbar .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .navbar span {
-            font-weight: 600;
-        }
-        .navbar button {
-            background: linear-gradient(90deg, #38BDF8, #2563EB);
-            color: #FFFFFF;
-            border-radius: 0.5rem;
-            padding: 0.5rem 1rem;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .navbar button:hover {
-            background: linear-gradient(90deg, #2563EB, #1D4ED8);
-            transform: scale(1.03);
-        }
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-        h2 {
-            font-family: 'Montserrat', sans-serif;
-            color: #38BDF8;
-            margin-bottom: 1.5rem;
-        }
-        .filters {
-            background: rgba(15, 23, 42, 0.95);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-        .filters .form-group {
-            flex: 1;
-            min-width: 200px;
-        }
-        .filters label {
-            display: block;
-            font-size: 0.9rem;
-            color: #A0BFE0;
-            margin-bottom: 0.3rem;
-        }
-        .filters input, .filters select {
-            width: 100%;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            background: #2D3748;
-            color: #E2E8F0;
-            border: 1px solid #4B5563;
-            transition: all 0.3s ease;
-        }
-        .filters input:focus, .filters select:focus {
-            border-color: #38BDF8;
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
-            outline: none;
-        }
-        .filters button {
-            background: linear-gradient(90deg, #38BDF8, #2563EB);
-            color: #FFFFFF;
-            border-radius: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            align-self: flex-end;
-        }
-        .filters button:hover {
-            background: linear-gradient(90deg, #2563EB, #1D4ED8);
-            transform: scale(1.03);
-        }
-        #cardList {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-        .card-item {
-            background: rgba(15, 23, 42, 0.95);
-            border-radius: 1rem;
-            padding: 1rem;
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+            padding: 15px;
+            background-color: #1f2937;
+            border-radius: 8px;
+            margin-bottom: 10px;
         }
         .card-brand {
-            color: #38BDF8;
-            font-size: 2rem;
+            font-size: 24px;
+            margin-right: 10px;
         }
         .card-info p {
-            font-size: 0.9rem;
-            color: #A0BFE0;
-            margin-bottom: 0.5rem;
-        }
-        .card-info p i {
-            margin-right: 0.5rem;
+            margin: 5px 0;
         }
         .card-button {
-            background: linear-gradient(90deg, #38BDF8, #2563EB);
-            color: #FFFFFF;
-            border-radius: 0.5rem;
-            padding: 0.75rem;
-            border: none;
+            background-color: #0ea5e9;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
         }
         .card-button:hover {
-            background: linear-gradient(90deg, #2563EB, #1D4ED8);
-            transform: scale(1.03);
+            background-color: #0284c7;
         }
-        #accountInfo {
-            background: rgba(15, 23, 42, 0.95);
-            border-radius: 1rem;
-            padding: 2rem;
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            margin-bottom: 2rem;
-        }
-        #accountInfo p {
-            font-size: 1rem;
-            color: #A0BFE0;
-            margin-bottom: 1rem;
-        }
-        #accountInfo button {
-            margin-right: 0.5rem;
-        }
-        .modal {
+        #globalLoader {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
+            z-index: 2000;
         }
-        .modal.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        .modal-content {
-            background: rgba(15, 23, 42, 0.95);
-            border-radius: 1rem;
-            padding: 2rem;
-            max-width: 600px;
-            width: 90%;
-            border: 1px solid rgba(56, 189, 248, 0.2);
-        }
-        .modal-content h2 {
-            font-family: 'Montserrat', sans-serif;
-            color: #38BDF8;
-            margin-bottom: 1.5rem;
-        }
-        .modal-content p {
-            color: #A0BFE0;
-            margin-bottom: 1rem;
-        }
-        .modal-content .form-group {
-            margin-bottom: 1rem;
-        }
-        .modal-content label {
-            display: block;
-            font-size: 0.9rem;
-            color: #A0BFE0;
-            margin-bottom: 0.3rem;
-        }
-        .modal-content input, .modal-content select {
-            width: 100%;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            background: #2D3748;
-            color: #E2E8F0;
-            border: 1px solid #4B5563;
-            transition: all 0.3s ease;
-        }
-        .modal-content input:focus, .modal-content select:focus {
-            border-color: #38BDF8;
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
-            outline: none;
-        }
-        .modal-content button {
-            background: linear-gradient(90deg, #38BDF8, #2563EB);
-            color: #FFFFFF;
-            border-radius: 0.5rem;
-            padding: 0.75rem;
-            border: none;
-            cursor: pointer;
-            margin-right: 0.5rem;
-        }
-        .modal-content button:hover {
-            background: linear-gradient(90deg, #2563EB, #1D4ED8);
-            transform: scale(1.03);
-        }
-        .notification {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            z-index: 1000;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            color: #FFFFFF;
-            font-size: 0.9rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            animation: slideIn 0.3s ease;
-        }
-        .notification.error {
-            background: #F87171;
-        }
-        .notification.success {
-            background: #34D399;
-        }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        @media (max-width: 640px) {
-            .navbar {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            .filters {
-                flex-direction: column;
-            }
-            .filters .form-group {
-                min-width: 100%;
-            }
-            .container {
-                padding: 0 0.5rem;
-            }
-        }
-        .hidden {
-            display: none;
+        #globalLoader.show {
+            display: flex;
         }
     </style>
 </head>
-<body>
-    <nav class="navbar">
-        <div class="logo">
-            <img src="logo.png" alt="Logo da LOGAN CC's" aria-label="Logo da LOGAN CC's" onerror="this.src='https://via.placeholder.com/40?text=Logo'">
+<body class="bg-gray-900 text-white min-h-screen">
+    <div id="notifications"></div>
+    <div id="globalLoader" class="hidden">
+        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #38BDF8;"></i>
+    </div>
+    <header class="bg-gray-800 p-4 flex justify-between items-center">
+        <div class="flex items-center">
+            <h1 class="text-2xl font-bold text-sky-400">LOGAN CC's</h1>
+            <span id="userBalanceHeader" class="ml-4 text-sm bg-sky-600 p-2 rounded">R$0.00</span>
         </div>
-        <div class="user-info">
-            <span id="userName"></span>
-            <span>R$<span id="userBalanceHeader">0.00</span></span>
-            <button id="accountButton">Conta</button>
-            <button id="walletButton">Carteira</button>
-            <button id="adminButton" class="hidden">Admin</button>
-            <button id="logoutButton">Sair</button>
+        <div>
+            <button id="accountButton" class="bg-gray-700 hover:bg-gray-600 p-2 rounded mr-2">
+                <i class="fas fa-user"></i> Conta
+            </button>
+            <button id="walletButton" class="bg-gray-700 hover:bg-gray-600 p-2 rounded mr-2">
+                <i class="fas fa-wallet"></i> Carteira
+            </button>
+            <button id="addBalanceButton" class="bg-sky-500 hover:bg-sky-600 p-2 rounded mr-2">
+                <i class="fas fa-coins"></i> Adicionar Saldo
+            </button>
+            <button id="adminButton" class="bg-gray-500 hover:bg-gray-400 p-2 rounded mr-2 hidden">
+                <i class="fas fa-cog"></i> Admin
+            </button>
+            <button id="logoutButton" class="bg-red-600 hover:bg-red-700 p-2 rounded">
+                <i class="fas fa-sign-out-alt"></i> Sair
+            </button>
         </div>
-    </nav>
-    <div class="container">
+    </header>
+
+    <main class="container mx-auto p-4">
+        <!-- Filtros -->
         <div class="filters">
-            <div class="form-group">
-                <label for="binFilter">BIN</label>
-                <input type="text" id="binFilter" placeholder="Digite o BIN (6 dígitos)" maxlength="6">
-            </div>
-            <div class="form-group">
-                <label for="brandFilter">Bandeira</label>
-                <select id="brandFilter">
-                    <option value="all">Todas</option>
+            <div class="flex flex-wrap gap-4 mb-4">
+                <input
+                    id="binFilter"
+                    type="text"
+                    placeholder="Filtrar por BIN"
+                    class="p-2 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400"
+                >
+                <select id="brandFilter" class="p-2 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400">
+                    <option value="all">Todas as Bandeiras</option>
                     <option value="Visa">Visa</option>
                     <option value="Mastercard">Mastercard</option>
                     <option value="Amex">Amex</option>
                 </select>
-            </div>
-            <div class="form-group">
-                <label for="bankFilter">Banco</label>
-                <select id="bankFilter">
-                    <option value="all">Todos</option>
+                <select id="bankFilter" class="p-2 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400">
+                    <option value="all">Todos os Bancos</option>
                     <option value="Nubank">Nubank</option>
                     <option value="Itaú">Itaú</option>
                     <option value="Bradesco">Bradesco</option>
                 </select>
-            </div>
-            <div class="form-group">
-                <label for="levelFilter">Nível</label>
-                <select id="levelFilter">
-                    <option value="all">Todos</option>
-                    <option value="Classic">Classic</option>
+                <select id="levelFilter" class="p-2 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400">
+                    <option value="all">Todos os Níveis</option>
+                    <option value="Classic">Clássico</option>
                     <option value="Gold">Gold</option>
                     <option value="Platinum">Platinum</option>
                 </select>
+                <button id="clearFiltersButton" class="bg-gray-600 hover:bg-gray-500 p-2 rounded">
+                    <i class="fas fa-eraser"></i> Limpar Filtros
+                </button>
             </div>
-            <button id="clearFiltersButton">Limpar Filtros</button>
         </div>
-        <div id="cardList"></div>
+
+        <!-- Lista de Cartões -->
+        <div id="cardList" class="card-list">
+            <p class="text-center p-4 text-gray-400">Carregando cartões...</p>
+        </div>
+
+        <!-- Informações de Conta -->
         <div id="accountInfo" class="hidden">
-            <h2>Informações da Conta</h2>
+            <h2 class="text-xl font-bold mb-4">Minha Conta</h2>
             <p><strong>Usuário:</strong> <span id="userNameAccount"></span></p>
-            <p><strong>Saldo:</strong> <span id="userBalanceAccount">R$0.00</span></p>
-            <button id="addBalanceButton">Adicionar Crédito</button>
-            <h2>Cartões Adquiridos</h2>
-            <div id="userCards"></div>
+            <p><strong>Saldo:</strong> <span id="userBalanceAccount"></span></p>
+            <h3 class="mt-4 font-bold">Cartões Adquiridos</h3>
+            <div id="userCards" class="card-list"></div>
         </div>
-    </div>
-    <div id="confirmPurchaseModal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Confirmar Compra</h2>
-            <div id="confirmCardDetails"></div>
+    </main>
+
+    <!-- Modal de Confirmação de Compra -->
+    <div id="confirmPurchaseModal" class="modal fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center hidden">
+        <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full">
+            <h2 class="text-xl font-bold mb-4">Confirmar Compra</h2>
+            <div id="confirmCardDetails" class="mb-4"></div>
             <p><strong>Total:</strong> R$ <span id="confirmTotalAmount"></span></p>
             <p><strong>Saldo Atual:</strong> R$ <span id="confirmUserBalance"></span></p>
-            <button id="confirmPurchaseButton">Confirmar</button>
-            <button id="cancelPurchaseButton">Cancelar</button>
-        </div>
-    </div>
-    <div id="walletModal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Carteira</h2>
-            <div id="userCardsWallet"></div>
-            <button id="closeWalletButton">Fechar</button>
-        </div>
-    </div>
-    <div id="rechargeModal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Adicionar Crédito</h2>
-            <div class="form-group">
-                <label for="rechargeAmount">Valor</label>
-                <input type="number" id="rechargeAmount" placeholder="Digite o valor (R$)">
+            <div class="mt-4 flex justify-between">
+                <button id="confirmPurchaseButton" class="bg-green-600 hover:bg-green-500 p-2 rounded">Confirmar</button>
+                <button id="cancelPurchaseButton" class="bg-red-600 hover:bg-red-700 p-2 rounded">Cancelar</button>
             </div>
-            <button id="addBalanceConfirmButton">Adicionar</button>
-            <button id="cancelRechargeButton">Cancelar</button>
         </div>
     </div>
-    <div id="notifications" class="fixed top-2 right-4 z-50" role="alert"></div>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const googleFonts = document.getElementById('google-fonts');
-            if (!googleFonts || !document.fonts.check('12px Poppins')) {
-                ui.showNotification('Erro: Fontes não carregadas corretamente.', 'error');
-            }
 
-            const fontAwesome = document.getElementById('font-awesome');
-            if (!fontAwesome || !document.querySelector('.fa-credit-card')) {
-                ui.showNotification('Erro: Ícones do Font Awesome não carregados.', 'error');
-            }
+    <!-- Modal da Carteira -->
+    <div id="walletModal" class="modal fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center hidden">
+        <div class="bg-gray-800 p-6 rounded-lg max-w-lg w-full">
+            <h2 class="text-xl font-bold mb-4">Minha Carteira</h2>
+            <div id="userCardsWallet" class="card-list"></div>
+            <button id="closeWalletButton" class="mt-4 bg-gray-600 hover:bg-gray-500 p-2 rounded">Fechar</button>
+        </div>
+    </div>
 
-            const supabaseScript = document.getElementById('supabase-js');
-            if (!supabaseScript || typeof createClient === 'undefined') {
-                ui.showNotification('Erro: Cliente Supabase não carregado. Verifique sua conexão.', 'error');
-            }
-
-            const scriptJs = document.getElementById('script-js');
-            if (!scriptJs) {
-                ui.showNotification('Erro: script.js não encontrado.', 'error');
-            }
-
-            const requiredElements = ['cardList', 'userCards', 'userName', 'userBalanceHeader', 'userBalanceAccount', 'adminButton', 'confirmPurchaseModal', 'walletModal', 'rechargeModal', 'notifications', 'binFilter', 'brandFilter', 'bankFilter', 'levelFilter'];
-            const missingElements = requiredElements.filter(id => !document.getElementById(id));
-            if (missingElements.length > 0) {
-                ui.showNotification(`Erro: Elementos do DOM não encontrados: ${missingElements.join(', ')}.`, 'error');
-            }
-        });
-    </script>
+    <!-- Modal de Recarga -->
+    <div id="rechargeModal" class="modal fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center hidden">
+        <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full">
+            <h2 class="text-xl font-bold mb-4">Adicionar Saldo</h2>
+            <input
+                id="rechargeAmount"
+                type="number"
+                placeholder="Valor (R$)"
+                class="p-2 bg-gray-700 rounded focus:ring-2 focus:ring-sky-400 w-full mb-4"
+            >
+            <div id="rechargeError" class="text-red-400 mb-4"></div>
+            <div class="mt-4 flex justify-between">
+                <button id="addBalanceConfirmButton" class="bg-green-600 hover:bg-green-500 p-2 rounded">Confirmar</button>
+                <button id="cancelRechargeButton" class="bg-red-600 hover:bg-red-700 p-2 rounded">Cancelar</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
