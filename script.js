@@ -1,10 +1,11 @@
 /**
- * LOGAN CC's - Main JavaScript Logic
- * Handles authentication, shop functionality, admin operations, and UI management.
- * Uses Supabase for backend integration.
+ * LOGAN CC's - Lógica Principal em JavaScript
+ * Gerencia autenticação, loja, operações administrativas e interface do usuário.
+ * Usa Supabase para integração com backend, com senhas em texto puro.
+ * Todas as mensagens e comentários em português.
  */
 
-// --- Configuration ---
+// --- Configuração ---
 const CONFIG = {
     SESSION_TIMEOUT_MINUTES: 30,
     MIN_PASSWORD_LENGTH: 4,
@@ -14,10 +15,11 @@ const CONFIG = {
     SUPABASE_URL: 'https://nphqfkfdjjpiqssdyanb.supabase.co',
     SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5waHFma2ZkampwaXFzc2R5YW5iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5MjIyODgsImV4cCI6MjA2NDQ5ODI4OH0.7wKoxm1oTY0lYavpBjEtQ1dH_x6ghIO2qYsf_K8z9_g',
     RETRY_ATTEMPTS: 2,
-    RETRY_DELAY_MS: 1000
+    RETRY_DELAY_MS: 1000,
+    DEBOUNCE_DELAY_MS: 300
 };
 
-// --- State Management ---
+// --- Estado ---
 const state = {
     users: [],
     cards: [],
@@ -26,19 +28,20 @@ const state = {
     isAdmin: false,
     loginAttempts: 0,
     loginBlockedUntil: 0,
-    sessionStart: parseInt(localStorage.getItem('sessionStart') || '0')
+    sessionStart: parseInt(localStorage.getItem('sessionStart') || '0'),
+    lastActionTime: 0 // Para debounce
 };
 
-// --- Supabase Client ---
+// --- Cliente Supabase ---
 const supabase = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 
-// --- Utility Functions ---
+// --- Funções Utilitárias ---
 const utils = {
     /**
-     * Executes a Supabase query with retry mechanism.
-     * @param {Function} queryFn - The Supabase query function to execute.
-     * @param {number} [attempts=CONFIG.RETRY_ATTEMPTS] - Number of retry attempts.
-     * @returns {Promise<any>} - Query result.
+     * Executa uma consulta ao Supabase com tentativas de retry.
+     * @param {Function} queryFn - Função de consulta ao Supabase.
+     * @param {number} [attempts=CONFIG.RETRY_ATTEMPTS] - Número de tentativas.
+     * @returns {Promise<any>} - Resultado da consulta.
      */
     async withRetry(queryFn, attempts = CONFIG.RETRY_ATTEMPTS) {
         for (let i = 0; i <= attempts; i++) {
@@ -54,8 +57,8 @@ const utils = {
     },
 
     /**
-     * Checks if the user is authenticated and the session is valid.
-     * @returns {boolean} - True if authenticated, false otherwise.
+     * Verifica se o usuário está autenticado e a sessão é válida.
+     * @returns {boolean} - Verdadeiro se autenticado, falso caso contrário.
      */
     checkAuth() {
         if (!state.currentUser?.id) {
@@ -72,9 +75,18 @@ const utils = {
     },
 
     /**
-     * Validates a card number (16 digits).
-     * @param {string} number - Card number.
-     * @returns {boolean} - True if valid.
+     * Sanitiza entrada para prevenir injeções.
+     * @param {string} input - Entrada a sanitizar.
+     * @returns {string} - Entrada sanitizada.
+     */
+    sanitizeInput(input) {
+        return input.replace(/[<>]/g, '');
+    },
+
+    /**
+     * Valida número de cartão (16 dígitos).
+     * @param {string} number - Número do cartão.
+     * @returns {boolean} - Verdadeiro se válido.
      */
     validateCardNumber(number) {
         const cleaned = number.replace(/\s/g, '');
@@ -82,18 +94,18 @@ const utils = {
     },
 
     /**
-     * Validates a CVV (3 digits).
-     * @param {string} cvv - CVV code.
-     * @returns {boolean} - True if valid.
+     * Valida CVV (3 dígitos).
+     * @param {string} cvv - Código CVV.
+     * @returns {boolean} - Verdadeiro se válido.
      */
     validateCardCvv(cvv) {
         return cvv.length === 3 && /^\d+$/.test(cvv);
     },
 
     /**
-     * Validates card expiry date (MM/AA format).
-     * @param {string} expiry - Expiry date.
-     * @returns {boolean} - True if valid and not expired.
+     * Valida data de validade do cartão (MM/AA).
+     * @param {string} expiry - Data de validade.
+     * @returns {boolean} - Verdadeiro se válida e não expirada.
      */
     validateCardExpiry(expiry) {
         const [month, year] = expiry.split('/');
@@ -107,24 +119,46 @@ const utils = {
     },
 
     /**
-     * Validates a Brazilian CPF (11 digits).
-     * @param {string} cpf - CPF number.
-     * @returns {boolean} - True if valid.
+     * Valida CPF brasileiro (11 dígitos).
+     * @param {string} cpf - Número do CPF.
+     * @returns {boolean} - Verdadeiro se válido.
      */
     validateCardCpf(cpf) {
         const cleaned = cpf.replace(/[\.-]/g, '');
         return cleaned.length === 11 && /^\d+$/.test(cleaned);
+    },
+
+    /**
+     * Impede ações rápidas consecutivas (debounce).
+     * @returns {boolean} Verdadeiro se a ação pode prosseguir.
+     */
+    debounce() {
+        const now = Date.now();
+        if (now - state.lastActionTime < CONFIG.DEBOUNCE_DELAY_MS) {
+            console.warn('Ação bloqueada por debounce.');
+            return false;
+        }
+        state.lastActionTime = now;
+        return true;
     }
 };
 
-// --- Authentication Module ---
+// --- Módulo de Autenticação ---
 const auth = {
     /**
-     * Logs in a user with username and password.
-     * @param {string} username - User's username.
-     * @param {string} password - User's password.
+     * Realiza login com usuário e senha em texto puro.
+     * @param {string} username - Nome de usuário.
+     * @param {string} password - Senha.
      */
     async login(username, password) {
+        if (!utils.debounce()) {
+            ui.showError('login', 'Aguarde antes de tentar novamente.');
+            return;
+        }
+
+        username = utils.sanitizeInput(username);
+        password = utils.sanitizeInput(password);
+
         if (!username || !password) {
             ui.showError('login', 'Usuário e senha são obrigatórios.');
             return;
@@ -132,11 +166,12 @@ const auth = {
 
         if (state.loginBlockedUntil > Date.now()) {
             const timeLeft = Math.ceil((state.loginBlockedUntil - Date.now()) / 1000);
-            ui.showError('login', `Bloqueado. Tente novamente em ${timeLeft} segundos.`);
+            ui.showError('login', `Bloqueado por muitas tentativas. Aguarde ${timeLeft} segundos.`);
             return;
         }
 
         ui.toggleLoading('loginButton', true);
+        ui.showNotification('Verificando usuário...', 'info');
 
         try {
             const { data, error } = await utils.withRetry(() =>
@@ -153,7 +188,7 @@ const auth = {
                 console.warn(`Login falhou: Tentativa ${state.loginAttempts}/${CONFIG.MAX_LOGIN_ATTEMPTS}`);
                 if (state.loginAttempts >= CONFIG.MAX_LOGIN_ATTEMPTS) {
                     state.loginBlockedUntil = Date.now() + CONFIG.LOGIN_BLOCK_TIME_MS;
-                    ui.showError('login', 'Limite de tentativas atingido. Aguarde 60 segundos.');
+                    ui.showError('login', 'Muitas tentativas. Aguarde 60 segundos.');
                 } else {
                     ui.showError('login', 'Usuário ou senha incorretos.');
                 }
@@ -171,26 +206,43 @@ const auth = {
             localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
             localStorage.setItem('sessionStart', Date.now().toString());
             console.log('Login bem-sucedido:', state.currentUser);
-            ui.showSuccess('Login bem-sucedido! Redirecionando...');
+            ui.showSuccess(`Bem-vindo, ${username}!`);
             ui.clearForm('login');
             setTimeout(() => window.location.href = 'shop.html', 1000);
         } catch (error) {
             console.error('Erro no login:', error);
-            ui.showError('login', `Erro ao conectar: ${error.message || 'Tente novamente.'}`);
+            let mensagemErro = 'Erro ao conectar. Tente novamente.';
+            if (error.code === 'PGRST116') {
+                mensagemErro = 'Usuário ou senha incorretos.';
+            } else if (error.message.includes('network')) {
+                mensagemErro = 'Sem conexão com a internet. Verifique sua rede.';
+            } else if (error.code === '42501') {
+                mensagemErro = 'Acesso negado ao banco de dados. Contate o suporte.';
+            }
+            ui.showError('login', mensagemErro);
         } finally {
             ui.toggleLoading('loginButton', false);
         }
     },
 
     /**
-     * Registers a new user.
-     * @param {string} username - New username.
-     * @param {string} password - New password.
-     * @param {string} confirmPassword - Password confirmation.
+     * Registra um novo usuário com senha em texto puro.
+     * @param {string} username - Nome de usuário.
+     * @param {string} password - Senha.
+     * @param {string} confirmPassword - Confirmação da senha.
      */
     async register(username, password, confirmPassword) {
-        if (!username || !password) {
-            ui.showError('register', 'Usuário e senha são obrigatórios.');
+        if (!utils.debounce()) {
+            ui.showError('register', 'Aguarde antes de tentar novamente.');
+            return;
+        }
+
+        username = utils.sanitizeInput(username);
+        password = utils.sanitizeInput(password);
+        confirmPassword = utils.sanitizeInput(confirmPassword);
+
+        if (!username || !password || !confirmPassword) {
+            ui.showError('register', 'Todos os campos são obrigatórios.');
             return;
         }
 
@@ -205,6 +257,7 @@ const auth = {
         }
 
         ui.toggleLoading('registerButton', true);
+        ui.showNotification('Criando conta...', 'info');
 
         try {
             const { data: existingUser, error: checkError } = await utils.withRetry(() =>
@@ -216,7 +269,7 @@ const auth = {
             );
 
             if (existingUser) {
-                ui.showError('register', 'Usuário já existe!');
+                ui.showError('register', 'Este usuário já existe.');
                 return;
             }
 
@@ -232,19 +285,27 @@ const auth = {
 
             if (insertError) throw insertError;
 
-            ui.showSuccess('Registro concluído! Faça login.');
+            ui.showSuccess('Conta criada! Faça login para continuar.');
             ui.clearForm('register');
             ui.toggleForms();
         } catch (error) {
             console.error('Erro no registro:', error);
-            ui.showError('register', `Erro ao registrar: ${error.message || 'Tente novamente.'}`);
+            let mensagemErro = 'Erro ao registrar. Tente novamente.';
+            if (error.code === '23505') {
+                mensagemErro = 'Usuário já existe.';
+            } else if (error.message.includes('network')) {
+                mensagemErro = 'Sem conexão com a internet. Verifique sua rede.';
+            } else if (error.code === '42501') {
+                mensagemErro = 'Acesso negado ao banco de dados. Contate o suporte.';
+            }
+            ui.showError('register', mensagemErro);
         } finally {
             ui.toggleLoading('registerButton', false);
         }
     },
 
     /**
-     * Logs out the current user.
+     * Realiza logout do usuário.
      */
     logout() {
         state.currentUser = null;
@@ -253,14 +314,15 @@ const auth = {
         localStorage.removeItem('currentUser');
         localStorage.removeItem('sessionStart');
         console.log('Logout realizado.');
+        ui.showSuccess('Logout realizado com sucesso!');
         window.location.href = 'index.html';
     }
 };
 
-// --- Shop Module ---
+// --- Módulo da Loja ---
 const shop = {
     /**
-     * Loads available and user-acquired cards.
+     * Carrega cartões disponíveis e adquiridos pelo usuário.
      */
     async loadCards() {
         if (!utils.checkAuth()) {
@@ -270,6 +332,7 @@ const shop = {
         }
 
         ui.showLoader();
+        ui.showNotification('Carregando cartões...', 'info');
 
         try {
             const [cardsResponse, userCardsResponse] = await Promise.all([
@@ -297,6 +360,7 @@ const shop = {
             ui.filterCards();
             if (state.isAdmin) ui.showAdminButton();
             ui.loadUserCards();
+            ui.showSuccess('Cartões carregados com sucesso!');
         } catch (error) {
             console.error('Erro ao carregar cartões:', error);
             ui.showError('global', `Erro ao carregar cartões: ${error.message || 'Tente novamente.'}`);
@@ -306,8 +370,8 @@ const shop = {
     },
 
     /**
-     * Shows the purchase confirmation modal for a card.
-     * @param {string} cardNumber - Card number.
+     * Exibe modal de confirmação de compra.
+     * @param {string} cardNumber - Número do cartão.
      */
     showConfirmPurchaseModal(cardNumber) {
         const card = state.cards.find(c => c.numero === cardNumber);
@@ -321,15 +385,16 @@ const shop = {
             userBalance: state.currentUser.balance.toFixed(2),
             cardNumber
         });
+        ui.showNotification('Confirmação de compra aberta.', 'info');
     },
 
     /**
-     * Purchases a card.
-     * @param {string} cardNumber - Card number to purchase.
+     * Realiza a compra de um cartão.
+     * @param {string} cardNumber - Número do cartão.
      */
     async purchaseCard(cardNumber) {
         if (!utils.checkAuth()) {
-            ui.showError('global', 'Faça login para realizar a compra.');
+            ui.showError('global', 'Faça login para comprar.');
             setTimeout(() => window.location.href = 'index.html', 1000);
             return;
         }
@@ -347,6 +412,7 @@ const shop = {
         }
 
         ui.showLoader();
+        ui.showNotification('Processando compra...', 'info');
 
         try {
             const { data: user, error: userError } = await utils.withRetry(() =>
@@ -368,7 +434,7 @@ const shop = {
                     .single()
             );
 
-            if (cardError || !cardData) throw new Error('Cartão não encontrado ou já adquirido.');
+            if (cardError || !cardData) throw new Error('Cartão não encontrado ou já comprado.');
 
             const newBalance = user.balance - price;
             const [updateUserResponse, updateCardResponse] = await Promise.all([
@@ -400,26 +466,27 @@ const shop = {
             ui.showSuccess('Compra realizada com sucesso!');
         } catch (error) {
             console.error('Erro na compra:', error);
-            ui.showError('global', `Erro ao realizar compra: ${error.message || 'Tente novamente.'}`);
+            ui.showError('global', `Erro ao comprar: ${error.message || 'Tente novamente.'}`);
         } finally {
             ui.hideLoader();
         }
     }
 };
 
-// --- Admin Module ---
+// --- Módulo Administrativo ---
 const admin = {
     /**
-     * Loads all users for admin management.
+     * Carrega todos os usuários para gerenciamento.
      */
     async loadUsers() {
         if (!utils.checkAuth() || !state.isAdmin) {
-            ui.showError('global', 'Acesso negado: Permissão de administrador necessária.');
+            ui.showError('global', 'Acesso negado: Apenas administradores.');
             setTimeout(() => window.location.href = 'shop.html', 1000);
             return;
         }
 
         ui.showLoader();
+        ui.showNotification('Carregando usuários...', 'info');
 
         try {
             const { data, error } = await utils.withRetry(() =>
@@ -433,6 +500,7 @@ const admin = {
             state.users = data || [];
             ui.displayUsers();
             ui.showElement('addUserButton');
+            ui.showSuccess('Usuários carregados com sucesso!');
         } catch (error) {
             console.error('Erro ao carregar usuários:', error);
             ui.showError('global', `Erro ao carregar usuários: ${error.message || 'Tente novamente.'}`);
@@ -442,16 +510,17 @@ const admin = {
     },
 
     /**
-     * Loads all available cards for admin management.
+     * Carrega cartões disponíveis para gerenciamento.
      */
     async loadAdminCards() {
         if (!utils.checkAuth() || !state.isAdmin) {
-            ui.showError('global', 'Acesso negado: Permissão de administrador necessária.');
+            ui.showError('global', 'Acesso negado: Apenas administradores.');
             setTimeout(() => window.location.href = 'shop.html', 1000);
             return;
         }
 
         ui.showLoader();
+        ui.showNotification('Carregando cartões...', 'info');
 
         try {
             const { data, error } = await utils.withRetry(() =>
@@ -466,6 +535,7 @@ const admin = {
             state.cards = data || [];
             ui.displayAdminCards();
             ui.showElement('addCardButton');
+            ui.showSuccess('Cartões carregados com sucesso!');
         } catch (error) {
             console.error('Erro ao carregar cartões:', error);
             ui.showError('global', `Erro ao carregar cartões: ${error.message || 'Tente novamente.'}`);
@@ -475,9 +545,9 @@ const admin = {
     },
 
     /**
-     * Updates a user's balance.
-     * @param {string} username - Username.
-     * @param {number} newBalance - New balance.
+     * Atualiza o saldo de um usuário.
+     * @param {string} username - Nome de usuário.
+     * @param {number} newBalance - Novo saldo.
      */
     async editUserBalance(username, newBalance) {
         if (!utils.checkAuth() || !state.isAdmin) {
@@ -491,6 +561,7 @@ const admin = {
         }
 
         ui.showLoader();
+        ui.showNotification('Atualizando saldo...', 'info');
 
         try {
             const { data: user, error: userError } = await utils.withRetry(() =>
@@ -530,17 +601,20 @@ const admin = {
     },
 
     /**
-     * Adds a new user.
-     * @param {string} username - New username.
-     * @param {string} password - New password.
-     * @param {number} balance - Initial balance.
-     * @param {boolean} isAdmin - Admin status.
+     * Adiciona um novo usuário.
+     * @param {string} username - Nome de usuário.
+     * @param {string} password - Senha.
+     * @param {number} balance - Saldo inicial.
+     * @param {boolean} isAdmin - Status de administrador.
      */
     async addUser(username, password, balance, isAdmin) {
         if (!utils.checkAuth() || !state.isAdmin) {
             ui.showError('global', 'Acesso negado.');
             return;
         }
+
+        username = utils.sanitizeInput(username);
+        password = utils.sanitizeInput(password);
 
         if (!username || !password) {
             ui.showError('addUser', 'Usuário e senha são obrigatórios.');
@@ -558,6 +632,7 @@ const admin = {
         }
 
         ui.showLoader();
+        ui.showNotification('Adicionando usuário...', 'info');
 
         try {
             const { data: existingUser, error: checkError } = await utils.withRetry(() =>
@@ -569,7 +644,7 @@ const admin = {
             );
 
             if (existingUser) {
-                ui.showError('addUser', 'Usuário já existe!');
+                ui.showError('addUser', 'Usuário já existe.');
                 return;
             }
 
@@ -597,11 +672,11 @@ const admin = {
     },
 
     /**
-     * Edits an existing user.
-     * @param {string} username - Username.
-     * @param {number} balance - New balance.
-     * @param {boolean} isAdmin - Admin status.
-     * @param {string} [password] - New password (optional).
+     * Edita um usuário existente.
+     * @param {string} username - Nome de usuário.
+     * @param {number} balance - Novo saldo.
+     * @param {boolean} isAdmin - Status de administrador.
+     * @param {string} [password] - Nova senha (opcional).
      */
     async editUser(username, balance, isAdmin, password) {
         if (!utils.checkAuth() || !state.isAdmin) {
@@ -609,12 +684,21 @@ const admin = {
             return;
         }
 
+        username = utils.sanitizeInput(username);
+        password = password ? utils.sanitizeInput(password) : null;
+
         if (isNaN(balance) || balance < 0) {
             ui.showError('editUser', 'Saldo inválido.');
             return;
         }
 
+        if (password && password.length < CONFIG.MIN_PASSWORD_LENGTH) {
+            ui.showError('editUser', `A senha deve ter pelo menos ${CONFIG.MIN_PASSWORD_LENGTH} caracteres.`);
+            return;
+        }
+
         ui.showLoader();
+        ui.showNotification('Atualizando usuário...', 'info');
 
         try {
             const { data: user, error: userError } = await utils.withRetry(() =>
@@ -628,9 +712,7 @@ const admin = {
             if (userError || !user) throw new Error('Usuário não encontrado.');
 
             const updatedData = { balance, is_admin: isAdmin };
-            if (password && password.length >= CONFIG.MIN_PASSWORD_LENGTH) {
-                updatedData.password = password;
-            }
+            if (password) updatedData.password = password;
 
             const { error } = await utils.withRetry(() =>
                 supabase
@@ -660,8 +742,8 @@ const admin = {
     },
 
     /**
-     * Deletes a user.
-     * @param {string} username - Username to delete.
+     * Exclui um usuário.
+     * @param {string} username - Nome de usuário.
      */
     async deleteUser(username) {
         if (!utils.checkAuth() || !state.isAdmin) {
@@ -675,6 +757,7 @@ const admin = {
         }
 
         ui.showLoader();
+        ui.showNotification('Excluindo usuário...', 'info');
 
         try {
             const { data: user, error: userError } = await utils.withRetry(() =>
@@ -710,8 +793,8 @@ const admin = {
     },
 
     /**
-     * Deletes a card.
-     * @param {string} cardNumber - Card number to delete.
+     * Exclui um cartão.
+     * @param {string} cardNumber - Número do cartão.
      */
     async deleteCard(cardNumber) {
         if (!utils.checkAuth() || !state.isAdmin) {
@@ -720,6 +803,7 @@ const admin = {
         }
 
         ui.showLoader();
+        ui.showNotification('Excluindo cartão...', 'info');
 
         try {
             const { data: card, error: cardError } = await utils.withRetry(() =>
@@ -753,8 +837,8 @@ const admin = {
     },
 
     /**
-     * Edits an existing card.
-     * @param {Object} cardData - Card data to update.
+     * Edita um cartão existente.
+     * @param {Object} cardData - Dados do cartão.
      */
     async editCard(cardData) {
         if (!utils.checkAuth() || !state.isAdmin) {
@@ -762,28 +846,38 @@ const admin = {
             return;
         }
 
+        cardData.numero = utils.sanitizeInput(cardData.numero);
+        cardData.cvv = utils.sanitizeInput(cardData.cvv);
+        cardData.validade = utils.sanitizeInput(cardData.validade);
+        cardData.nome = utils.sanitizeInput(cardData.nome);
+        cardData.cpf = utils.sanitizeInput(cardData.cpf);
+        cardData.bandeira = utils.sanitizeInput(cardData.bandeira);
+        cardData.banco = utils.sanitizeInput(cardData.banco);
+        cardData.nivel = utils.sanitizeInput(cardData.nivel);
+
         if (!utils.validateCardNumber(cardData.numero)) {
-            ui.showError('editCard', 'Número de cartão inválido!');
+            ui.showError('editCard', 'Número de cartão inválido.');
             return;
         }
         if (!utils.validateCardCvv(cardData.cvv)) {
-            ui.showError('editCard', 'CVV inválido!');
+            ui.showError('editCard', 'CVV inválido.');
             return;
         }
         if (!utils.validateCardExpiry(cardData.validade)) {
-            ui.showError('editCard', 'Validade inválida ou expirada!');
+            ui.showError('editCard', 'Validade inválida ou expirada.');
             return;
         }
         if (!utils.validateCardCpf(cardData.cpf)) {
-            ui.showError('editCard', 'CPF inválido!');
+            ui.showError('editCard', 'CPF inválido.');
             return;
         }
         if (!cardData.bandeira || !cardData.banco || !cardData.nivel) {
-            ui.showError('editCard', 'Preencha todos os campos obrigatórios!');
+            ui.showError('editCard', 'Preencha todos os campos obrigatórios.');
             return;
         }
 
         ui.showLoader();
+        ui.showNotification('Atualizando cartão...', 'info');
 
         try {
             const { data: card, error: cardError } = await utils.withRetry(() =>
@@ -817,8 +911,8 @@ const admin = {
     },
 
     /**
-     * Adds a new card.
-     * @param {Object} cardData - Card data to add.
+     * Adiciona um novo cartão.
+     * @param {Object} cardData - Dados do cartão.
      */
     async saveCard(cardData) {
         if (!utils.checkAuth() || !state.isAdmin) {
@@ -826,28 +920,38 @@ const admin = {
             return;
         }
 
+        cardData.numero = utils.sanitizeInput(cardData.numero);
+        cardData.cvv = utils.sanitizeInput(cardData.cvv);
+        cardData.validade = utils.sanitizeInput(cardData.validade);
+        cardData.nome = utils.sanitizeInput(cardData.nome);
+        cardData.cpf = utils.sanitizeInput(cardData.cpf);
+        cardData.bandeira = utils.sanitizeInput(cardData.bandeira);
+        cardData.banco = utils.sanitizeInput(cardData.banco);
+        cardData.nivel = utils.sanitizeInput(cardData.nivel);
+
         if (!utils.validateCardNumber(cardData.numero)) {
-            ui.showError('addCard', 'Número de cartão inválido!');
+            ui.showError('addCard', 'Número de cartão inválido.');
             return;
         }
         if (!utils.validateCardCvv(cardData.cvv)) {
-            ui.showError('addCard', 'CVV inválido!');
+            ui.showError('addCard', 'CVV inválido.');
             return;
         }
         if (!utils.validateCardExpiry(cardData.validade)) {
-            ui.showError('addCard', 'Validade inválida ou expirada!');
+            ui.showError('addCard', 'Validade inválida ou expirada.');
             return;
         }
         if (!utils.validateCardCpf(cardData.cpf)) {
-            ui.showError('addCard', 'CPF inválido!');
+            ui.showError('addCard', 'CPF inválido.');
             return;
         }
         if (!cardData.bandeira || !cardData.banco || !cardData.nivel) {
-            ui.showError('addCard', 'Preencha todos os campos obrigatórios!');
+            ui.showError('addCard', 'Preencha todos os campos obrigatórios.');
             return;
         }
 
         ui.showLoader();
+        ui.showNotification('Adicionando cartão...', 'info');
 
         try {
             const { data: existingCard, error: checkError } = await utils.withRetry(() =>
@@ -859,7 +963,7 @@ const admin = {
             );
 
             if (existingCard) {
-                ui.showError('addCard', 'Cartão já existe!');
+                ui.showError('addCard', 'Cartão já existe.');
                 return;
             }
 
@@ -887,28 +991,36 @@ const admin = {
     }
 };
 
-// --- UI Module ---
+// --- Módulo de Interface do Usuário ---
 const ui = {
     /**
-     * Shows a notification message.
-     * @param {string} message - Message to display.
-     * @param {string} [type='error'] - Notification type ('error' or 'success').
+     * Exibe uma notificação.
+     * @param {string} message - Mensagem a exibir.
+     * @param {string} [type='error'] - Tipo ('error', 'success', 'info').
      */
     showNotification(message, type = 'error') {
         const notificationsDiv = document.getElementById('notifications');
         if (!notificationsDiv) return;
 
-        const notification = document.createElement('p');
+        const notification = document.createElement('div');
         notification.className = `notification ${type}`;
+        notification.style.cssText = `
+            padding: 10px 20px;
+            margin: 5px 0;
+            border-radius: 4px;
+            color: white;
+            font-size: 0.9rem;
+            background-color: ${type === 'error' ? '#EF4444' : type === 'success' ? '#10B981' : '#3B82F6'};
+        `;
         notification.textContent = message;
         notificationsDiv.appendChild(notification);
         setTimeout(() => notification.remove(), CONFIG.NOTIFICATION_TIMEOUT_MS);
     },
 
     /**
-     * Shows an error message for a specific context.
-     * @param {string} context - Context ID (e.g., 'login', 'register').
-     * @param {string} message - Error message.
+     * Exibe mensagem de erro para um contexto.
+     * @param {string} context - Contexto (ex.: 'login', 'register').
+     * @param {string} message - Mensagem de erro.
      */
     showError(context, message) {
         this.showNotification(message, 'error');
@@ -916,21 +1028,22 @@ const ui = {
         if (errorElement) {
             errorElement.textContent = message;
             errorElement.classList.add('show');
+            errorElement.style.color = '#EF4444';
         }
     },
 
     /**
-     * Shows a success message.
-     * @param {string} message - Success message.
+     * Exibe mensagem de sucesso.
+     * @param {string} message - Mensagem de sucesso.
      */
     showSuccess(message) {
         this.showNotification(message, 'success');
     },
 
     /**
-     * Toggles loading state for a button.
-     * @param {string} buttonId - Button ID.
-     * @param {boolean} isLoading - Loading state.
+     * Alterna estado de carregamento de um botão.
+     * @param {string} buttonId - ID do botão.
+     * @param {boolean} isLoading - Estado de carregamento.
      */
     toggleLoading(buttonId, isLoading) {
         const button = document.getElementById(buttonId);
@@ -942,7 +1055,7 @@ const ui = {
     },
 
     /**
-     * Shows the global loader.
+     * Exibe carregador global.
      */
     showLoader() {
         let loader = document.getElementById('globalLoader');
@@ -968,7 +1081,7 @@ const ui = {
     },
 
     /**
-     * Hides the global loader.
+     * Oculta carregador global.
      */
     hideLoader() {
         const loader = document.getElementById('globalLoader');
@@ -976,7 +1089,7 @@ const ui = {
     },
 
     /**
-     * Toggles login/register forms.
+     * Alterna formulários de login e registro.
      */
     toggleForms() {
         const loginContainer = document.getElementById('loginContainer');
@@ -984,12 +1097,13 @@ const ui = {
         if (loginContainer && registerContainer) {
             loginContainer.classList.toggle('hidden');
             registerContainer.classList.toggle('hidden');
+            ui.showNotification('Formulário alterado.', 'info');
         }
     },
 
     /**
-     * Clears a form by context.
-     * @param {string} context - Form context ('login' or 'register').
+     * Limpa um formulário por contexto.
+     * @param {string} context - Contexto ('login' ou 'register').
      */
     clearForm(context) {
         const fields = {
@@ -1000,42 +1114,44 @@ const ui = {
             const input = document.getElementById(id);
             if (input) input.value = '';
         });
-        fields.forEach(id => {
-            const error = document.getElementById(`${id}Error`);
-            if (error) {
-                error.textContent = '';
-                error.classList.remove('show');
-            }
-        });
+        const errorElement = document.getElementById(`${context}Error`);
+        if (errorElement) {
+            errorElement.textContent = '';
+            errorElement.classList.remove('show');
+        }
     },
 
     /**
-     * Updates user information in the UI.
+     * Atualiza informações do usuário na interface.
      */
     updateUserInfo() {
         const elements = {
-            userName: state.currentUser.username,
-            userBalanceHeader: state.currentUser.balance.toFixed(2),
-            userNameAccount: state.currentUser.username,
-            userBalanceAccount: `R$${state.currentUser.balance.toFixed(2)}`
+            userName: state.currentUser?.username || 'N/A',
+            userBalanceHeader: state.currentUser?.balance?.toFixed(2) || '0.00',
+            userNameAccount: state.currentUser?.username || 'N/A',
+            userBalanceAccount: state.currentUser ? `R$${state.currentUser.balance.toFixed(2)}` : 'R$0.00'
         };
         Object.entries(elements).forEach(([id, value]) => {
             const element = document.getElementById(id);
             if (element) element.textContent = value;
         });
+        ui.showNotification('Informações do usuário atualizadas.', 'info');
     },
 
     /**
-     * Shows the admin button if user is admin.
+     * Exibe botão de administrador se usuário for admin.
      */
     showAdminButton() {
         const adminButton = document.getElementById('adminButton');
-        if (adminButton) adminButton.classList.remove('hidden');
+        if (adminButton) {
+            adminButton.classList.remove('hidden');
+            ui.showNotification('Painel de administrador disponível.', 'info');
+        }
     },
 
     /**
-     * Shows an element by ID.
-     * @param {string} id - Element ID.
+     * Exibe um elemento por ID.
+     * @param {string} id - ID do elemento.
      */
     showElement(id) {
         const element = document.getElementById(id);
@@ -1043,7 +1159,7 @@ const ui = {
     },
 
     /**
-     * Filters and displays available cards.
+     * Filtra e exibe cartões disponíveis.
      */
     filterCards() {
         const cardList = document.getElementById('cardList');
@@ -1076,10 +1192,11 @@ const ui = {
                     </button>
                 </div>
             `).join('');
+        ui.showNotification('Filtro de cartões aplicado.', 'info');
     },
 
     /**
-     * Clears card filters.
+     * Limpa filtros de cartões.
      */
     clearFilters() {
         const filters = ['binFilter', 'brandFilter', 'bankFilter', 'levelFilter'];
@@ -1088,10 +1205,11 @@ const ui = {
             if (element) element.value = id === 'binFilter' ? '' : 'all';
         });
         this.filterCards();
+        ui.showNotification('Filtros limpos.', 'info');
     },
 
     /**
-     * Shows account information.
+     * Exibe informações da conta.
      */
     showAccountInfo() {
         if (!utils.checkAuth()) {
@@ -1106,11 +1224,12 @@ const ui = {
             accountInfo.classList.remove('hidden');
             this.updateUserInfo();
             this.loadUserCards();
+            ui.showNotification('Informações da conta exibidas.', 'info');
         }
     },
 
     /**
-     * Shows the wallet modal.
+     * Exibe modal da carteira.
      */
     showWallet() {
         if (!utils.checkAuth()) {
@@ -1120,26 +1239,28 @@ const ui = {
         }
         this.showModal('walletModal');
         this.loadUserCardsWallet();
+        ui.showNotification('Carteira exibida.', 'info');
     },
 
     /**
-     * Shows the add balance form.
+     * Exibe formulário de adicionar saldo.
      */
     showAddBalanceForm() {
         if (!utils.checkAuth()) {
-            this.showError('global', 'Faça login para adicionar crédito.');
+            this.showError('global', 'Faça login para adicionar saldo.');
             setTimeout(() => window.location.href = 'index.html', 1000);
             return;
         }
         this.showModal('rechargeModal');
+        ui.showNotification('Formulário de recarga aberto.', 'info');
     },
 
     /**
-     * Adds balance to the user's account.
+     * Adiciona saldo à conta do usuário.
      */
     async addBalance() {
         if (!utils.checkAuth()) {
-            this.showError('global', 'Faça login para adicionar crédito.');
+            this.showError('global', 'Faça login para adicionar saldo.');
             setTimeout(() => window.location.href = 'index.html', 1000);
             return;
         }
@@ -1150,7 +1271,8 @@ const ui = {
             return;
         }
 
-        this.showLoader();
+        ui.showLoader();
+        ui.showNotification('Adicionando saldo...', 'info');
 
         try {
             const { data: user, error: userError } = await utils.withRetry(() =>
@@ -1187,7 +1309,7 @@ const ui = {
     },
 
     /**
-     * Loads user's acquired cards.
+     * Carrega cartões adquiridos pelo usuário.
      */
     loadUserCards() {
         const userCards = document.getElementById('userCards');
@@ -1206,10 +1328,11 @@ const ui = {
                     </div>
                 </div>
             `).join('');
+        ui.showNotification('Cartões do usuário carregados.', 'info');
     },
 
     /**
-     * Loads user's cards in the wallet modal.
+     * Carrega cartões na carteira.
      */
     loadUserCardsWallet() {
         const userCardsWallet = document.getElementById('userCardsWallet');
@@ -1230,12 +1353,13 @@ const ui = {
                     </div>
                 </div>
             `).join('');
+        ui.showNotification('Cartões da carteira carregados.', 'info');
     },
 
     /**
-     * Shows a modal with optional data.
-     * @param {string} modalId - Modal ID.
-     * @param {Object} [data] - Data to populate the modal.
+     * Exibe um modal.
+     * @param {string} modalId - ID do modal.
+     * @param {Object} [data] - Dados para o modal.
      */
     showModal(modalId, data = {}) {
         const modal = document.getElementById(modalId);
@@ -1255,22 +1379,24 @@ const ui = {
 
         modal.classList.remove('hidden');
         modal.classList.add('show');
+        ui.showNotification(`Modal ${modalId} aberto.`, 'info');
     },
 
     /**
-     * Closes a modal.
-     * @param {string} modalId - Modal ID.
+     * Fecha um modal.
+     * @param {string} modalId - ID do modal.
      */
     closeModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
             modal.classList.remove('show');
             modal.classList.add('hidden');
+            ui.showNotification(`Modal ${modalId} fechado.`, 'info');
         }
     },
 
     /**
-     * Displays users in the admin table.
+     * Exibe usuários na tabela administrativa.
      */
     displayUsers() {
         const userList = document.getElementById('userList');
@@ -1288,10 +1414,11 @@ const ui = {
                 </td>
             </tr>
         `).join('');
+        ui.showNotification('Tabela de usuários atualizada.', 'info');
     },
 
     /**
-     * Displays cards in the admin table.
+     * Exibe cartões na tabela administrativa.
      */
     displayAdminCards() {
         const cardList = document.getElementById('adminCardList');
@@ -1309,11 +1436,12 @@ const ui = {
                 </td>
             </tr>
         `).join('');
+        ui.showNotification('Tabela de cartões atualizada.', 'info');
     },
 
     /**
-     * Shows the edit balance modal.
-     * @param {string} username - Username.
+     * Exibe modal de edição de saldo.
+     * @param {string} username - Nome de usuário.
      */
     showEditBalanceModal(username) {
         if (!state.isAdmin) {
@@ -1329,8 +1457,8 @@ const ui = {
     },
 
     /**
-     * Shows the edit user modal.
-     * @param {string} username - Username.
+     * Exibe modal de edição de usuário.
+     * @param {string} username - Nome de usuário.
      */
     showEditUserModal(username) {
         if (!state.isAdmin) {
@@ -1353,7 +1481,7 @@ const ui = {
     },
 
     /**
-     * Shows the add user modal.
+     * Exibe modal de adição de usuário.
      */
     showAddUserModal() {
         if (!state.isAdmin) {
@@ -1371,8 +1499,8 @@ const ui = {
     },
 
     /**
-     * Shows the edit card modal.
-     * @param {string} cardNumber - Card number.
+     * Exibe modal de edição de cartão.
+     * @param {string} cardNumber - Número do cartão.
      */
     showEditCardModal(cardNumber) {
         if (!state.isAdmin) {
@@ -1400,7 +1528,7 @@ const ui = {
     },
 
     /**
-     * Shows the add card modal.
+     * Exibe modal de adição de cartão.
      */
     showAddCardModal() {
         if (!state.isAdmin) {
@@ -1422,8 +1550,8 @@ const ui = {
     },
 
     /**
-     * Formats card number input.
-     * @param {HTMLInputElement} input - Input element.
+     * Formata número de cartão.
+     * @param {HTMLInputElement} input - Elemento de entrada.
      */
     formatCardNumber(input) {
         let value = input.value.replace(/\s/g, '').replace(/\D/g, '').slice(0, 16);
@@ -1431,16 +1559,16 @@ const ui = {
     },
 
     /**
-     * Restricts CVV input to 3 digits.
-     * @param {HTMLInputElement} input - Input element.
+     * Restringe CVV a 3 dígitos.
+     * @param {HTMLInputElement} input - Elemento de entrada.
      */
     restrictCvv(input) {
         input.value = input.value.replace(/\D/g, '').slice(0, 3);
     },
 
     /**
-     * Formats expiry date input (MM/AA).
-     * @param {HTMLInputElement} input - Input element.
+     * Formata data de validade (MM/AA).
+     * @param {HTMLInputElement} input - Elemento de entrada.
      */
     formatExpiry(input) {
         let value = input.value.replace(/\D/g, '').slice(0, 4);
@@ -1451,8 +1579,8 @@ const ui = {
     },
 
     /**
-     * Formats CPF input (XXX.XXX.XXX-XX).
-     * @param {HTMLInputElement} input - Input element.
+     * Formata CPF (XXX.XXX.XXX-XX).
+     * @param {HTMLInputElement} input - Elemento de entrada.
      */
     formatCpf(input) {
         let value = input.value.replace(/\D/g, '').slice(0, 11);
@@ -1467,21 +1595,21 @@ const ui = {
     }
 };
 
-// --- Event Listeners ---
+// --- Listeners de Eventos ---
 function setupEventListeners() {
     // Index.html
     document.getElementById('loginButton')?.addEventListener('click', () => {
         auth.login(
-            document.getElementById('username').value.trim(),
-            document.getElementById('password').value.trim()
+            document.getElementById('username')?.value.trim(),
+            document.getElementById('password')?.value.trim()
         );
     });
 
     document.getElementById('registerButton')?.addEventListener('click', () => {
         auth.register(
-            document.getElementById('newUsername').value.trim(),
-            document.getElementById('newPassword').value.trim(),
-            document.getElementById('confirmPassword').value.trim()
+            document.getElementById('newUsername')?.value.trim(),
+            document.getElementById('newPassword')?.value.trim(),
+            document.getElementById('confirmPassword')?.value.trim()
         );
     });
 
@@ -1580,29 +1708,12 @@ function setupEventListeners() {
             pais: 'Brazil',
             acquired: false,
             user_id: null,
-            price: 10.00 // TODO: Add price field to form
+            price: 10.00
         });
     });
     document.getElementById('cancelAddCardButton')?.addEventListener('click', () => ui.closeModal('addCardModal'));
 
-    document.getElementById('userList')?.addEventListener('click', e => {
-        const target = e.target.closest('button');
-        if (!target) return;
-        const { username, action } = target.dataset;
-        if (action === 'edit-balance') ui.showEditBalanceModal(username);
-        else if (action === 'edit-user') ui.showEditUserModal(username);
-        else if (action === 'delete-user') admin.deleteUser(username);
-    });
-
-    document.getElementById('adminCardList')?.addEventListener('click', e => {
-        const target = e.target.closest('button');
-        if (!target) return;
-        const { cardNumber, action } = target.dataset;
-        if (action === 'edit-card') ui.showEditCardModal(cardNumber);
-        else if (action === 'delete-card') admin.deleteCard(cardNumber);
-    });
-
-    // Input Formatting
+    // Formatações
     ['cardNumber', 'editCardNumber'].forEach(id => {
         document.getElementById(id)?.addEventListener('input', e => ui.formatCardNumber(e.target));
     });
@@ -1617,11 +1728,16 @@ function setupEventListeners() {
     });
 }
 
-// --- Initialization ---
+// --- Inicialização ---
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
+    if (window.location.pathname.includes('shop.html')) {
+        shop.loadCards();
+    } else if (window.location.pathname.includes('dashboard.html')) {
+        admin.loadUsers();
+        admin.loadAdminCards();
+    }
 });
 
-// --- Security Note ---
-// TODO: Replace plain text password storage with supabase.auth.signInWithPassword and supabase.auth.signUp
-// for secure authentication with password hashing.
+// --- Nota de Segurança ---
+// As senhas são armazenadas em texto puro, conforme solicitado. Para maior segurança, considere usar supabase.auth no futuro.
