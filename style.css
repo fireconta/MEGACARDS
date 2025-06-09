@@ -1,0 +1,124 @@
+/* styles.css */
+.notification {
+    animation: slideIn 0.5s ease-out, fadeOut 0.5s ease-in 4.5s forwards;
+    z-index: 10000;
+    min-width: 200px;
+    max-width: 300px;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-wrap: break-word;
+}
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+@keyframes fadeOut {
+    to { opacity: 0; }
+}
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+.modal.show {
+    display: flex;
+}
+.modal-content {
+    animation: fadeIn 0.5s ease-out;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+#globalLoader {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+#globalLoader.show {
+    display: flex;
+}
+.spinner {
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid #10B981;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.card-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #2d3748;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+}
+.card-brand {
+    font-size: 2rem;
+    margin-right: 1rem;
+}
+.card-button {
+    background: #10B981;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    transition: background 0.2s;
+}
+.card-button:hover {
+    background: #059669;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #4a5568;
+}
+th {
+    background: #2d3748;
+}
+.action-button {
+    background: #10B981;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    margin-right: 0.5rem;
+    transition: background 0.2s;
+}
+.action-button:hover {
+    background: #059669;
+}
+.delete-button {
+    background: #EF4444;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    transition: background 0.2s;
+}
+.delete-button:hover {
+    background: #DC2626;
+}
